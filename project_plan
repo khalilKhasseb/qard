@@ -1,0 +1,1650 @@
+# TapIt Architecture - Laravel/Filament/Inertia/MySQL Stack
+
+## Stack Overview
+
+| Component | Previous Stack | New Stack | Rationale |
+|-----------|----------------|-----------|-----------|
+| **Backend Framework** | Node.js + Express | **Laravel 10** | Rich ecosystem, built-in features |
+| **Admin Panel** | Custom React | **FilamentPHP** | Rapid development, CRUD out-of-the-box |
+| **Frontend** | React + Next.js | **Inertia.js + Vue/Svelte** | SPA feel without API complexity |
+| **Database** | PostgreSQL | **MySQL 8** | Laravel's first-class support |
+| **Queue** | BullMQ (Redis) | **Laravel Queues** | Database driver or Redis |
+| **Storage** | AWS S3 | **Laravel Filesystem** | Same S3 abstraction |
+| **Cache** | Redis | **Redis** | Unchanged - Laravel supports it |
+| **Auth** | JWT custom | **Laravel Breeze/Sanctum** | Built-in security |
+
+---
+
+## 1. Adjusted System Architecture
+
+### 1.1 High-Level Flow
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Browser / Mobile                                       │
+│  Inertia.js (Vue/Svelte)                                │
+└────────────────────┬──────────────────────────────────────┘
+                     │
+┌────────────────────▼──────────────────────────────────────┐
+│  Laravel Application (API + SSR)                        │
+│  ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐  │
+│  │ Web Routes  │ │ API Routes  │ │ Filament Admin   │  │
+│  └─────────────┘ └─────────────┘ └──────────────────┘  │
+│  ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐  │
+│  │ Middleware  │ │ Controllers │ │ Policies/ACL     │  │
+│  └─────────────┘ └─────────────┘ └──────────────────┘  │
+└────────────────────┬──────────────────────────────────────┘
+                     │
+┌────────────────────▼──────────────────────────────────────┐
+│  Laravel Services Layer                                  │
+│  ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐  │
+│  │ AuthService │ │ CardService │ │ ThemeService     │  │
+│  └─────────────┘ └─────────────┘ └──────────────────┘  │
+│  ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐  │
+│  │ ShareService│ │ SubService  │ │ AnalyticsService │  │
+│  └─────────────┘ └─────────────┘ └──────────────────┘  │
+└────────────────────┬──────────────────────────────────────┘
+                     │
+┌────────────────────▼──────────────────────────────────────┐
+│  Data Layer (Eloquent ORM)                               │
+│  ┌─────────────┐ ┌─────────────┐ ┌──────────────────┐  │
+│  │ MySQL DB   │ │ Redis Cache │ │ S3 Storage       │  │
+│  └─────────────┘ └─────────────┘ └──────────────────┘  │
+└───────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2. Database Schema (MySQL)
+
+### 2.1 Migrations Structure
+
+```php
+// database/migrations/
+// 2024_01_01_000000_create_users_table.php
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('email')->unique();
+    $table->string('password'); // Will be hashed by Laravel
+    $table->string('name');
+    $table->enum('language', ['en', 'ar'])->default('en');
+    $table->enum('subscription_tier', ['free', 'pro', 'business'])
+          ->default('free');
+    $table->enum('subscription_status', ['active', 'pending', 'canceled'])
+          ->default('pending');
+    $table->string('stripe_customer_id')->nullable();
+    $table->rememberToken();
+    $table->timestamps();
+    $table->timestamp('last_login')->nullable();
+});
+
+// 2024_01_01_000100_create_business_cards_table.php
+Schema::create('business_cards', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+    $table->string('title');
+    $table->string('subtitle')->nullable();
+    $table->foreignId('template_id')->nullable()->constrained();
+    $table->foreignId('theme_id')->nullable()->constrained()->nullOnDelete();
+    $table->json('theme_overrides')->nullable();
+    $table->string('custom_slug')->nullable()->unique();
+    $table->string('share_url')->unique();
+    $table->string('qr_code_url')->nullable();
+    $table->string('nfc_identifier')->nullable()->unique();
+    $table->boolean('is_published')->default(false);
+    $table->integer('views_count')->default(0);
+    $table->integer('shares_count')->default(0);
+    $table->timestamps();
+});
+
+// 2024_01_01_000200_create_card_sections_table.php
+Schema::create('card_sections', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('card_id')->constrained()->cascadeOnDelete();
+    $table->enum('section_type', [
+        'contact', 'social', 'services', 'products',
+        'testimonials', 'hours', 'appointments', 'gallery'
+    ]);
+    $table->string('title');
+    $table->json('content');
+    $table->integer('section_order')->default(0);
+    $table->boolean('is_active')->default(true);
+    $table->json('metadata')->nullable();
+    $table->timestamps();
+});
+
+// 2024_01_01_000300_create_themes_table.php
+Schema::create('themes', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+    $table->string('name');
+    $table->boolean('is_system_default')->default(false);
+    $table->boolean('is_public')->default(false);
+    $table->json('config');
+    $table->string('preview_image')->nullable();
+    $table->integer('used_by_cards_count')->default(0);
+    $table->timestamps();
+});
+
+// 2024_01_01_000400_create_theme_images_table.php
+Schema::create('theme_images', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('theme_id')->nullable()->constrained()->nullOnDelete();
+    $table->string('file_path');
+    $table->enum('file_type', ['background', 'header', 'logo']);
+    $table->integer('width')->nullable();
+    $table->integer('height')->nullable();
+    $table->integer('file_size');
+    $table->timestamps();
+});
+
+// 2024_01_01_000500_create_analytics_events_table.php
+Schema::create('analytics_events', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('card_id')->nullable()->constrained()->nullOnDelete();
+    $table->enum('event_type', [
+        'view', 'nfc_tap', 'qr_scan', 'social_share', 'section_click'
+    ]);
+    $table->string('referrer')->nullable();
+    $table->text('user_agent')->nullable();
+    $table->ipAddress('ip_address')->nullable();
+    $table->json('metadata')->nullable();
+    $table->timestamps();
+});
+```
+
+---
+
+## 3. Laravel Models & Relationships
+
+### 3.1 User Model
+```php
+// app/Models/User.php
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'name', 'email', 'password', 'language',
+        'subscription_tier', 'subscription_status',
+        'stripe_customer_id'
+    ];
+
+    protected $hidden = ['password', 'remember_token'];
+
+    protected $casts = [
+        'last_login' => 'datetime',
+        'subscription_status' => 'string',
+    ];
+
+    // Relationships
+    public function cards(): HasMany
+    {
+        return $this->hasMany(BusinessCard::class);
+    }
+
+    public function themes(): HasMany
+    {
+        return $this->hasMany(Theme::class);
+    }
+
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(UserSubscription::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('subscription_status', 'active');
+    }
+
+    // Methods
+    public function canCreateTheme(): bool
+    {
+        $limit = $this->subscription?->plan->theme_limit ?? 1;
+        return $this->themes()->count() < $limit;
+    }
+}
+```
+
+### 3.2 BusinessCard Model
+```php
+// app/Models/BusinessCard.php
+class BusinessCard extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'title', 'subtitle', 'template_id',
+        'theme_id', 'theme_overrides', 'custom_slug',
+        'share_url', 'qr_code_url', 'nfc_identifier',
+        'is_published', 'views_count', 'shares_count'
+    ];
+
+    protected $casts = [
+        'theme_overrides' => 'array',
+        'is_published' => 'boolean',
+        'views_count' => 'integer',
+        'shares_count' => 'integer',
+    ];
+
+    // Relationships
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function sections(): HasMany
+    {
+        return $this->hasMany(CardSection::class)->orderBy('section_order');
+    }
+
+    public function theme(): BelongsTo
+    {
+        return $this->belongsTo(Theme::class)->withDefault([
+            'config' => Theme::getDefaultConfig()
+        ]);
+    }
+
+    // Accessors
+    public function getFullUrlAttribute(): string
+    {
+        return $this->custom_slug 
+            ? route('card.public.slug', $this->custom_slug)
+            : route('card.public.id', $this->id);
+    }
+
+    // Scopes
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', true);
+    }
+}
+```
+
+### 3.3 Theme Model
+```php
+// app/Models/Theme.php
+class Theme extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'name', 'is_system_default', 'is_public',
+        'config', 'preview_image', 'used_by_cards_count'
+    ];
+
+    protected $casts = [
+        'is_system_default' => 'boolean',
+        'is_public' => 'boolean',
+        'config' => 'array',
+        'used_by_cards_count' => 'integer',
+    ];
+
+    // Relationships
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function cards(): HasMany
+    {
+        return $this->hasMany(BusinessCard::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ThemeImage::class);
+    }
+
+    // Methods
+    public function generateCSS(): string
+    {
+        $config = $this->config;
+        
+        $css = ":root {\n";
+        foreach ($config['colors'] as $key => $value) {
+            $css .= "  --{$key}: {$value};\n";
+        }
+        $css .= "}\n\n";
+
+        $css .= ".theme-wrapper {\n";
+        $css .= "  background: var(--bg);\n";
+        $css .= "  font-family: {$config['fonts']['body']};\n";
+        
+        if (isset($config['images']['background']['url'])) {
+            $bg = $config['images']['background'];
+            $css .= "  background-image: url({$bg['url']});\n";
+            $css .= "  background-size: cover;\n";
+            $css .= "  opacity: {$bg['opacity']};\n";
+            $css .= "  filter: blur({$bg['blur']}px);\n";
+        }
+        $css .= "}\n\n";
+
+        // Add component styles...
+        return minify($css); // Laravel's HTML minifier
+    }
+
+    public function getDefaultConfig(): array
+    {
+        return [
+            'colors' => [
+                'primary' => '#2563eb',
+                'secondary' => '#1e40af',
+                'background' => '#ffffff',
+                'text' => '#1f2937',
+                'card_bg' => '#f9fafb',
+            ],
+            'fonts' => [
+                'heading' => 'Inter',
+                'body' => 'Inter',
+            ],
+            'images' => [],
+            'layout' => [
+                'card_style' => 'elevated',
+                'border_radius' => '12px',
+                'alignment' => 'center',
+                'spacing' => 'normal',
+            ],
+            'custom_css' => '',
+        ];
+    }
+}
+```
+
+---
+
+## 4. FilamentPHP Admin Panel
+
+### 4.1 Admin Resources
+
+```php
+// app/Filament/Resources/UserResource.php
+class UserResource extends Resource
+{
+    protected static ?string $model = User::class;
+    protected static ?string $navigationIcon = 'heroicon-o-user';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\TextInput::make('name')
+                    ->required(),
+                Forms\Components\TextInput::make('email')
+                    ->email()->required()->unique(),
+                Forms\Components\Select::make('subscription_tier')
+                    ->options([
+                        'free' => 'Free',
+                        'pro' => 'Pro',
+                        'business' => 'Business'
+                    ]),
+                Forms\Components\Select::make('language')
+                    ->options(['en' => 'English', 'ar' => 'Arabic']),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name')->searchable(),
+                Tables\Columns\TextColumn::make('email')->searchable(),
+                Tables\Columns\BadgeColumn::make('subscription_tier')
+                    ->colors([
+                        'gray' => 'free',
+                        'blue' => 'pro',
+                        'green' => 'business',
+                    ]),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime(),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('subscription_tier')
+                    ->options(['free', 'pro', 'business']),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+            ]);
+    }
+}
+
+// app/Filament/Resources/BusinessCardResource.php
+class BusinessCardResource extends Resource
+{
+    protected static ?string $model = BusinessCard::class;
+    protected static ?string $navigationIcon = 'heroicon-o-id-card';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
+                    ->required(),
+                Forms\Components\TextInput::make('title')->required(),
+                Forms\Components\TextInput::make('subtitle'),
+                Forms\Components\Toggle::make('is_published'),
+                Forms\Components\TextInput::make('custom_slug')
+                    ->unique()->nullable(),
+                Forms\Components\KeyValue::make('theme_overrides')
+                    ->keyLabel('Property')
+                    ->valueLabel('Value'),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('user.name'),
+                Tables\Columns\TextColumn::make('title'),
+                Tables\Columns\BadgeColumn::make('is_published')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('views_count'),
+                Tables\Columns\TextColumn::make('share_url')
+                    ->copyable(),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('preview')
+                    ->icon('heroicon-o-eye')
+                    ->url(fn ($record) => $record->full_url)
+                    ->openUrlInNewTab(),
+            ]);
+    }
+}
+
+// app/Filament/Resources/ThemeResource.php
+class ThemeResource extends Resource
+{
+    protected static ?string $model = Theme::class;
+    protected static ?string $navigationIcon = 'heroicon-o-paint-brush';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\TextInput::make('name')->required(),
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name'),
+                Forms\Components\Toggle::make('is_public'),
+                Forms\Components\KeyValue::make('config')
+                    ->keyLabel('Config Key')
+                    ->valueLabel('Value'),
+                Forms\Components\FileUpload::make('preview_image')
+                    ->directory('theme-previews')
+                    ->image(),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name'),
+                Tables\Columns\TextColumn::make('user.name'),
+                Tables\Columns\BadgeColumn::make('is_public')->boolean(),
+                Tables\Columns\TextColumn::make('used_by_cards_count'),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('generate_css')
+                    ->icon('heroicon-o-code')
+                    ->action(fn ($record) => $record->generateCSS()),
+            ]);
+    }
+}
+```
+
+### 4.2 Filament Widgets (Analytics Dashboard)
+
+```php
+// app/Filament/Widgets/StatsOverview.php
+class StatsOverview extends Widget
+{
+    protected int | string | array $columnSpan = 'full';
+    protected static ?string $heading = 'Performance Overview';
+
+    protected function getStats(): array
+    {
+        return [
+            Stat::make('Total Users', User::count()),
+            Stat::make('Active Cards', BusinessCard::where('is_published', true)->count()),
+            Stat::make('Theme Creations', Theme::count()),
+            Stat::make('Weekly NFC Taps', AnalyticsEvent::where('event_type', 'nfc_tap')
+                ->where('created_at', '>=', now()->subWeek())
+                ->count()),
+        ];
+    }
+}
+
+// app/Filament/Widgets/RecentCardViewsChart.php
+class RecentCardViewsChart extends ChartWidget
+{
+    protected static ?string $heading = 'Card Views (Last 7 Days)';
+
+    protected function getType(): string
+    {
+        return 'line';
+    }
+
+    protected function getData(): array
+    {
+        $data = AnalyticsEvent::where('event_type', 'view')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        return [
+            'labels' => $data->pluck('date'),
+            'datasets' => [
+                [
+                    'label' => 'Views',
+                    'data' => $data->pluck('count'),
+                    'borderColor' => '#3b82f6',
+                    'backgroundColor' => '#3b82f620',
+                ],
+            ],
+        ];
+    }
+}
+```
+
+---
+
+## 5. Inertia.js Frontend
+
+### 5.1 Setup
+
+```bash
+composer require inertiajs/inertia-laravel
+php artisan breeze:install vue --ssr
+npm install @inertiajs/inertia-vue3 @inertiajs/ssr
+```
+
+### 5.2 Main Layout
+
+```vue
+<!-- resources/js/Layouts/AppLayout.vue -->
+<template>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <div class="flex-shrink-0 flex items-center">
+              <Link href="/" class="text-xl font-bold text-blue-600">
+                TapIt
+              </Link>
+            </div>
+            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <Link 
+                v-for="item in navItems" 
+                :key="item.href"
+                :href="item.href"
+                :class="{
+                  'border-blue-500 text-gray-900': $page.url === item.href,
+                  'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': $page.url !== item.href
+                }"
+                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+              >
+                {{ item.label }}
+              </Link>
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <span v-if="$page.props.auth.user" class="text-sm text-gray-700">
+              {{ $page.props.auth.user.name }}
+            </span>
+            <Link 
+              v-if="$page.props.auth.user"
+              href="/logout" 
+              method="post"
+              as="button"
+              class="text-sm text-red-600"
+            >
+              Logout
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <slot />
+    </main>
+
+    <!-- Toast Notifications -->
+    <ToastContainer />
+  </div>
+</template>
+
+<script setup>
+import { Link } from '@inertiajs/vue3'
+import ToastContainer from '@/Components/ToastContainer.vue'
+
+const navItems = [
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'My Cards', href: '/cards' },
+  { label: 'Themes', href: '/themes' },
+  { label: 'Analytics', href: '/analytics' },
+]
+</script>
+```
+
+### 5.3 Theme Editor Component
+
+```vue
+<!-- resources/js/Pages/Themes/Edit.vue -->
+<template>
+  <AppLayout title="Edit Theme">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Controls Panel -->
+      <div class="space-y-6">
+        <Card>
+          <template #header>
+            <h2 class="text-lg font-semibold">Theme Editor</h2>
+          </template>
+
+          <!-- Theme Name -->
+          <TextInput
+            v-model="form.name"
+            label="Theme Name"
+            :error="form.errors.name"
+          />
+
+          <!-- Color Picker -->
+          <div class="mt-4">
+            <Label>Colors</Label>
+            <div class="grid grid-cols-2 gap-3 mt-2">
+              <ColorPicker 
+                v-for="(value, key) in form.config.colors" 
+                :key="key"
+                :label="key"
+                v-model="form.config.colors[key]"
+              />
+            </div>
+          </div>
+
+          <!-- Font Selector -->
+          <div class="mt-4">
+            <Label>Fonts</Label>
+            <SelectInput
+              v-model="form.config.fonts.heading"
+              :options="fontOptions"
+              label="Heading Font"
+            />
+            <SelectInput
+              v-model="form.config.fonts.body"
+              :options="fontOptions"
+              label="Body Font"
+              class="mt-2"
+            />
+          </div>
+
+          <!-- Image Uploads -->
+          <div class="mt-4 space-y-3">
+            <Label>Images</Label>
+            
+            <FileUpload
+              label="Background Image"
+              v-model="form.images.background"
+              @upload="handleUpload('background', $event)"
+            />
+            
+            <FileUpload
+              label="Header Image"
+              v-model="form.images.header"
+              @upload="handleUpload('header', $event)"
+            />
+            
+            <FileUpload
+              label="Logo"
+              v-model="form.images.logo"
+              @upload="handleUpload('logo', $event)"
+            />
+          </div>
+
+          <!-- Layout Controls -->
+          <div class="mt-4">
+            <Label>Layout</Label>
+            <SelectInput
+              v-model="form.config.layout.card_style"
+              :options="['elevated', 'outlined', 'filled']"
+              label="Card Style"
+            />
+            <TextInput
+              v-model="form.config.layout.border_radius"
+              label="Border Radius (e.g., 12px)"
+              class="mt-2"
+            />
+          </div>
+
+          <!-- Custom CSS -->
+          <div class="mt-4" v-if="$page.props.user.can_use_custom_css">
+            <Label>Custom CSS</Label>
+            <TextArea
+              v-model="form.config.custom_css"
+              rows="6"
+              placeholder="/* Write custom CSS here */"
+            />
+          </div>
+
+          <!-- Actions -->
+          <div class="mt-6 flex justify-end space-x-3">
+            <Button 
+              variant="secondary" 
+              @click="previewTheme"
+            >
+              Preview
+            </Button>
+            <Button 
+              @click="saveTheme"
+              :disabled="form.processing"
+            >
+              Save Theme
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="space-y-4">
+        <Card>
+          <template #header>
+            <h2 class="text-lg font-semibold">Live Preview</h2>
+          </template>
+          
+          <!-- Device Toggle -->
+          <div class="flex space-x-2 mb-4">
+            <Button 
+              size="sm" 
+              :variant="previewMode === 'desktop' ? 'primary' : 'secondary'"
+              @click="previewMode = 'desktop'"
+            >
+              Desktop
+            </Button>
+            <Button 
+              size="sm" 
+              :variant="previewMode === 'mobile' ? 'primary' : 'secondary'"
+              @click="previewMode = 'mobile'"
+            >
+              Mobile
+            </Button>
+          </div>
+
+          <!-- Preview Container -->
+          <div 
+            class="border rounded-lg overflow-hidden bg-white"
+            :class="previewMode === 'mobile' ? 'max-w-xs mx-auto' : 'max-w-full'"
+          >
+            <div 
+              class="p-4 theme-wrapper"
+              :style="previewStyles"
+            >
+              <div class="card-container">
+                <h1 class="text-2xl font-bold mb-2">John Doe</h1>
+                <p class="text-gray-600 mb-4">Software Engineer</p>
+                
+                <!-- Sample Sections -->
+                <div class="space-y-3">
+                  <div class="bg-gray-100 p-3 rounded">
+                    <strong>Contact:</strong> john@example.com
+                  </div>
+                  <div class="bg-gray-100 p-3 rounded">
+                    <strong>Social:</strong> LinkedIn, GitHub
+                  </div>
+                  <div class="bg-gray-100 p-3 rounded">
+                    <strong>Services:</strong> Web Development
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+
+<script setup>
+import { reactive, ref, computed } from 'vue'
+import { useForm, usePage } from '@inertiajs/vue3'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import Card from '@/Components/Card.vue'
+import TextInput from '@/Components/TextInput.vue'
+import SelectInput from '@/Components/SelectInput.vue'
+import ColorPicker from '@/Components/ColorPicker.vue'
+import FileUpload from '@/Components/FileUpload.vue'
+import Button from '@/Components/Button.vue'
+import Label from '@/Components/Label.vue'
+import TextArea from '@/Components/TextArea.vue'
+
+const props = defineProps({
+  theme: Object,
+  errors: Object
+})
+
+const form = useForm({
+  name: props.theme?.name || '',
+  config: props.theme?.config || {
+    colors: {
+      primary: '#2563eb',
+      secondary: '#1e40af',
+      background: '#ffffff',
+      text: '#1f2937',
+      card_bg: '#f9fafb'
+    },
+    fonts: {
+      heading: 'Inter',
+      body: 'Inter'
+    },
+    images: {},
+    layout: {
+      card_style: 'elevated',
+      border_radius: '12px',
+      alignment: 'center',
+      spacing: 'normal'
+    },
+    custom_css: ''
+  }
+})
+
+const previewMode = ref('desktop')
+
+const fontOptions = [
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Open Sans', label: 'Open Sans' },
+  { value: 'Playfair Display', label: 'Playfair Display' }
+]
+
+const previewStyles = computed(() => {
+  const config = form.config
+  const styles = {
+    backgroundColor: config.colors.background,
+    fontFamily: config.fonts.body,
+    color: config.colors.text
+  }
+  
+  if (config.images.background) {
+    styles.backgroundImage = `url(${config.images.background})`
+    styles.backgroundSize = 'cover'
+  }
+  
+  return styles
+})
+
+const handleUpload = async (type, file) => {
+  const formData = new FormData()
+  formData.append('image', file)
+  formData.append('type', type)
+  
+  const response = await fetch('/api/themes/upload', {
+    method: 'POST',
+    body: formData
+  })
+  
+  const { url } = await response.json()
+  form.config.images[type] = url
+}
+
+const previewTheme = () => {
+  // Generate CSS and show in new window
+  window.open(`/themes/preview?config=${encodeURIComponent(JSON.stringify(form.config))}`, '_blank')
+}
+
+const saveTheme = () => {
+  form.post('/themes', {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Show success toast
+    }
+  })
+}
+</script>
+```
+
+### 5.4 Public Card View
+
+```vue
+<!-- resources/js/Pages/Cards/Public.vue -->
+<template>
+  <div class="min-h-screen" :style="themeStyles">
+    <!-- Theme CSS is injected server-side via @inertiajs/head -->
+    <Head>
+      <title>{{ card.title }} - TapIt</title>
+      <meta name="description" :content="card.subtitle" />
+      <link v-if="theme?.config.fonts.heading_url" :href="theme.config.fonts.heading_url" rel="stylesheet" />
+      <link v-if="theme?.config.fonts.body_url" :href="theme.config.fonts.body_url" rel="stylesheet" />
+      <style v-if="customCSS">{{ customCSS }}</style>
+    </Head>
+
+    <!-- Header Image -->
+    <div 
+      v-if="theme?.config.images.header?.url"
+      class="relative w-full"
+      :style="{ 
+        height: theme.config.images.header.height,
+        backgroundImage: `url(${theme.config.images.header.url})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }"
+    >
+      <div 
+        v-if="theme.config.images.header.overlay"
+        class="absolute inset-0 bg-black bg-opacity-50"
+      />
+    </div>
+
+    <!-- Main Card Container -->
+    <div class="max-w-2xl mx-auto px-4 py-8">
+      <div 
+        class="card-container"
+        :style="cardContainerStyles"
+      >
+        <!-- Logo -->
+        <img 
+          v-if="theme?.config.images.logo?.url"
+          :src="theme.config.images.logo.url"
+          class="mx-auto mb-4"
+          :style="logoStyles"
+          alt="Logo"
+        />
+
+        <!-- Basic Info -->
+        <h1 class="text-3xl font-bold mb-2" :style="{ color: 'var(--primary)' }">
+          {{ card.title }}
+        </h1>
+        <p class="text-lg mb-6 opacity-80">{{ card.subtitle }}</p>
+
+        <!-- Dynamic Sections -->
+        <div class="space-y-4">
+          <div 
+            v-for="section in card.sections" 
+            :key="section.id"
+            class="section"
+            @click="trackSectionClick(section.id)"
+          >
+            <h3 
+              class="text-lg font-semibold mb-2 border-b pb-1"
+              :style="{ borderColor: 'var(--primary)' }"
+            >
+              {{ section.title }}
+            </h3>
+            
+            <!-- Section Content -->
+            <component 
+              :is="getSectionComponent(section.section_type)"
+              :data="section.content"
+            />
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 space-y-2">
+          <a 
+            :href="`mailto:${card.contact?.email}`"
+            class="btn-primary block text-center"
+            :style="buttonStyles"
+          >
+            Email Me
+          </a>
+          <Button 
+            variant="secondary"
+            @click="shareCard"
+            class="w-full"
+          >
+            Share Card
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share Modal -->
+    <ShareModal 
+      :show="showShareModal"
+      :card="card"
+      @close="showShareModal = false"
+    />
+  </div>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue'
+import { Head, router } from '@inertiajs/vue3'
+import ShareModal from '@/Components/ShareModal.vue'
+import Button from '@/Components/Button.vue'
+
+const props = defineProps({
+  card: Object,
+  theme: Object,
+  customCSS: String
+})
+
+const showShareModal = ref(false)
+
+// Computed theme styles
+const themeStyles = computed(() => {
+  if (!props.theme) return {}
+  const config = props.theme.config
+  return {
+    '--primary': config.colors.primary,
+    '--secondary': config.colors.secondary,
+    '--bg': config.colors.background,
+    '--text': config.colors.text,
+    '--card-bg': config.colors.card_bg,
+    '--radius': config.layout.border_radius,
+  }
+})
+
+const cardContainerStyles = computed(() => {
+  if (!props.theme) return {}
+  const config = props.theme.config
+  const styles = {
+    backgroundColor: config.colors.card_bg,
+    borderRadius: config.layout.border_radius,
+    textAlign: config.layout.alignment,
+  }
+  
+  if (config.layout.card_style === 'elevated') {
+    styles.boxShadow = '0 10px 25px rgba(0,0,0,0.2)'
+  } else if (config.layout.card_style === 'outlined') {
+    styles.border = `1px solid ${config.colors.border || '#e5e7eb'}`
+  }
+  
+  return styles
+})
+
+const logoStyles = computed(() => {
+  if (!props.theme?.config.images.logo) return {}
+  const logo = props.theme.config.images.logo
+  return {
+    width: logo.size,
+    borderRadius: logo.shape === 'circle' ? '50%' : 
+                 logo.shape === 'rounded' ? '8px' : '0'
+  }
+})
+
+const buttonStyles = computed(() => {
+  if (!props.theme) return {}
+  return {
+    backgroundColor: 'var(--primary)',
+    borderRadius: props.theme.config.layout.card_style === 'elevated' ? '8px' : '0'
+  }
+})
+
+// Dynamic section components
+const getSectionComponent = (type) => {
+  const components = {
+    contact: 'SectionContact',
+    social: 'SectionSocial',
+    services: 'SectionList',
+    products: 'SectionList',
+    testimonials: 'SectionTestimonials',
+    hours: 'SectionHours',
+    appointments: 'SectionAppointment',
+    gallery: 'SectionGallery'
+  }
+  return components[type] || 'SectionDefault'
+}
+
+// Analytics tracking
+const trackSectionClick = (sectionId) => {
+  router.post('/api/analytics/track', {
+    event_type: 'section_click',
+    card_id: props.card.id,
+    section_id: sectionId
+  }, { preserveState: true })
+}
+
+const shareCard = () => {
+  if (navigator.share) {
+    navigator.share({
+      title: props.card.title,
+      text: props.card.subtitle,
+      url: props.card.share_url
+    })
+  } else {
+    showShareModal.value = true
+  }
+}
+</script>
+
+<style scoped>
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: var(--secondary);
+  transform: translateY(-2px);
+}
+
+.section {
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+}
+</style>
+```
+
+---
+
+## 6. Laravel Services
+
+### 6.1 ThemeService
+
+```php
+// app/Services/ThemeService.php
+class ThemeService
+{
+    public function createTheme(User $user, array $data): Theme
+    {
+        if (!$user->canCreateTheme()) {
+            throw new \Exception('Theme limit reached for your plan');
+        }
+
+        return Theme::create([
+            'user_id' => $user->id,
+            'name' => $data['name'],
+            'config' => $data['config'],
+            'is_public' => $data['is_public'] ?? false,
+        ]);
+    }
+
+    public function processImage(UploadedFile $file, string $type, ?Theme $theme = null): string
+    {
+        $allowedTypes = ['background', 'header', 'logo'];
+        if (!in_array($type, $allowedTypes)) {
+            throw new \InvalidArgumentException('Invalid image type');
+        }
+
+        // Validate size
+        if ($file->getSize() > 5 * 1024 * 1024) {
+            throw new \Exception('File too large. Max 5MB');
+        }
+
+        // Process based on type
+        $image = Image::make($file->path());
+        
+        switch ($type) {
+            case 'background':
+                $image->resize(1920, 1080, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+                $image->encode('webp', 80);
+                break;
+                
+            case 'header':
+                $image->fit(1200, 400);
+                $image->encode('png', 85);
+                break;
+                
+            case 'logo':
+                $image->fit(200, 200);
+                $image->encode('png');
+                break;
+        }
+
+        // Store in S3
+        $path = "user/{$theme->user_id}/themes/" . uniqid() . ".{$image->extension}";
+        Storage::disk('s3')->put($path, $image->encode());
+        
+        // Store metadata
+        if ($theme) {
+            ThemeImage::create([
+                'user_id' => $theme->user_id,
+                'theme_id' => $theme->id,
+                'file_path' => $path,
+                'file_type' => $type,
+                'width' => $image->width(),
+                'height' => $image->height(),
+                'file_size' => $image->filesize(),
+            ]);
+        }
+
+        return Storage::disk('s3')->url($path);
+    }
+
+    public function generateCSS(Theme $theme): string
+    {
+        $config = $theme->config;
+        
+        $css = ":root {\n";
+        foreach ($config['colors'] as $key => $value) {
+            $css .= "  --{$key}: {$value};\n";
+        }
+        $css .= "}\n\n";
+
+        // Base styles
+        $css .= ".theme-wrapper {\n";
+        $css .= "  background: var(--bg);\n";
+        $css .= "  font-family: {$config['fonts']['body']}, sans-serif;\n";
+        $css .= "  color: var(--text);\n";
+        
+        if (isset($config['images']['background']['url'])) {
+            $bg = $config['images']['background'];
+            $css .= "  background-image: url({$bg['url']});\n";
+            $css .= "  background-size: cover;\n";
+            $css .= "  background-attachment: fixed;\n";
+            $css .= "  opacity: {$bg['opacity']};\n";
+            $css .= "  filter: blur({$bg['blur']}px);\n";
+        }
+        $css .= "}\n\n";
+
+        // Card styles
+        $css .= ".card-container {\n";
+        $css .= "  background: var(--card-bg);\n";
+        $css .= "  border-radius: {$config['layout']['border_radius']};\n";
+        $css .= "  text-align: {$config['layout']['alignment']};\n";
+        
+        if ($config['layout']['card_style'] === 'elevated') {
+            $css .= "  box-shadow: 0 10px 25px rgba(0,0,0,0.2);\n";
+        } elseif ($config['layout']['card_style'] === 'outlined') {
+            $css .= "  border: 1px solid #e5e7eb;\n";
+        }
+        $css .= "}\n\n";
+
+        // Typography
+        $css .= "h1, h2, h3 {\n";
+        $css .= "  font-family: {$config['fonts']['heading']}, sans-serif;\n";
+        $css .= "  color: var(--primary);\n";
+        $css .= "}\n\n";
+
+        // Custom CSS
+        if (!empty($config['custom_css'])) {
+            $css .= "/* Custom CSS */\n{$config['custom_css']}\n";
+        }
+
+        // Minify
+        $css = preg_replace('/\s+/', ' ', $css);
+        $css = preg_replace('/;/', ";\n", $css);
+
+        return $css;
+    }
+
+    public function applyToCard(Theme $theme, BusinessCard $card): void
+    {
+        $card->theme_id = $theme->id;
+        $card->save();
+
+        // Increment usage count
+        $theme->increment('used_by_cards_count');
+    }
+
+    public function getPreview(Theme $theme): string
+    {
+        $css = $this->generateCSS($theme);
+        
+        // Generate HTML preview
+        $html = <<<HTML
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>{$css}</style>
+            <style>
+                body { margin: 0; padding: 20px; background: #f3f4f6; }
+                .preview-wrapper { max-width: 640px; margin: 0 auto; }
+            </style>
+        </head>
+        <body>
+            <div class="preview-wrapper theme-wrapper">
+                <div class="card-container">
+                    <h1>Preview</h1>
+                    <p>This is how your theme will look</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        HTML;
+
+        return $html;
+    }
+}
+```
+
+---
+
+## 7. Queue Jobs (Image Processing)
+
+```php
+// app/Jobs/ProcessThemeImage.php
+class ProcessThemeImage implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 120;
+    public $tries = 3;
+
+    public function __construct(
+        public Theme $theme,
+        public string $filePath,
+        public string $type
+    ) {}
+
+    public function handle(): void
+    {
+        $disk = Storage::disk('local');
+        $s3 = Storage::disk('s3');
+
+        // Download from local temp
+        $image = Image::make($disk->path($this->filePath));
+
+        // Process
+        switch ($this->type) {
+            case 'background':
+                $image->resize(1920, 1080, function ($c) {
+                    $c->aspectRatio();
+                });
+                $image->encode('webp', 80);
+                break;
+            case 'header':
+                $image->fit(1200, 400);
+                $image->encode('png', 85);
+                break;
+            case 'logo':
+                $image->fit(200, 200);
+                $image->encode('png');
+                break;
+        }
+
+        // Upload to S3
+        $s3Path = "themes/{$this->theme->id}/{$this->type}." . $image->extension();
+        $s3->put($s3Path, $image->encode());
+
+        // Update theme config
+        $config = $this->theme->config;
+        $config['images'][$this->type] = [
+            'url' => $s3->url($s3Path),
+            'width' => $image->width(),
+            'height' => $image->height(),
+        ];
+        $this->theme->config = $config;
+        $this->theme->save();
+
+        // Cleanup temp file
+        $disk->delete($this->filePath);
+
+        // Notify user via WebSocket or notification
+        Notification::send($this->theme->user, new ThemeImageProcessed($this->theme, $this->type));
+    }
+}
+```
+
+---
+
+## 8. Routes & Controllers
+
+### 8.1 Web Routes (Inertia)
+
+```php
+// routes/web.php
+Route::middleware(['auth'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+    // Cards
+    Route::resource('cards', CardController::class);
+    Route::post('/cards/{card}/publish', [CardController::class, 'publish'])
+        ->name('cards.publish');
+    
+    // Card Sections
+    Route::post('/cards/{card}/sections', [SectionController::class, 'store']);
+    Route::put('/sections/{section}', [SectionController::class, 'update']);
+    Route::delete('/sections/{section}', [SectionController::class, 'destroy']);
+
+    // Themes
+    Route::resource('themes', ThemeController::class);
+    Route::post('/themes/{theme}/apply/{card}', [ThemeController::class, 'apply'])
+        ->name('themes.apply');
+    Route::get('/themes/{theme}/preview', [ThemeController::class, 'preview'])
+        ->name('themes.preview');
+
+    // Analytics
+    Route::get('/analytics', [AnalyticsController::class, 'index'])
+        ->name('analytics');
+    Route::post('/api/analytics/track', [AnalyticsController::class, 'track'])
+        ->name('analytics.track');
+});
+
+// Public Card Routes
+Route::get('/u/{slug}', [PublicCardController::class, 'bySlug'])
+    ->name('card.public.slug');
+Route::get('/cards/{id}', [PublicCardController::class, 'byId'])
+    ->name('card.public.id');
+```
+
+### 8.2 API Routes (for AJAX/file uploads)
+
+```php
+// routes/api.php
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Theme uploads
+    Route::post('/themes/upload', [ThemeApiController::class, 'upload'])
+        ->name('api.themes.upload');
+    
+    // Generate CSS preview
+    Route::post('/themes/preview-css', [ThemeApiController::class, 'previewCSS'])
+        ->name('api.themes.preview_css');
+});
+```
+
+---
+
+## 9. Filament Admin Setup
+
+### 9.1 Installation
+
+```bash
+composer require filament/filament
+php artisan filament:install --panels
+```
+
+### 9.2 Panel Configuration
+
+```php
+// app/Providers/Filament/AdminPanelProvider.php
+class AdminPanelProvider extends PanelProvider
+{
+    public function panel(Panel $panel): Panel
+    {
+        return $panel
+            ->id('admin')
+            ->path('admin')
+            ->login()
+            ->colors([
+                'primary' => '#3b82f6',
+            ])
+            ->discoverResources(in: app_path('Filament/Resources'))
+            ->discoverPages(in: app_path('Filament/Pages'))
+            ->pages([
+                Pages\Dashboard::class,
+            ])
+            ->navigationItems([
+                NavigationItem::make('Analytics')
+                    ->url('/admin/analytics')
+                    ->icon('heroicon-o-chart-bar')
+                    ->active(fn () => request()->routeIs('filament.admin.pages.analytics')),
+            ])
+            ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
+            ->authGuard('web');
+    }
+}
+```
+
+---
+
+## 10. Deployment (Laravel Forge)
+
+### 10.1 Forge Provisioning
+
+```bash
+# Provision DigitalOcean Droplet
+forge create server my-app-name
+
+# Install Laravel
+forge install laravel/laravel
+
+# Configure Nginx
+# Forge automatically configures Nginx with:
+# - PHP 8.2-FPM
+# - Let's Encrypt SSL
+# - Queue worker supervisor
+
+# Set Environment Variables
+forge env:set DB_DATABASE=tapit
+forge env:set DB_USERNAME=forge
+forge env:set AWS_BUCKET=tapit-assets
+forge env:set REDIS_HOST=127.0.0.1
+
+# Deploy
+forge deploy
+```
+
+### 10.2 Queue Workers
+
+```bash
+# In Forge, configure supervisor for queue
+forge supervisord:queue-worker --queue=default --processes=3
+forge supervisord:queue-worker --queue=images --processes=2
+```
+
+---
+
+## 11. Testing
+
+### 11.1 Pest PHP Tests
+
+```php
+// tests/Feature/ThemeTest.php
+test('user can create theme', function () {
+    $user = User::factory()->create();
+    
+    $response = $this->actingAs($user)->post('/themes', [
+        'name' => 'My Theme',
+        'config' => Theme::getDefaultConfig(),
+    ]);
+
+    $response->assertRedirect('/themes');
+    $this->assertDatabaseHas('themes', [
+        'user_id' => $user->id,
+        'name' => 'My Theme',
+    ]);
+});
+
+test('theme css generation', function () {
+    $theme = Theme::factory()->create([
+        'config' => [
+            'colors' => ['primary' => '#ff0000'],
+            'fonts' => ['body' => 'Arial'],
+            'images' => [],
+            'layout' => ['border_radius' => '8px'],
+            'custom_css' => '',
+        ],
+    ]);
+
+    $service = new ThemeService();
+    $css = $service->generateCSS($theme);
+
+    expect($css)->toContain('--primary: #ff0000')
+                ->toContain('font-family: Arial')
+                ->toContain('border-radius: 8px');
+});
+```
+
+---
+
+## 12. Advantages of This Stack
+
+### Laravel Benefits
+- **Rapid Development:** Built-in auth, queues, cache, storage
+- **Ecosystem:** Filament for admin, Inertia for SPA feel
+- **Security:** CSRF, XSS protection, SQL injection prevention
+- **Testing:** Robust testing suite (Pest, PHPUnit)
+- **Deployment:** Laravel Forge for easy server management
+
+### Filament Benefits
+- **Admin Panel:** Ready in hours, not days
+- **CRUD:** Automatic resource management
+- **Analytics:** Built-in widgets and charts
+- **Authentication:** Integrated with Laravel's auth
+
+### Inertia Benefits
+- **No API:** Direct server-side data fetching
+- **SPA Feel:** Full page transitions without full reload
+- **SEO:** Server-side rendering support
+- **Developer Experience:** Single codebase for server & client
+
+---
+
+## 13. Getting Started Checklist
+
+```bash
+# 1. Install Laravel
+composer create-project laravel/laravel tapit
+cd tapit
+
+# 2. Install Filament
+composer require filament/filament
+php artisan filament:install --panels
+
+# 3. Install Inertia & Vue
+composer require inertiajs/inertia-laravel
+php artisan breeze:install vue --ssr
+npm install @inertiajs/inertia-vue3 @inertiajs/ssr
+
+# 4. Install Image Intervention
+composer require intervention/image
+
+# 5. Install Stripe
+composer require laravel/cashier
+
+# 6. Configure Database
+# Edit .env with MySQL credentials
+
+# 7. Run Migrations
+php artisan migrate
+
+# 8. Start Development
+npm run dev
+php artisan serve
+
+# 9. Create Admin User
+php artisan make:user --admin
+
+# 10. Access Panel
+# Visit /admin
+```
+
+---
+
+## 14. Summary
+
+This Laravel/Filament/Inertia/MySQL stack provides:
+
+✅ **Faster Development** - Leverage Laravel's built-in features  
+✅ **Admin Panel** - Filament for instant CRUD and analytics  
+✅ **SPA Experience** - Inertia for seamless navigation  
+✅ **Scalable Database** - MySQL with proper indexing  
+✅ **Queue System** - Laravel's native queue for image processing  
+✅ **Security** - Laravel's robust security defaults  
+✅ **Testing** - Pest/PHPUnit for reliability  
+
+The core architecture remains identical to the Node.js version, but implemented with Laravel's elegant syntax and ecosystem. All business logic, data models, and user flows are preserved.::w

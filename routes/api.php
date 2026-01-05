@@ -1,0 +1,77 @@
+<?php
+
+use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\CardController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\SectionController;
+use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\ThemeController;
+use Illuminate\Support\Facades\Route;
+
+// Public analytics tracking (no auth required)
+Route::post('/analytics/track', [AnalyticsController::class, 'track'])
+    ->name('api.analytics.track');
+
+// Authenticated API routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Business Cards
+    Route::apiResource('cards', CardController::class)->names([
+        'index' => 'api.cards.index', 
+        'store' => 'api.cards.store',
+        'show' => 'api.cards.show',
+        'update' => 'api.cards.update',
+        'destroy' => 'api.cards.destroy',
+    ]);
+    Route::post('cards/{card}/publish', [CardController::class, 'publish'])
+        ->name('api.cards.publish');
+    Route::post('cards/{card}/duplicate', [CardController::class, 'duplicate'])
+        ->name('api.cards.duplicate');
+    Route::get('cards/{card}/analytics', [CardController::class, 'analytics'])
+        ->name('api.cards.analytics');
+
+    // Card Sections
+    Route::post('cards/{card}/sections', [SectionController::class, 'store'])
+        ->name('api.sections.store');
+    Route::put('sections/{section}', [SectionController::class, 'update'])
+        ->name('api.sections.update');
+    Route::delete('sections/{section}', [SectionController::class, 'destroy'])
+        ->name('api.sections.destroy');
+    Route::post('cards/{card}/sections/reorder', [SectionController::class, 'reorder'])
+        ->name('api.sections.reorder');
+
+    // Themes
+    Route::apiResource('themes', ThemeController::class)->names([
+        'index' => 'api.themes.index',
+        'store' => 'api.themes.store',
+        'show' => 'api.themes.show',
+        'update' => 'api.themes.update',
+        'destroy' => 'api.themes.destroy',
+    ]);
+    Route::post('themes/{theme}/duplicate', [ThemeController::class, 'duplicate'])
+        ->name('api.themes.duplicate');
+    Route::post('themes/{theme}/apply/{card}', [ThemeController::class, 'apply'])
+        ->name('api.themes.apply');
+    Route::post('themes/upload', [ThemeController::class, 'upload'])
+        ->name('api.themes.upload');
+    Route::post('themes/preview-css', [ThemeController::class, 'previewCss'])
+        ->name('api.themes.preview_css');
+    Route::post('themes/preview', [ThemeController::class, 'preview'])
+        ->name('api.themes.preview');
+
+    // Payments & Subscriptions
+    Route::get('subscription-plans', [PaymentController::class, 'plans'])
+        ->name('api.subscription-plans.index');
+    Route::post('payments', [PaymentController::class, 'create'])
+        ->name('api.payments.create');
+    Route::post('payments/{payment}/confirm', [PaymentController::class, 'confirm'])
+        ->name('api.payments.confirm');
+    Route::get('payments/history', [PaymentController::class, 'history'])
+        ->name('api.payments.history');
+    Route::get('payments/pending', [PaymentController::class, 'pending'])
+        ->name('api.payments.pending');
+
+    Route::get('subscription', [SubscriptionController::class, 'show'])
+        ->name('api.subscription.show');
+    Route::post('subscription/cancel', [SubscriptionController::class, 'cancel'])
+        ->name('api.subscription.cancel');
+});
