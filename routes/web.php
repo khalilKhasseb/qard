@@ -49,6 +49,10 @@ Route::middleware('auth')->group(function () {
         ->name('payments.checkout');
     Route::get('/payments/confirmation/{payment}', [App\Http\Controllers\PaymentController::class, 'confirmation'])
         ->name('payments.confirmation');
+
+    // Language switching
+    Route::post('/language/switch', [App\Http\Controllers\Api\LanguageController::class, 'switchLanguage'])
+        ->name('language.switch');
 });
 
 // Public Card Routes

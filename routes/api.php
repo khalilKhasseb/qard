@@ -75,3 +75,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('subscription/cancel', [SubscriptionController::class, 'cancel'])
         ->name('api.subscription.cancel');
 });
+
+// Language API routes (public)
+Route::prefix('language')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\LanguageController::class, 'index'])
+        ->name('api.language.index');
+    Route::get('/{language}', [\App\Http\Controllers\Api\LanguageController::class, 'show'])
+        ->name('api.language.show');
+    Route::post('/switch', [\App\Http\Controllers\Api\LanguageController::class, 'switchLanguage'])
+        ->name('api.language.switch');
+});
+
+// Translation API routes (authenticated)
+Route::middleware('auth:sanctum')->prefix('translations')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\TranslationController::class, 'index'])
+        ->name('api.translations.index');
+    Route::post('/', [\App\Http\Controllers\Api\TranslationController::class, 'store'])
+        ->name('api.translations.store');
+    Route::get('/{translation}', [\App\Http\Controllers\Api\TranslationController::class, 'show'])
+        ->name('api.translations.show');
+    Route::put('/{translation}', [\App\Http\Controllers\Api\TranslationController::class, 'update'])
+        ->name('api.translations.update');
+    Route::delete('/{translation}', [\App\Http\Controllers\Api\TranslationController::class, 'destroy'])
+        ->name('api.translations.destroy');
+});
