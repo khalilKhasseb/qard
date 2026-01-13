@@ -55,6 +55,23 @@
               <InputError :message="form.errors.theme_id" class="mt-2" />
             </div>
 
+            <!-- Language Selection -->
+            <div>
+              <InputLabel for="language_id" value="Primary Language *" />
+              <select
+                id="language_id"
+                v-model="form.language_id"
+                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              >
+                <option v-for="lang in languages" :key="lang.id" :value="lang.id">
+                  {{ lang.name }} ({{ lang.code.toUpperCase() }})
+                </option>
+              </select>
+              <p class="mt-1 text-xs text-gray-500">This will be the default language for your card. You can add more languages later.</p>
+              <InputError :message="form.errors.language_id" class="mt-2" />
+            </div>
+
             <!-- Custom Slug -->
             <div>
               <InputLabel for="custom_slug" value="Custom URL (optional)" />
@@ -114,6 +131,8 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 
 const props = defineProps({
   themes: Array,
+  languages: Array,
+  defaultLanguage: Object,
   appUrl: String,
 });
 
@@ -121,6 +140,7 @@ const form = useForm({
   title: '',
   subtitle: '',
   theme_id: null,
+  language_id: props.defaultLanguage?.id || (props.languages.length > 0 ? props.languages[0].id : null),
   custom_slug: '',
   is_published: false,
 });

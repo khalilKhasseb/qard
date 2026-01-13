@@ -8,6 +8,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -25,7 +26,7 @@ class ThemeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Theme Details')
+                Schemas\Components\Section::make('Theme Details')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -44,7 +45,7 @@ class ThemeResource extends Resource
                             ->helperText('Public themes can be used by other users'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Colors')
+                Schemas\Components\Section::make('Colors')
                     ->schema([
                         Forms\Components\ColorPicker::make('config.colors.primary')
                             ->label('Primary Color'),
@@ -60,7 +61,7 @@ class ThemeResource extends Resource
                             ->label('Border Color'),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Typography')
+                Schemas\Components\Section::make('Typography')
                     ->schema([
                         Forms\Components\Select::make('config.fonts.heading')
                             ->label('Heading Font')
@@ -85,7 +86,7 @@ class ThemeResource extends Resource
                             ->default('Inter'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Layout')
+                Schemas\Components\Section::make('Layout')
                     ->schema([
                         Forms\Components\Select::make('config.layout.card_style')
                             ->label('Card Style')
@@ -117,7 +118,7 @@ class ThemeResource extends Resource
                             ->default('normal'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Custom CSS')
+                Schemas\Components\Section::make('Custom CSS')
                     ->schema([
                         Forms\Components\Textarea::make('config.custom_css')
                             ->label('Custom CSS')
@@ -125,7 +126,7 @@ class ThemeResource extends Resource
                             ->placeholder('/* Add your custom CSS here */'),
                     ]),
 
-                Forms\Components\Section::make('Preview')
+                Schemas\Components\Section::make('Preview')
                     ->schema([
                         Forms\Components\FileUpload::make('preview_image')
                             ->image()

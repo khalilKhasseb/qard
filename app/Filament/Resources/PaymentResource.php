@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -27,7 +28,7 @@ class PaymentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Payment Details')
+                Schemas\Components\Section::make('Payment Details')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
@@ -52,7 +53,7 @@ class PaymentResource extends Resource
                             ->default('USD'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Payment Method')
+                Schemas\Components\Section::make('Payment Method')
                     ->schema([
                         Forms\Components\Select::make('payment_method')
                             ->options([
@@ -73,7 +74,7 @@ class PaymentResource extends Resource
                             ->required(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Additional Information')
+                Schemas\Components\Section::make('Additional Information')
                     ->schema([
                         Forms\Components\TextInput::make('transaction_id')
                             ->disabled()

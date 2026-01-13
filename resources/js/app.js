@@ -30,21 +30,26 @@ if (hasCardData) {
     // This is a public card page with Blade template - mount PublicCard directly
     const cardData = appEl.dataset.card ? JSON.parse(appEl.dataset.card) : null;
     const sectionsData = appEl.dataset.sections ? JSON.parse(appEl.dataset.sections) : [];
-    const primaryColor = cardData?.theme?.config?.primary || '#8b5cf6';
+    const languagesData = appEl.dataset.languages ? JSON.parse(appEl.dataset.languages) : [];
+    const primaryColor = cardData?.theme?.config?.colors?.primary || '#8b5cf6';
     const customTheme = createTheme(primaryColor);
 
     const app = createApp({
-        render: () => h(NConfigProvider, { theme: customTheme }, {
+        render: () => h(NConfigProvider, { themeOverrides: customTheme }, {
             default: () => h(NMessageProvider, null, {
                 default: () => h(NDialogProvider, null, {
                     default: () => h(NNotificationProvider, null, {
-                        default: () => h(PublicCard, { card: cardData, sections: sectionsData })
+                        default: () => h(PublicCard, {
+                            card: cardData,
+                            sections: sectionsData,
+                            languages: languagesData
+                        })
                     })
                 })
             })
         })
     });
-    
+
     app.use(ZiggyVue);
     app.component('PublicCard', PublicCard);
     app.mount('#app');

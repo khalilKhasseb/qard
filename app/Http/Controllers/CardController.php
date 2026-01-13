@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\BusinessCard;
+use App\Models\Language;
 use App\Models\Theme;
 use App\Services\CardService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class CardController extends Controller
 {
@@ -31,9 +33,13 @@ class CardController extends Controller
     public function create(Request $request): Response
     {
         $themes = Theme::forUser($request->user()->id)->get();
+        $languages = Language::active()->get();
+        $defaultLanguage = Language::default()->first() ?? $languages->first();
 
         return Inertia::render('Cards/Create', [
             'themes' => $themes,
+            'languages' => $languages,
+            'defaultLanguage' => $defaultLanguage,
             'appUrl' => url('/'),
         ]);
     }
@@ -44,9 +50,17 @@ class CardController extends Controller
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'theme_id' => 'nullable|exists:themes,id',
+            'language_id' => 'required|exists:languages,id',
             'custom_slug' => 'nullable|string|max:255|unique:business_cards,custom_slug',
             'is_published' => 'boolean',
         ]);
+
+        // Wrap title and subtitle into JSON based on selected language
+        $language = Language::find($validated['language_id']);
+        $validated['title'] = [$language->code => $validated['title']];
+        if (!empty($validated['subtitle'])) {
+            $validated['subtitle'] = [$language->code => $validated['subtitle']];
+        }
 
         $card = $this->cardService->createCard($request->user(), $validated);
 
@@ -58,9 +72,10 @@ class CardController extends Controller
     {
         $this->authorize('update', $card);
 
-        $card->load(['sections' => fn($q) => $q->ordered(), 'theme']);
+        $card->load(['sections' => fn($q) => $q->ordered(), 'theme', 'language']);
 
         $themes = Theme::forUser($request->user()->id)->get();
+        $languages = Language::active()->get();
 
         $publicUrl = $card->custom_slug
             ? route('card.public.slug', $card->custom_slug)
@@ -70,6 +85,7 @@ class CardController extends Controller
             'card' => $card,
             'sections' => $card->sections,
             'themes' => $themes,
+            'languages' => $languages,
             'publicUrl' => $publicUrl,
         ]);
     }
@@ -79,11 +95,24 @@ class CardController extends Controller
         $this->authorize('update', $card);
 
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'subtitle' => 'nullable|string|max:255',
+            'title' => 'sometimes|array',
+            'subtitle' => 'nullable|array',
+            'cover_image' => 'nullable|image|max:2048',
+            'profile_image' => 'nullable|image|max:2048',
             'theme_id' => 'nullable|exists:themes,id',
+            'language_id' => 'sometimes|exists:languages,id',
             'custom_slug' => 'nullable|string|max:255|unique:business_cards,custom_slug,' . $card->id,
         ]);
+
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('covers', 'public');
+            $validated['cover_image_path'] = $path;
+        }
+
+        if ($request->hasFile('profile_image')) {
+            $path = $request->file('profile_image')->store('profiles', 'public');
+            $validated['profile_image_path'] = $path;
+        }
 
         $this->cardService->updateCard($card, $validated);
 
@@ -112,5 +141,35 @@ class CardController extends Controller
         $card->save();
 
         return back()->with('success', $card->is_published ? 'Card published successfully!' : 'Card unpublished successfully!');
+    }
+
+    public function updateSections(Request $request, BusinessCard $card)
+    {
+        $this->authorize('update', $card);
+
+        $validated = $request->validate([
+            'sections' => 'required|array',
+            'sections.*.id' => 'nullable',
+            'sections.*.type' => 'required|string',
+            'sections.*.title' => 'nullable|string',
+            'sections.*.content' => 'required|array',
+            'sections.*.order' => 'nullable|integer',
+        ]);
+
+        DB::transaction(function () use ($card, $validated) {
+            $card->sections()->delete();
+
+            foreach ($validated['sections'] as $index => $sectionData) {
+                $card->sections()->create([
+                    'section_type' => $sectionData['type'],
+                    'title' => $sectionData['title'] ?? ucfirst($sectionData['type']),
+                    'content' => $sectionData['content'],
+                    'sort_order' => $sectionData['order'] ?? ($index + 1),
+                    'is_active' => true,
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Sections updated successfully!');
     }
 }

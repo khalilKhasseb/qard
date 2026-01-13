@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('share_url')->unique();
             $table->string('qr_code_url')->nullable();
             $table->string('nfc_identifier')->nullable()->unique();
-            $table->boolean('is_published')->default(false);
+	    $table->unsignedBigInteger('nfc_taps_count')->default(0);
+	    $table->boolean('is_published')->default(false);
             $table->boolean('is_primary')->default(false);
             $table->unsignedBigInteger('views_count')->default(0);
             $table->unsignedBigInteger('shares_count')->default(0);

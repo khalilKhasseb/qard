@@ -59,6 +59,10 @@ class CardSection extends Model
         'links' => 'Links',
         'about' => 'About',
         'custom' => 'Custom Content',
+        'text' => 'Text',
+        'image' => 'Image',
+        'link' => 'Link',
+        'qr_code' => 'QR Code',
     ];
 
     public function card(): BelongsTo

@@ -14,8 +14,11 @@ class BusinessCard extends Model
 
     protected $fillable = [
         'user_id',
+        'language_id',
         'title',
         'subtitle',
+        'cover_image_path',
+        'profile_image_path',
         'template_id',
         'theme_id',
         'theme_overrides',
@@ -32,12 +35,42 @@ class BusinessCard extends Model
     protected function casts(): array
     {
         return [
+            'title' => 'array',
+            'subtitle' => 'array',
             'theme_overrides' => 'array',
             'is_published' => 'boolean',
             'is_primary' => 'boolean',
             'views_count' => 'integer',
             'shares_count' => 'integer',
         ];
+    }
+
+    protected $appends = ['full_url', 'cover_image_url', 'profile_image_url'];
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        if (!$this->cover_image_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->cover_image_path, 'http')) {
+            return $this->cover_image_path;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($this->cover_image_path);
+    }
+
+    public function getProfileImageUrlAttribute(): ?string
+    {
+        if (!$this->profile_image_path) {
+            return null;
+        }
+
+        if (str_starts_with($this->profile_image_path, 'http')) {
+            return $this->profile_image_path;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($this->profile_image_path);
     }
 
     protected static function booted(): void
@@ -52,6 +85,11 @@ class BusinessCard extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function language(): BelongsTo
+    {
+        return $this->belongsTo(Language::class);
     }
 
     public function template(): BelongsTo
@@ -99,14 +137,14 @@ class BusinessCard extends Model
         if ($this->custom_slug) {
             return url("/u/{$this->custom_slug}");
         }
-        
+
         return url("/c/{$this->share_url}");
     }
 
     public function getEffectiveThemeConfig(): array
     {
         $baseConfig = $this->theme?->config ?? Theme::getDefaultConfig();
-        
+
         if (!empty($this->theme_overrides)) {
             return array_replace_recursive($baseConfig, $this->theme_overrides);
         }

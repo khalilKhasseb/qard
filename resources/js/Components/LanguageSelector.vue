@@ -12,15 +12,13 @@ const showDropdown = ref(false);
 const selectedLanguage = ref(props.currentLanguage);
 
 const switchLanguage = (languageCode) => {
-    router.post('/api/language/switch', {
+    router.post(route('language.switch'), {
         language_code: languageCode
     }, {
         preserveScroll: true,
         onSuccess: () => {
             selectedLanguage.value = languageCode;
             showDropdown.value = false;
-            // Reload the page to apply language changes
-            window.location.reload();
         }
     });
 };

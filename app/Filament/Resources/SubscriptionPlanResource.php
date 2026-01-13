@@ -8,6 +8,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -25,7 +26,7 @@ class SubscriptionPlanResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Plan Details')
+                Schemas\Components\Section::make('Plan Details')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -39,7 +40,7 @@ class SubscriptionPlanResource extends Resource
                             ->nullable(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Pricing')
+                Schemas\Components\Section::make('Pricing')
                     ->schema([
                         Forms\Components\TextInput::make('price')
                             ->numeric()
@@ -55,7 +56,7 @@ class SubscriptionPlanResource extends Resource
                             ->required(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Limits')
+                Schemas\Components\Section::make('Limits')
                     ->schema([
                         Forms\Components\TextInput::make('cards_limit')
                             ->numeric()
@@ -67,7 +68,7 @@ class SubscriptionPlanResource extends Resource
                             ->required(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Features')
+                Schemas\Components\Section::make('Features')
                     ->schema([
                         Forms\Components\Toggle::make('custom_css_allowed')
                             ->label('Custom CSS Allowed'),
@@ -82,7 +83,7 @@ class SubscriptionPlanResource extends Resource
                             ->default(true),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Additional Features')
+                Schemas\Components\Section::make('Additional Features')
                     ->schema([
                         Forms\Components\KeyValue::make('features')
                             ->keyLabel('Feature')

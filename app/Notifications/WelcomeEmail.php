@@ -32,6 +32,7 @@ class WelcomeEmail extends Notification implements ShouldQueue
             ->line('• Create and manage digital business cards')
             ->line('• Customize themes and styles')
             ->line('• Share your cards with anyone, anywhere')
+            ->line('Please make sure to verify your email address to access all features.')
             ->action('Get Started', url('/dashboard'))
             ->line('If you have any questions, feel free to reach out to our support team.')
             ->line('Welcome aboard!');

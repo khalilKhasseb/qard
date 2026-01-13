@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BusinessCard;
+use App\Models\Language;
 use App\Services\CardService;
 use Illuminate\Http\Request;
 
@@ -26,6 +27,7 @@ class PublicCardController extends Controller
             'card' => $card,
             'theme' => $card->theme,
             'sections' => $card->activeSections,
+            'languages' => Language::active()->get(),
         ]);
     }
 
@@ -43,6 +45,7 @@ class PublicCardController extends Controller
             'card' => $card,
             'theme' => $card->theme,
             'sections' => $card->activeSections,
+            'languages' => Language::active()->get(),
         ]);
     }
 
@@ -60,6 +63,7 @@ class PublicCardController extends Controller
             'card' => $card,
             'theme' => $card->theme,
             'sections' => $card->activeSections,
+            'languages' => Language::active()->get(),
         ]);
     }
 

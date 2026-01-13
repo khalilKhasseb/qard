@@ -86,11 +86,11 @@ class SectionController extends Controller
             'order.*.order' => 'required|integer',
         ]);
 
-        // Update each section's display_order
+        // Update each section's sort_order
         foreach ($validated['order'] as $item) {
             CardSection::where('id', $item['id'])
                 ->where('business_card_id', $card->id)
-                ->update(['display_order' => $item['order']]);
+                ->update(['sort_order' => $item['order']]);
         }
 
         return response()->json([

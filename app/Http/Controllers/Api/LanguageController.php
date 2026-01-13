@@ -30,9 +30,13 @@ class LanguageController extends Controller
         session()->put('locale', $language->code);
         app()->setLocale($language->code);
 
-        return response()->json([
-            'message' => 'Language switched successfully',
-            'language' => new LanguageResource($language)
-        ]);
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'message' => 'Language switched successfully',
+                'language' => new LanguageResource($language)
+            ]);
+        }
+
+        return back()->with('success', 'Language switched successfully');
     }
 }

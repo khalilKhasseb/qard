@@ -8,6 +8,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -25,21 +26,36 @@ class BusinessCardResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Card Details')
+               Schemas\Components\Section::make('Card Details')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Forms\Components\TextInput::make('title')
+                        Forms\Components\KeyValue::make('title')
                             ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('subtitle')
-                            ->maxLength(255),
+                            ->keyLabel('Language Code (e.g., en, ar)')
+                            ->valueLabel('Title'),
+                        Forms\Components\KeyValue::make('subtitle')
+                            ->keyLabel('Language Code (e.g., en, ar)')
+                            ->valueLabel('Subtitle'),
+                        Forms\Components\FileUpload::make('cover_image_path')
+                            ->image()
+                            ->directory('covers')
+                            ->label('Cover Image'),
+                        Forms\Components\FileUpload::make('profile_image_path')
+                            ->image()
+                            ->directory('profiles')
+                            ->label('Profile Image (Avatar/Logo)'),
+                        Forms\Components\Select::make('language_id')
+                            ->relationship('language', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Appearance')
+                Schemas\Components\Section::make('Appearance')
                     ->schema([
                         Forms\Components\Select::make('template_id')
                             ->relationship('template', 'name')
@@ -57,7 +73,7 @@ class BusinessCardResource extends Resource
                             ->nullable(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('URLs & Identifiers')
+                Schemas\Components\Section::make('URLs & Identifiers')
                     ->schema([
                         Forms\Components\TextInput::make('custom_slug')
                             ->unique(ignoreRecord: true)
@@ -73,7 +89,7 @@ class BusinessCardResource extends Resource
                             ->maxLength(255),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Status')
+                Schemas\Components\Section::make('Status')
                     ->schema([
                         Forms\Components\Toggle::make('is_published')
                             ->label('Published')
@@ -89,15 +105,24 @@ class BusinessCardResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('profile_image_path')
+                    ->label('Avatar')
+                    ->circular(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Owner')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('title')
+                    ->formatStateUsing(fn ($state) => is_array($state) ? (reset($state) ?: '-') : $state)
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('subtitle')
+                    ->formatStateUsing(fn ($state) => is_array($state) ? (reset($state) ?: '-') : $state)
                     ->limit(30)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('language.name')
+                    ->label('Language')
+                    ->sortable()
                     ->toggleable(),
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean()
