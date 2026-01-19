@@ -3,6 +3,13 @@ import { ref, computed, h } from 'vue';
 import { NButton, NIcon, NAvatar } from 'naive-ui';
 import * as IconNamespace from '@vicons/ionicons5';
 
+const FIGMA_ICONS = {
+    location: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.7183 8.19024C20.5352 3.2322 15.9944 1 12.0056 1H11.9944C8.01689 1 3.46477 3.22146 2.28167 8.17951C0.963353 13.7171 4.52393 18.4068 7.74647 21.358C8.94084 22.4527 10.4732 23 12.0056 23C13.538 23 15.0704 22.4527 16.2535 21.358C19.4761 18.4068 23.0366 13.7278 21.7183 8.19024ZM12.0056 13.5668C10.0451 13.5668 8.45633 12.0537 8.45633 10.1863C8.45633 8.31903 10.0451 6.80585 12.0056 6.80585C13.9662 6.80585 15.5549 8.31903 15.5549 10.1863C15.5549 12.0537 13.9662 13.5668 12.0056 13.5668Z" fill="#FF575A"/></svg>`,
+    facebook: `<svg viewBox="0 0 24.0005 23.9122" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37264 0 0 5.37264 0 12C0 17.6275 3.87456 22.3498 9.10128 23.6467V15.6672H6.62688V12H9.10128V10.4198C9.10128 6.33552 10.9498 4.4424 14.9597 4.4424C15.72 4.4424 17.0318 4.59168 17.5685 4.74048V8.06448C17.2853 8.03472 16.7933 8.01984 16.1822 8.01984C14.2147 8.01984 13.4544 8.76528 13.4544 10.703V12H17.3741L16.7006 15.6672H13.4544V23.9122C19.3963 23.1946 24.0005 18.1354 24.0005 12C24 5.37264 18.6274 0 12 0Z" fill="#0866FF"/></svg>`,
+    instagram: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#E1306C" d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Z"/><path fill="#fff" d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Zm0 6.2a2.4 2.4 0 1 1 0-4.8 2.4 2.4 0 0 1 0 4.8ZM16.6 7.8a.9.9 0 1 0 0-1.8.9.9 0 0 0 0 1.8Z"/></svg>`,
+    whatsapp: `<svg viewBox="0 0 23.8859 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 24L1.687 17.837C0.645998 16.033 0.0989998 13.988 0.0999998 11.891C0.103 5.335 5.43799 0 11.993 0C15.174 0.001 18.16 1.24 20.406 3.488C22.6509 5.736 23.8869 8.724 23.8859 11.902C23.8829 18.459 18.548 23.794 11.993 23.794C10.003 23.793 8.04198 23.294 6.30499 22.346L0 24ZM6.59698 20.193C8.27298 21.188 9.87298 21.784 11.989 21.785C17.437 21.785 21.875 17.351 21.878 11.9C21.88 6.438 17.463 2.01 11.997 2.008C6.54498 2.008 2.11 6.442 2.108 11.892C2.107 14.117 2.75899 15.783 3.85399 17.526L2.85499 21.174L6.59698 20.193ZM17.984 14.729C17.91 14.605 17.712 14.531 17.414 14.382C17.117 14.233 15.656 13.514 15.383 13.415C15.111 13.316 14.913 13.266 14.714 13.564C14.516 13.861 13.946 14.531 13.773 14.729C13.6 14.927 13.426 14.952 13.129 14.803C12.832 14.654 11.874 14.341 10.739 13.328C9.85598 12.54 9.25898 11.567 9.08598 11.269C8.91298 10.972 9.06798 10.811 9.21598 10.663C9.34998 10.53 9.51298 10.316 9.66198 10.142C9.81298 9.97 9.86198 9.846 9.96198 9.647C10.061 9.449 10.012 9.275 9.93698 9.126C9.86198 8.978 9.26798 7.515 9.02098 6.92C8.77898 6.341 8.53398 6.419 8.35198 6.41L7.78198 6.4C7.58398 6.4 7.26198 6.474 6.98998 6.772C6.71798 7.07 5.94999 7.788 5.94999 9.251C5.94999 10.714 7.01498 12.127 7.16298 12.325C7.31198 12.523 9.25798 15.525 12.239 16.812C12.948 17.118 13.502 17.301 13.933 17.438C14.645 17.664 15.293 17.632 15.805 17.556C16.376 17.471 17.563 16.837 17.811 16.143C18.059 15.448 18.059 14.853 17.984 14.729Z" fill="#25D366"/></svg>`,
+};
+
 const props = defineProps({
     card: { type: Object, required: true },
     sections: { type: Array, default: () => [] },
@@ -148,6 +155,87 @@ const contactSection = computed(() => parsedSections.value.find(s => s.section_t
 const email = computed(() => sc(contactSection.value || {})?.email);
 const phone = computed(() => sc(contactSection.value || {})?.phone);
 
+const socialSection = computed(() => parsedSections.value.find(s => s.section_type === 'social'));
+const socialLinks = computed(() => {
+    const content = sc(socialSection.value || {});
+    if (!content || typeof content !== 'object') return [];
+    const supported = ['location', 'facebook', 'instagram', 'whatsapp'];
+    return supported
+        .map((k) => ({ key: k, url: content[k] }))
+        .filter((x) => !!x.url);
+});
+
+const getShareUrl = () => props.card?.full_url || window.location.href;
+
+const shareCard = async () => {
+    const url = getShareUrl();
+    const title = t(props.card.title) || '';
+
+    if (navigator.share) {
+        try {
+            await navigator.share({ title, url });
+            return;
+        } catch {
+            // fallthrough to clipboard
+        }
+    }
+
+    try {
+        await navigator.clipboard.writeText(url);
+        // keep minimal UX; avoid alert loops on mobile
+    } catch {
+        // ignore
+    }
+};
+
+const escapeVCardText = (value) => {
+    if (!value) return '';
+    return String(value)
+        .replace(/\\/g, '\\\\')
+        .replace(/\n/g, '\\n')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,');
+};
+
+const buildVCard = () => {
+    const name = (t(props.card.title) || '').trim();
+    const orgOrRole = (t(props.card.subtitle) || '').trim();
+    const emailVal = email.value;
+    const phoneVal = phone.value;
+    const telVal = sc(contactSection.value || {})?.telephone;
+    const addrVal = sc(contactSection.value || {})?.address;
+    const url = getShareUrl();
+
+    return [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        `FN:${escapeVCardText(name)}`,
+        `N:${escapeVCardText(name)};;;;`,
+        orgOrRole ? `TITLE:${escapeVCardText(orgOrRole)}` : null,
+        phoneVal ? `TEL;TYPE=CELL:${escapeVCardText(phoneVal)}` : null,
+        telVal ? `TEL;TYPE=WORK:${escapeVCardText(telVal)}` : null,
+        emailVal ? `EMAIL;TYPE=INTERNET:${escapeVCardText(emailVal)}` : null,
+        addrVal ? `ADR;TYPE=WORK:;;${escapeVCardText(addrVal)};;;;` : null,
+        url ? `URL:${escapeVCardText(url)}` : null,
+        'END:VCARD',
+    ].filter(Boolean).join('\r\n');
+};
+
+const downloadContactCard = () => {
+    const vcf = buildVCard();
+    const blob = new Blob([vcf], { type: 'text/vcard;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    const filename = `${(t(props.card.title) || 'contact').toString().replace(/\s+/g, '_')}.vcf`;
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 500);
+};
+
 const getIconComponent = (iconName) => {
     const icons = IconNamespace;
     const lowerName = iconName.toLowerCase();
@@ -204,13 +292,15 @@ const hasContent = (section) => {
     return false;
 };
 
-const shareCard = async () => {
-    if (navigator.share) {
-        try { await navigator.share({ title: props.card.title, url: window.location.href }); } catch {}
-    } else {
-        navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard');
+const formatHoursValue = (value) => {
+    if (!value) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+        const start = value.start || value.from || '';
+        const end = value.end || value.to || '';
+        return [start, end].filter(Boolean).join(' - ');
     }
+    return String(value);
 };
 
 const themeStyles = computed(() => ({
@@ -228,191 +318,138 @@ const themeStyles = computed(() => ({
 <template>
     <div class="card-viewer" :style="themeStyles" :dir="selectedLangData.direction" :lang="currentLanguage">
         <div class="card-container mt-2">
-            <!-- Facebook style Header -->
-            <div class="cover-wrapper">
-                <img v-if="card.cover_image_url" :src="card.cover_image_url" class="cover-image" />
-                <div v-else class="cover-placeholder"></div>
+            <div class="ui" :class="{ 'is-rtl': selectedLangData.direction === 'rtl' }">
+                <!-- Header (cover + avatar) -->
+                <div class="header">
+                    <div class="cover">
+                        <img v-if="card.cover_image_url" :src="card.cover_image_url" class="cover-image" />
+                        <div v-else class="cover-placeholder" />
 
-                <div class="profile-image-container">
-                    <div class="profile-image-ring">
-                        <NAvatar
-                            v-if="card.profile_image_url"
-                            :round="true"
-                            :size="120"
-                            :src="card.profile_image_url"
-                            class="profile-avatar"
-                        />
-                        <div v-else class="initials-avatar-large">
-                            {{ (t(card.title) || 'C').charAt(0) }}
+                        <div class="avatar-wrap">
+                            <div class="avatar-ring">
+                                <NAvatar
+                                    v-if="card.profile_image_url"
+                                    :round="true"
+                                    :size="100"
+                                    :src="card.profile_image_url"
+                                    class="profile-avatar"
+                                />
+                                <div v-else class="initials-avatar">
+                                    {{ (t(card.title) || 'C').charAt(0) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="header-text">
+                        <h1 class="name">{{ t(card.title) }}</h1>
+                        <p class="subtitle">{{ t(card.subtitle) }}</p>
+                    </div>
+
+                    <div v-if="availableLanguages.length > 1" class="language-switcher">
+                        <span class="available-text">{{ ut('available_in') }}</span>
+                        <div class="lang-buttons">
+                            <button
+                                v-for="lang in availableLanguages"
+                                :key="lang.code"
+                                :class="{ 'active-lang': currentLanguage === lang.code }"
+                                @click="switchLanguage(lang.code)"
+                                class="lang-inline-btn"
+                            >
+                                {{ lang.code.toUpperCase() }}
+                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="bio-section">
-                <h1 class="card-title">{{ t(card.title) }}</h1>
-                <p class="card-subtitle">{{ t(card.subtitle) }}</p>
+                <!-- Social icons (from section content) -->
+                <div class="social-row">
+                    <a
+                        v-for="item in socialLinks"
+                        :key="item.key"
+                        v-if="socialLinks.length"
+                        class="social-btn"
+                        :href="item.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        :aria-label="item.key"
+                    >
+                        <span class="social-icon" v-html="FIGMA_ICONS[item.key] || ''" />
+                    </a>
+                </div>
 
-                <!-- Language Selector (Inline) -->
-                <div v-if="availableLanguages.length > 1" class="language-switcher-inline">
-                    <span class="available-text">{{ ut('available_in') }}</span>
-                    <div class="lang-buttons">
-                        <button
-                            v-for="lang in availableLanguages"
-                            :key="lang.code"
-                            :class="{ 'active-lang': currentLanguage === lang.code }"
-                            @click="switchLanguage(lang.code)"
-                            class="lang-inline-btn"
-                        >
-                            {{ lang.code.toUpperCase() }}
+                <!-- Contact cards (email + phones + address) -->
+                <div class="contact-stack">
+                    <a v-if="email" class="info-card" :href="`mailto:${email}`">
+                        <span class="info-icon"><component :is="renderIcon('Mail')" /></span>
+                        <span class="info-text">{{ email }}</span>
+                    </a>
+
+                    <div class="two-col">
+                        <a v-if="phone" class="info-card" :href="`tel:${phone}`">
+                            <span class="info-icon"><component :is="renderIcon('Phone')" /></span>
+                            <span class="info-text">{{ phone }}</span>
+                        </a>
+                        <a v-if="sc(contactSection || {})?.telephone" class="info-card" :href="`tel:${sc(contactSection || {}).telephone}`">
+                            <span class="info-icon"><component :is="renderIcon('Call')" /></span>
+                            <span class="info-text">{{ sc(contactSection || {}).telephone }}</span>
+                        </a>
+                    </div>
+
+                    <div v-if="sc(contactSection || {})?.address" class="info-card">
+                        <span class="info-icon"><component :is="renderIcon('Location')" /></span>
+                        <span class="info-text info-text--small">{{ sc(contactSection || {}).address }}</span>
+                    </div>
+                </div>
+
+                <!-- QR + Actions row -->
+                <div class="qr-actions">
+                    <div class="qr-left">
+                        <div class="qr-box">
+                            <img
+                                :src="card.qr_code_url || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(card.full_url)}`"
+                                class="qr-img"
+                                alt="QR"
+                            />
+                        </div>
+                        <div class="qr-label">QR Code</div>
+                    </div>
+
+                    <div class="qr-right">
+                        <button class="primary-btn" type="button" @click="shareCard">
+                            <span class="btn-icon"><component :is="renderIcon('Share')" /></span>
+                            <span class="btn-text">{{ ut('share') }}</span>
+                        </button>
+                        <button class="primary-btn" type="button" @click="downloadContactCard">
+                            <span class="btn-icon"><component :is="renderIcon('Download')" /></span>
+                            <span class="btn-text">Download</span>
                         </button>
                     </div>
                 </div>
 
-                <div class="action-buttons">
-                    <NButton v-if="phone" round type="primary" size="large" tag="a" :href="`tel:${phone}`" class="flex-1">
-                        <template #icon><NIcon><component :is="renderIcon('Phone')" /></NIcon></template>
-                        {{ ut('call') }}
-                    </NButton>
-                    <NButton v-if="email" round quaternary size="large" tag="a" :href="`mailto:${email}`" class="flex-1">
-                        <template #icon><NIcon><component :is="renderIcon('Mail')" /></NIcon></template>
-                        {{ ut('email') }}
-                    </NButton>
-                    <NButton circle quaternary size="large" @click="shareCard">
-                        <template #icon><NIcon><component :is="renderIcon('Share')" /></NIcon></template>
-                    </NButton>
+                <!-- Hours section (Figma style) -->
+                <div class="hours">
+                    <div class="hours-title">{{ ut('hours') }}</div>
+                    <div class="hours-list">
+                        <template v-for="section in parsedSections" :key="section.id">
+                            <template v-if="section.section_type === 'hours' && hasContent(section)">
+                                <div v-for="(time, day) in sc(section)" :key="day" class="hour-row">
+                                    <div class="hour-icon"><component :is="renderIcon('CalendarCheck')" /></div>
+                                    <div class="hour-text">
+                                        <div class="hour-day">{{ day }}</div>
+                                        <div class="hour-time">{{ formatHoursValue(time) }}</div>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
                 </div>
+
+                <footer class="viewer-footer">
+                    <span>{{ ut('powered_by') }} <strong>Qard</strong></span>
+                </footer>
             </div>
 
-            <!-- Main Sections -->
-            <main class="sections-container">
-                <div v-for="section in parsedSections" :key="section.id" class="section-block">
-                    <!-- Only show section if it has content for current language -->
-                    <template v-if="hasContent(section)">
-                        <div class="section-label">
-                            <NIcon :color="primaryColor" :size="16">
-                                <component :is="renderIcon(section.section_type.charAt(0).toUpperCase() + section.section_type.slice(1))" />
-                            </NIcon>
-                            <span>{{ section.title || ut(section.section_type) }}</span>
-                        </div>
-
-                        <!-- Image Support for any section -->
-                        <div v-if="section.image_url" class="section-image-wrapper">
-                            <img :src="section.image_url" :alt="section.title" class="section-main-image" />
-                        </div>
-
-                        <!-- Contact -->
-                        <div v-if="section.section_type === 'contact'" class="glass-box contact-info space-y-3">
-                            <div v-if="sc(section).email" class="data-row">
-                                <span class="row-label">{{ ut('email') }}</span>
-                                <a :href="`mailto:${sc(section).email}`" class="row-value">{{ sc(section).email }}</a>
-                            </div>
-                            <div v-if="sc(section).phone" class="data-row">
-                                <span class="row-label">{{ ut('phone') }}</span>
-                                <a :href="`tel:${sc(section).phone}`" class="row-value">{{ sc(section).phone }}</a>
-                            </div>
-                            <div v-if="sc(section).address" class="data-row">
-                                <span class="row-label">{{ ut('address') }}</span>
-                                <p class="row-value">{{ sc(section).address }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Social Links -->
-                        <div v-else-if="section.section_type === 'social'" class="flex flex-wrap gap-3">
-                            <template v-for="(url, platform) in sc(section)" :key="platform">
-                                <NButton v-if="url" circle quaternary size="large" tag="a" :href="url" target="_blank">
-                                    <template #icon><NIcon><component :is="renderIcon(platform.charAt(0).toUpperCase() + platform.slice(1))" /></NIcon></template>
-                                </NButton>
-                            </template>
-                        </div>
-
-                        <!-- QR Code Section -->
-                        <div v-else-if="section.section_type === 'qr_code'" class="glass-box qr-code-box">
-                            <div class="flex flex-col items-center py-4">
-                                <div class="qr-wrapper bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-                                    <img :src="card.qr_code_url || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(card.full_url)}`"
-                                         class="w-40 h-40" />
-                                </div>
-                                <p class="mt-4 text-xs font-medium text-gray-400 uppercase tracking-widest">{{ ut('scan_to_connect') }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Hours -->
-                        <div v-else-if="section.section_type === 'hours'" class="glass-box space-y-2">
-                            <div v-for="(time, day) in sc(section)" :key="day" class="flex justify-between text-sm">
-                                <span class="capitalize font-medium text-gray-500">{{ day }}</span>
-                                <span class="text-gray-900">{{ time || '-' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Appointments -->
-                        <div v-else-if="section.section_type === 'appointments'" class="glass-box space-y-4">
-                            <p v-if="sc(section).instructions" class="text-sm text-gray-600 whitespace-pre-wrap">{{ sc(section).instructions }}</p>
-                            <NButton v-if="sc(section).booking_url" block type="primary" tag="a" :href="sc(section).booking_url" target="_blank" round>
-                                {{ ut('appointments') }}
-                            </NButton>
-                        </div>
-
-                        <!-- Services / Products -->
-                        <div v-else-if="['services', 'products'].includes(section.section_type)" class="space-y-4">
-                            <div v-for="(item, idx) in sc(section)" :key="idx" class="glass-box flex gap-4">
-                                <div v-if="item.image_url" class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                                    <img :src="item.image_url" class="w-full h-full object-cover">
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex justify-between items-start">
-                                        <h4 class="font-bold text-gray-900">{{ item.name }}</h4>
-                                        <span v-if="item.price" class="text-sm font-bold text-primary">{{ item.price }}</span>
-                                    </div>
-                                    <p class="text-sm text-gray-600 mt-1">{{ item.description }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Testimonials -->
-                        <div v-else-if="section.section_type === 'testimonials'" class="space-y-4">
-                            <div v-for="(item, idx) in sc(section)" :key="idx" class="glass-box italic text-gray-700 relative">
-                                <span class="absolute top-2 left-2 text-4xl text-gray-200 font-serif">"</span>
-                                <p class="relative z-10 pt-4">{{ item.quote }}</p>
-                                <div class="mt-4 not-italic">
-                                    <p class="font-bold text-gray-900">{{ item.author }}</p>
-                                    <p class="text-xs text-gray-500">{{ item.company }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Gallery -->
-                        <div v-else-if="section.section_type === 'gallery'" class="grid grid-cols-2 gap-3">
-                            <div v-for="(item, idx) in sc(section)" :key="idx" class="group relative rounded-xl overflow-hidden aspect-square border border-gray-100">
-                                <img :src="item.url" class="w-full h-full object-cover transition transform group-hover:scale-110">
-                                <div v-if="item.caption" class="absolute bottom-0 left-0 right-0 bg-black/50 p-2 text-[10px] text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition">
-                                    {{ item.caption }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Text based sections -->
-                        <div v-else-if="['text', 'about', 'video', 'link', 'links', 'image'].includes(section.section_type)" class="glass-box text-content">
-                            <p v-if="['link', 'links'].includes(section.section_type)">
-                                <a :href="sc(section)" target="_blank" class="row-value break-all text-primary hover:underline">{{ sc(section) }}</a>
-                            </p>
-                            <div v-else-if="section.section_type === 'image'" class="image-section">
-                                <img :src="sc(section)" class="w-full h-auto rounded-lg" :alt="section.title" />
-                            </div>
-                            <p v-else class="whitespace-pre-wrap">{{ sc(section) }}</p>
-                        </div>
-
-                        <!-- Fallback -->
-                        <div v-else class="glass-box">
-                             <p>{{ sc(section) }}</p>
-                        </div>
-                    </template>
-                </div>
-            </main>
-
-            <footer class="viewer-footer">
-                <span>{{ ut('powered_by') }} <strong>Qard</strong></span>
-            </footer>
         </div>
     </div>
 </template>
@@ -434,8 +471,99 @@ const themeStyles = computed(() => ({
     box-shadow: 0 0 40px rgba(0,0,0,0.05);
 }
 
-.language-switcher-inline {
-    margin-top: 16px;
+.ui {
+    padding: 32px 24px 56px;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+    align-items: stretch;
+}
+
+.cover {
+    position: relative;
+}
+
+.cover-image,
+.cover-placeholder {
+    width: 100%;
+    height: 168px;
+    border-radius: 20px;
+}
+
+.cover-image {
+    object-fit: cover;
+}
+
+.cover-placeholder {
+    background: #d9d9d9;
+}
+
+.avatar-wrap {
+    position: absolute;
+    left: 50%;
+    top: 138px;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px;
+    display: grid;
+    place-items: center;
+}
+
+.avatar-ring {
+    width: 100px;
+    height: 100px;
+    border-radius: 9999px;
+    background: #fdfdff;
+    padding: 6px;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+}
+
+.profile-avatar {
+    border: 0;
+}
+
+.initials-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 9999px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    font-size: 40px;
+    font-weight: 800;
+}
+
+.header-text {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.name {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #2e385c;
+    font-family: var(--heading-font), sans-serif;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: 16px;
+    color: #666b7f;
+    line-height: normal;
+    white-space: pre-wrap;
+    padding-bottom: 8px;
+}
+
+.language-switcher {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -477,142 +605,224 @@ const themeStyles = computed(() => ({
     color: white;
 }
 
-.cover-wrapper {
-    position: relative;
-    height: 200px;
+.social-row {
+    margin-top: 24px;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
 }
 
-.cover-image {
-    width: 100%;
-    height: 100%;
+.social-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: #f4f5fa;
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+}
+
+.social-icon :deep(svg) {
+    width: 24px;
+    height: 24px;
+}
+
+.social-icon :deep(path) {
+    vector-effect: non-scaling-stroke;
+}
+
+.contact-stack {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.info-card {
+    background: #f4f5fa;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    text-decoration: none;
+}
+
+.info-icon :deep(svg) {
+    width: 24px;
+    height: 24px;
+    color: #2e385c;
+}
+
+.info-text {
+    font-size: 16px;
+    color: #666b7f;
+    text-align: center;
+    line-height: normal;
+    word-break: break-word;
+}
+
+.info-text--small {
+    font-size: 14px;
+}
+
+.qr-actions {
+    margin-top: 24px;
+    background: #f4f5fa;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.is-rtl .qr-actions {
+    flex-direction: row-reverse;
+}
+
+.qr-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-box {
+    width: 72px;
+    height: 72px;
+    background: #d9d9d9;
+    display: grid;
+    place-items: center;
+}
+
+.qr-img {
+    width: 72px;
+    height: 72px;
     object-fit: cover;
 }
 
-.cover-placeholder {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    opacity: 0.15;
-}
-
-.profile-image-container {
-    position: absolute;
-    bottom: -60px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-}
-
-.profile-image-ring {
-    background: var(--card-bg);
-    padding: 6px;
-    border-radius: 50%;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-}
-
-.profile-avatar {
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-.initials-avatar-large {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: var(--primary-soft);
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    font-weight: 800;
-}
-
-.bio-section {
-    padding: 80px 24px 32px;
+.qr-label {
+    font-size: 16px;
+    color: #666b7f;
     text-align: center;
 }
 
-.card-title {
-    font-family: var(--heading-font), sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    margin: 0 0 8px 0;
-    color: #111827;
-    letter-spacing: -0.02em;
-}
-
-.card-subtitle {
-    font-size: 16px;
-    color: var(--secondary);
-    margin: 0;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: 24px;
-}
-
-.sections-container {
-    padding: 0 24px 40px;
+.qr-right {
+    width: 146px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
-}
-
-.section-label {
-    display: flex;
-    align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
-    font-size: 11px;
-    font-weight: 800;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
 }
 
-.glass-box {
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 20px;
-    transition: transform 0.2s ease;
-}
-
-.qr-code-box {
-    background: var(--primary-soft);
-    border: 1px dashed var(--primary);
-}
-
-.section-image-wrapper {
-    margin-bottom: 16px;
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-.section-main-image {
+.primary-btn {
     width: 100%;
-    height: auto;
-    max-height: 400px;
-    object-fit: cover;
-}
-
-.row-label {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    color: #9ca3af;
-    text-transform: uppercase;
-    margin-bottom: 2px;
-}
-
-.row-value {
-    font-size: 16px;
-    font-weight: 600;
-    color: #111827;
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    background: #6198f1;
+    color: #fff;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
     text-decoration: none;
+}
+
+.btn-icon :deep(svg) {
+    width: 24px;
+    height: 24px;
+    color: #fff;
+}
+
+.btn-text {
+    font-size: 16px;
+    line-height: normal;
+}
+
+.hours {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.hours-title {
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2e385c;
+}
+
+.hours-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.hour-row {
+    width: 100%;
+    background: #f4f5fa;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.is-rtl .hour-row {
+    justify-content: flex-end;
+}
+
+.hour-icon {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+}
+
+.hour-icon :deep(svg) {
+    width: 24px;
+    height: 24px;
+    color: #2e385c;
+}
+
+.hour-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+}
+
+.is-rtl .hour-text {
+    text-align: right;
+    align-items: flex-end;
+}
+
+.hour-day {
+    font-size: 12px;
+    color: #666b7f;
+}
+
+.hour-time {
+    font-size: 16px;
+    font-weight: 500;
+    color: #2e385c;
 }
 
 .viewer-footer {
