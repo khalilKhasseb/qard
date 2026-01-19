@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Language;
 use App\Models\SubscriptionPlan;
 use App\Models\Template;
 use App\Models\Theme;
@@ -16,13 +17,26 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create admin user
-        $admin = User::factory()->create([
-            'name' => 'Admin User',
-            'email' => 'admin@tapit.com',
-            'is_admin' => true,
-            'subscription_tier' => 'business',
-            'subscription_status' => 'active',
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@tapit.com'],
+            [
+                'name' => 'Admin User',
+                'password' => bcrypt('password'),
+                'is_admin' => true,
+                'subscription_tier' => 'business',
+                'subscription_status' => 'active',
+            ]
+        );
+
+        // Languages
+        Language::firstOrCreate(
+            ['code' => 'en'],
+            ['name' => 'English', 'direction' => 'ltr', 'is_active' => true, 'is_default' => true]
+        );
+        Language::firstOrCreate(
+            ['code' => 'ar'],
+            ['name' => 'Arabic', 'direction' => 'rtl', 'is_active' => true, 'is_default' => false]
+        );
 
         // Create subscription plans
         $this->createSubscriptionPlans();
@@ -32,11 +46,14 @@ class DatabaseSeeder extends Seeder
 
         // Create default templates
         $this->createDefaultTemplates();
+
+        // Demo public card with fully populated sections
+        $this->call(DemoPublicCardSeeder::class);
     }
 
     protected function createSubscriptionPlans(): void
     {
-        SubscriptionPlan::create([
+        SubscriptionPlan::updateOrCreate(['slug' => 'free'], [
             'name' => 'Free',
             'slug' => 'free',
             'description' => 'Get started with basic features',
@@ -51,7 +68,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        SubscriptionPlan::create([
+        SubscriptionPlan::updateOrCreate(['slug' => 'pro'], [
             'name' => 'Pro',
             'slug' => 'pro',
             'description' => 'Perfect for professionals',
@@ -66,7 +83,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        SubscriptionPlan::create([
+        SubscriptionPlan::updateOrCreate(['slug' => 'business'], [
             'name' => 'Business',
             'slug' => 'business',
             'description' => 'For teams and businesses',
@@ -84,7 +101,7 @@ class DatabaseSeeder extends Seeder
 
     protected function createDefaultThemes(): void
     {
-        Theme::create([
+        Theme::updateOrCreate(['name' => 'Classic Blue', 'is_system_default' => true], [
             'name' => 'Classic Blue',
             'is_system_default' => true,
             'is_public' => true,
@@ -112,7 +129,7 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
-        Theme::create([
+        Theme::updateOrCreate(['name' => 'Dark Mode', 'is_system_default' => true], [
             'name' => 'Dark Mode',
             'is_system_default' => true,
             'is_public' => true,
@@ -140,7 +157,7 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
-        Theme::create([
+        Theme::updateOrCreate(['name' => 'Minimal Green', 'is_system_default' => true], [
             'name' => 'Minimal Green',
             'is_system_default' => true,
             'is_public' => true,
@@ -171,7 +188,7 @@ class DatabaseSeeder extends Seeder
 
     protected function createDefaultTemplates(): void
     {
-        Template::create([
+        Template::updateOrCreate(['slug' => 'professional'], [
             'name' => 'Professional',
             'slug' => 'professional',
             'description' => 'Clean and professional layout for business cards',
@@ -185,7 +202,7 @@ class DatabaseSeeder extends Seeder
             'sort_order' => 1,
         ]);
 
-        Template::create([
+        Template::updateOrCreate(['slug' => 'business-services'], [
             'name' => 'Business Services',
             'slug' => 'business-services',
             'description' => 'Showcase your services and business hours',
@@ -200,7 +217,7 @@ class DatabaseSeeder extends Seeder
             'sort_order' => 2,
         ]);
 
-        Template::create([
+        Template::updateOrCreate(['slug' => 'portfolio'], [
             'name' => 'Portfolio',
             'slug' => 'portfolio',
             'description' => 'Perfect for creatives and freelancers',
