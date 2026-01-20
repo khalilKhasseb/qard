@@ -130,8 +130,8 @@ const subscriptionStatus = computed(() => {
                 <!-- Subscription Status -->
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="flex items-center justify-between">
-                            <div>
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
                                 <h3 class="text-lg font-semibold text-gray-900">Subscription Status</h3>
                                 <p class="mt-1 text-sm text-gray-500">
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -147,11 +147,27 @@ const subscriptionStatus = computed(() => {
                                         {{ subscription.plan.name }}
                                     </span>
                                 </p>
+                                
+                                <!-- Usage Bar -->
+                                <div v-if="subscription && subscription.plan" class="mt-3">
+                                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                                        <span>Business Cards: {{ stats.total_cards }} / {{ subscription.plan.cards_limit }}</span>
+                                        <span :class="stats.total_cards >= subscription.plan.cards_limit ? 'text-red-600 font-semibold' : ''">
+                                            {{ subscription.plan.cards_limit - stats.total_cards }} remaining
+                                        </span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="h-2 rounded-full transition-all"
+                                             :class="stats.total_cards >= subscription.plan.cards_limit ? 'bg-red-500' : 'bg-green-500'"
+                                             :style="`width: ${(stats.total_cards / subscription.plan.cards_limit) * 100}%`"></div>
+                                    </div>
+                                </div>
+
                                 <p v-if="subscription && subscription.days_remaining" class="mt-1 text-sm text-gray-500">
                                     {{ subscription.days_remaining }} days remaining
                                 </p>
                             </div>
-                            <Link href="/subscription" class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                            <Link href="/subscription" class="ml-4 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                                 Manage Subscription
                             </Link>
                         </div>

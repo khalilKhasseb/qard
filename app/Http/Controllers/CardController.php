@@ -30,9 +30,17 @@ class CardController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
-        $themes = Theme::forUser($request->user()->id)->get();
+        $user = $request->user();
+
+        // Check if user can create more cards
+        if (! $user->canCreateCard()) {
+            return redirect()->route('subscription.index')
+                ->with('error', 'You have reached your card limit. Upgrade your plan to create more cards.');
+        }
+
+        $themes = Theme::forUser($user->id)->get();
         $languages = Language::active()->get();
         $defaultLanguage = Language::default()->first() ?? $languages->first();
 
@@ -41,6 +49,8 @@ class CardController extends Controller
             'languages' => $languages,
             'defaultLanguage' => $defaultLanguage,
             'appUrl' => url('/'),
+            'cardCount' => $user->cards()->count(),
+            'cardLimit' => $user->getCardLimit(),
         ]);
     }
 

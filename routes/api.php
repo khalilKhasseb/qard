@@ -76,6 +76,16 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.subscription.sync');
     Route::post('subscription/cancel', [SubscriptionController::class, 'cancel'])
         ->name('api.subscription.cancel');
+
+    // Usage stats endpoint
+    Route::get('usage', function (Request $request) {
+        $user = $request->user();
+
+        return response()->json([
+            'cardCount' => $user->cards()->count(),
+            'themeCount' => $user->themes()->count(),
+        ]);
+    })->name('api.usage');
 });
 
 // Language API routes (public)

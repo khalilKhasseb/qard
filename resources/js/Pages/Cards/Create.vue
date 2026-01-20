@@ -8,6 +8,23 @@
           <div class="p-6 border-b border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-900">Create New Business Card</h2>
             <p class="mt-1 text-sm text-gray-600">Fill in the basic information for your card.</p>
+            
+            <!-- Usage Indicator -->
+            <div v-if="cardLimit > 0" class="mt-3">
+              <div class="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Usage: {{ cardCount }} / {{ cardLimit }} cards</span>
+                <span :class="cardCount >= cardLimit ? 'text-red-600 font-semibold' : 'text-gray-600'">
+                  {{ cardLimit - cardCount }} remaining
+                </span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  class="h-2 rounded-full transition-all"
+                  :class="cardCount >= cardLimit ? 'bg-red-500' : 'bg-green-500'"
+                  :style="`width: ${(cardCount / cardLimit) * 100}%`"
+                ></div>
+              </div>
+            </div>
           </div>
 
           <form @submit.prevent="submit" class="p-6 space-y-6">
@@ -134,6 +151,14 @@ const props = defineProps({
   languages: Array,
   defaultLanguage: Object,
   appUrl: String,
+  cardCount: {
+    type: Number,
+    default: 0,
+  },
+  cardLimit: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const form = useForm({

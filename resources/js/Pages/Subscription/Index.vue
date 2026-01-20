@@ -4,6 +4,14 @@
 
     <div class="py-12">
       <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <!-- Success/Error Messages -->
+        <div v-if="$page.props.flash?.success" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+          {{ $page.props.flash.success }}
+        </div>
+        <div v-if="$page.props.flash?.error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+          {{ $page.props.flash.error }}
+        </div>
+
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-12">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
@@ -96,6 +104,59 @@
                     {{ formatDate(subscription.data.trial_ends_at) }}
                   </p>
                 </div>
+
+                <!-- Usage Stats -->
+                <div class="col-span-1 md:col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Usage</label>
+                  <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <!-- Cards Usage -->
+                    <div class="flex justify-between items-center">
+                      <div>
+                        <p class="font-medium text-gray-900">Business Cards</p>
+                        <p class="text-sm text-gray-600">
+                          {{ usageStats.cardCount }} of {{ subscription.data.plan?.cards_limit }} used
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span 
+                          class="px-2 py-1 text-xs font-medium rounded-full"
+                          :class="usageStats.cardCount >= subscription.data.plan?.cards_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+                        >
+                          {{ subscription.data.plan?.cards_limit - usageStats.cardCount }} remaining
+                        </span>
+                      </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        class="h-2 rounded-full transition-all"
+                        :class="usageStats.cardCount >= subscription.data.plan?.cards_limit ? 'bg-red-500' : 'bg-green-500'"
+                        :style="`width: ${(usageStats.cardCount / subscription.data.plan?.cards_limit) * 100}%`"
+                      ></div>
+                    </div>
+
+                    <!-- Themes Usage -->
+                    <div class="flex justify-between items-center mt-3">
+                      <div>
+                        <p class="font-medium text-gray-900">Custom Themes</p>
+                        <p class="text-sm text-gray-600">
+                          {{ usageStats.themeCount }} of {{ subscription.data.plan?.themes_limit }} used
+                        </p>
+                      </div>
+                      <span 
+                        class="px-2 py-1 text-xs font-medium rounded-full"
+                        :class="usageStats.themeCount >= subscription.data.plan?.themes_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+                      >
+                        {{ subscription.data.plan?.themes_limit - usageStats.themeCount }} remaining
+                      </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        class="h-2 rounded-full bg-green-500 transition-all"
+                        :style="`width: ${(usageStats.themeCount / subscription.data.plan?.themes_limit) * 100}%`"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Plan Features -->
@@ -168,6 +229,48 @@
             </div>
           </div>
 
+          <!-- Upgrade Available Section -->
+          <div v-if="availablePlans.length > 0" class="bg-white shadow-sm rounded-lg overflow-hidden p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Upgrade Your Plan</h3>
+            <p class="text-gray-600 mb-4">You're currently using {{ usageStats.cardCount }} out of {{ subscription.data.plan?.cards_limit }} cards. Upgrade for more space!</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div 
+                v-for="plan in availablePlans" 
+                :key="plan.id"
+                class="border-2 rounded-lg p-4 transition-colors hover:border-indigo-500"
+                :class="plan.id === subscription.data.plan?.id ? 'border-green-500 bg-green-50' : 'border-gray-200'"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <h4 class="font-bold text-gray-900">{{ plan.name }}</h4>
+                  <span 
+                    v-if="plan.id === subscription.data.plan?.id"
+                    class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium"
+                  >
+                    Current
+                  </span>
+                </div>
+                <p class="text-2xl font-bold text-gray-900 mb-2">${{ plan.price }}<span class="text-sm text-gray-500">/{{ plan.billing_cycle }}</span></p>
+                <p class="text-sm text-gray-600 mb-3">{{ plan.cards_limit }} cards, {{ plan.themes_limit }} themes</p>
+                <button 
+                  v-if="plan.id !== subscription.data.plan?.id"
+                  @click="upgradeToPlan(plan)"
+                  class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-indigo-700 transition"
+                >
+                  Upgrade
+                </button>
+                <button 
+                  v-else
+                  @click="syncSubscription"
+                  class="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-300 transition"
+                  :disabled="syncing"
+                >
+                  {{ syncing ? 'Syncing...' : 'Sync Plan' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Payment History -->
           <div class="bg-white shadow-sm rounded-lg overflow-hidden p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment History</h3>
@@ -224,23 +327,43 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+
+const props = defineProps({
+  availablePlans: {
+    type: Array,
+    default: () => [],
+  },
+});
 
 const subscription = ref(null);
 const loading = ref(true);
 const error = ref(null);
 const syncing = ref(false);
+const cardCount = ref(0);
+const themeCount = ref(0);
+
+const usageStats = computed(() => ({
+  cardCount: cardCount.value,
+  themeCount: themeCount.value,
+}));
 
 const loadSubscription = async () => {
   loading.value = true;
   error.value = null;
 
   try {
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    // Load subscription data
     const response = await fetch('/api/subscription', {
       headers: {
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
       },
     });
 
@@ -252,6 +375,21 @@ const loadSubscription = async () => {
     
     if (data.data) {
       subscription.value = data;
+    }
+
+    // Load usage stats (cards and themes count)
+    const statsResponse = await fetch('/api/usage', {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
+      },
+    });
+
+    if (statsResponse.ok) {
+      const statsData = await statsResponse.json();
+      cardCount.value = statsData.cardCount || 0;
+      themeCount.value = statsData.themeCount || 0;
     }
   } catch (err) {
     error.value = 'Failed to load subscription details. Please try again.';
@@ -266,10 +404,14 @@ const syncSubscription = async () => {
   error.value = null;
 
   try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     const response = await fetch('/api/subscription/sync', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
       },
     });
 
@@ -299,10 +441,14 @@ const cancelSubscription = async () => {
   }
 
   try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     const response = await fetch('/api/subscription/cancel', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
       },
     });
 
@@ -327,6 +473,10 @@ const upgradePlan = () => {
 
 const renewSubscription = () => {
   router.visit(route('payments.index'));
+};
+
+const upgradeToPlan = (plan) => {
+  router.visit(route('payments.checkout', plan.id));
 };
 
 const formatDate = (dateString) => {

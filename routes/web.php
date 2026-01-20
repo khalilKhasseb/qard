@@ -57,7 +57,17 @@ Route::middleware('auth')->group(function () {
 
     // Subscription Management
     Route::get('/subscription', function () {
-        return Inertia::render('Subscription/Index');
+        $user = request()->user();
+        $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
+
+        // Get all active plans (available for upgrade)
+        $plans = \App\Models\SubscriptionPlan::where('is_active', true)
+            ->orderBy('price')
+            ->get();
+
+        return Inertia::render('Subscription/Index', [
+            'availablePlans' => $plans,
+        ]);
     })->name('subscription.index');
 
     // Language switching

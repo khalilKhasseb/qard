@@ -97,27 +97,37 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canUseCustomCss(): bool
     {
-        return in_array($this->subscription_tier, ['pro', 'business']);
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            return $subscription->subscriptionPlan->custom_css_allowed ?? false;
+        }
+
+        return false;
     }
 
     public function getCardLimit(): int
     {
-        return match ($this->subscription_tier) {
-            'free' => 1,
-            'pro' => 5,
-            'business' => 20,
-            default => 1,
-        };
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            return $subscription->subscriptionPlan->cards_limit ?? 1;
+        }
+
+        // Free tier default (no subscription)
+        return 1;
     }
 
     public function getThemeLimit(): int
     {
-        return match ($this->subscription_tier) {
-            'free' => 1,
-            'pro' => 10,
-            'business' => 50,
-            default => 1,
-        };
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            return $subscription->subscriptionPlan->themes_limit ?? 1;
+        }
+
+        // Free tier default (no subscription)
+        return 1;
     }
 
     public function isSubscriptionActive(): bool
