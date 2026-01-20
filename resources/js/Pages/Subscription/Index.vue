@@ -355,8 +355,14 @@ const loadSubscription = async () => {
   error.value = null;
 
   try {
-    // Get CSRF token from meta tag
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    // Get the XSRF token from cookies (Laravel Sanctum session auth)
+    const xsrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('XSRF-TOKEN='))
+      ?.split('=')[1];
+
+    // Decode the token if it's URL encoded
+    const csrfToken = xsrfToken ? decodeURIComponent(xsrfToken) : null;
     
     // Load subscription data
     const response = await fetch('/api/subscription', {
@@ -377,7 +383,7 @@ const loadSubscription = async () => {
       subscription.value = data;
     }
 
-    // Load usage stats (cards and themes count)
+    // Load usage stats
     const statsResponse = await fetch('/api/usage', {
       headers: {
         'Accept': 'application/json',
@@ -404,7 +410,11 @@ const syncSubscription = async () => {
   error.value = null;
 
   try {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const xsrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('XSRF-TOKEN='))
+      ?.split('=')[1];
+    const csrfToken = xsrfToken ? decodeURIComponent(xsrfToken) : null;
     
     const response = await fetch('/api/subscription/sync', {
       method: 'POST',
@@ -441,7 +451,11 @@ const cancelSubscription = async () => {
   }
 
   try {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const xsrfToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('XSRF-TOKEN='))
+      ?.split('=')[1];
+    const csrfToken = xsrfToken ? decodeURIComponent(xsrfToken) : null;
     
     const response = await fetch('/api/subscription/cancel', {
       method: 'POST',

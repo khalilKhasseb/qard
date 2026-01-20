@@ -10,6 +10,7 @@ class SubscriptionController extends Controller
 {
     public function show(Request $request)
     {
+
         $subscription = $request->user()
             ->activeSubscription()
             ->with('subscriptionPlan')

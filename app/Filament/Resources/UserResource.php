@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers\SubscriptionsRelationManager;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Forms;
@@ -153,7 +154,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            SubscriptionsRelationManager::class,
         ];
     }
 
