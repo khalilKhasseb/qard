@@ -49,7 +49,7 @@ class BusinessCard extends Model
 
     public function getCoverImageUrlAttribute(): ?string
     {
-        if (!$this->cover_image_path) {
+        if (! $this->cover_image_path) {
             return null;
         }
 
@@ -62,7 +62,7 @@ class BusinessCard extends Model
 
     public function getProfileImageUrlAttribute(): ?string
     {
-        if (!$this->profile_image_path) {
+        if (! $this->profile_image_path) {
             return null;
         }
 
@@ -145,7 +145,7 @@ class BusinessCard extends Model
     {
         $baseConfig = $this->theme?->config ?? Theme::getDefaultConfig();
 
-        if (!empty($this->theme_overrides)) {
+        if (! empty($this->theme_overrides)) {
             return array_replace_recursive($baseConfig, $this->theme_overrides);
         }
 

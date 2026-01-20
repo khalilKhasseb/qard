@@ -71,7 +71,7 @@ class UserSubscription extends Model
 
     public function isActive(): bool
     {
-        return $this->status === 'active' && 
+        return $this->status === 'active' &&
                ($this->ends_at === null || $this->ends_at->isFuture());
     }
 
@@ -82,7 +82,7 @@ class UserSubscription extends Model
 
     public function daysRemaining(): int
     {
-        if (!$this->ends_at) {
+        if (! $this->ends_at) {
             return PHP_INT_MAX;
         }
 
@@ -97,7 +97,7 @@ class UserSubscription extends Model
     public function activate(): void
     {
         $this->update(['status' => 'active']);
-        
+
         $this->user->update([
             'subscription_status' => 'active',
             'subscription_tier' => $this->plan->slug,

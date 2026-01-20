@@ -7,8 +7,8 @@ use App\Models\BusinessCard;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -16,9 +16,9 @@ class BusinessCardResource extends Resource
 {
     protected static ?string $model = BusinessCard::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Cards';
+    protected static string|\UnitEnum|null $navigationGroup = 'Cards';
 
     protected static ?int $navigationSort = 1;
 
@@ -26,7 +26,7 @@ class BusinessCardResource extends Resource
     {
         return $form
             ->schema([
-               Schemas\Components\Section::make('Card Details')
+                Schemas\Components\Section::make('Card Details')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')

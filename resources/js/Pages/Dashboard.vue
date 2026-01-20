@@ -151,8 +151,8 @@ const subscriptionStatus = computed(() => {
                                     {{ subscription.days_remaining }} days remaining
                                 </p>
                             </div>
-                            <Link href="/subscription/plans" class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                                Upgrade Plan
+                            <Link href="/subscription" class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                                Manage Subscription
                             </Link>
                         </div>
                     </div>

@@ -2,9 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -21,7 +20,7 @@ return new class extends Migration
         foreach ($cards as $card) {
             $title = $card->title;
             // Check if it's already JSON (starts with {)
-            if (!str_starts_with(trim($title), '{')) {
+            if (! str_starts_with(trim($title), '{')) {
                 DB::table('business_cards')->where('id', $card->id)->update([
                     'title' => json_encode([$defaultLang => $title]),
                     'subtitle' => $card->subtitle ? json_encode([$defaultLang => $card->subtitle]) : null,

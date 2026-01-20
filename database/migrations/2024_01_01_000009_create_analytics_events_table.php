@@ -19,7 +19,7 @@ return new class extends Migration
                 'social_share',
                 'section_click',
                 'contact_save',
-                'link_click'
+                'link_click',
             ]);
             $table->string('referrer')->nullable();
             $table->text('user_agent')->nullable();

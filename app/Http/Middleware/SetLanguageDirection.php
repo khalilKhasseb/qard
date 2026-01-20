@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Language;
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\Language;
 
 class SetLanguageDirection
 {
@@ -12,7 +12,7 @@ class SetLanguageDirection
     {
         $languageCode = app()->getLocale();
         $language = Language::where('code', $languageCode)->first();
-        
+
         if ($language && $language->direction === 'rtl') {
             config(['app.direction' => 'rtl']);
         } else {

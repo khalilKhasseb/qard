@@ -14,7 +14,7 @@ class ThemeFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'name' => fake()->words(2, true) . ' Theme',
+            'name' => fake()->words(2, true).' Theme',
             'is_system_default' => false,
             'is_public' => false,
             'config' => Theme::getDefaultConfig(),

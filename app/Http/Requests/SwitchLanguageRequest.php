@@ -21,7 +21,7 @@ class SwitchLanguageRequest extends FormRequest
                 'exists:languages,code',
                 function ($attribute, $value, $fail) {
                     $language = \App\Models\Language::where('code', $value)->first();
-                    if ($language && !$language->is_active) {
+                    if ($language && ! $language->is_active) {
                         $fail('The selected language is not active.');
                     }
                 },

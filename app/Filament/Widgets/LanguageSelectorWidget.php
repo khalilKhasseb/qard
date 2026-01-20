@@ -9,7 +9,7 @@ class LanguageSelectorWidget extends Widget
 {
     protected string $view = 'filament.widgets.language-selector';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function getLanguages()
     {

@@ -26,7 +26,7 @@ class CardResource extends JsonResource
             'full_url' => $this->full_url,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            
+
             // Relationships (when loaded)
             'sections' => SectionResource::collection($this->whenLoaded('sections')),
             'theme' => new ThemeResource($this->whenLoaded('theme')),

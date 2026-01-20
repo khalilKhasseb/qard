@@ -2,7 +2,6 @@
 
 use App\Models\BusinessCard;
 use App\Models\CardSection;
-use App\Models\Template;
 use App\Models\User;
 use App\Services\CardService;
 
@@ -10,7 +9,7 @@ beforeEach(function () {
     $this->user = User::factory()->create([
         'subscription_tier' => 'pro',
     ]);
-    $this->cardService = new CardService();
+    $this->cardService = new CardService;
 });
 
 test('user can create card', function () {

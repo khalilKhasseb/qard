@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessCard;
 use App\Models\Language;
 use App\Services\CardService;
 use Illuminate\Http\Request;
@@ -17,7 +16,7 @@ class PublicCardController extends Controller
     {
         $card = $this->cardService->getCardBySlug($slug);
 
-        if (!$card) {
+        if (! $card) {
             abort(404);
         }
 
@@ -35,7 +34,7 @@ class PublicCardController extends Controller
     {
         $card = $this->cardService->getCardByShareUrl($shareUrl);
 
-        if (!$card) {
+        if (! $card) {
             abort(404);
         }
 
@@ -53,7 +52,7 @@ class PublicCardController extends Controller
     {
         $card = $this->cardService->getCardByNfc($nfcId);
 
-        if (!$card) {
+        if (! $card) {
             abort(404);
         }
 
@@ -71,7 +70,7 @@ class PublicCardController extends Controller
     {
         $card = $this->cardService->getCardByShareUrl($shareUrl);
 
-        if (!$card) {
+        if (! $card) {
             abort(404);
         }
 

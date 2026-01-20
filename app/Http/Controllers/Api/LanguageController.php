@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SwitchLanguageRequest;
 use App\Http\Resources\LanguageResource;
 use App\Models\Language;
-use Illuminate\Http\Request;
-use App\Http\Requests\SwitchLanguageRequest;
 
 class LanguageController extends Controller
 {
     public function index()
     {
         $languages = Language::active()->get();
+
         return LanguageResource::collection($languages);
     }
 
@@ -33,7 +33,7 @@ class LanguageController extends Controller
         if ($request->wantsJson() || $request->is('api/*')) {
             return response()->json([
                 'message' => 'Language switched successfully',
-                'language' => new LanguageResource($language)
+                'language' => new LanguageResource($language),
             ]);
         }
 

@@ -16,7 +16,7 @@ Route::post('/analytics/track', [AnalyticsController::class, 'track'])
 Route::middleware('auth:sanctum')->group(function () {
     // Business Cards
     Route::apiResource('cards', CardController::class)->names([
-        'index' => 'api.cards.index', 
+        'index' => 'api.cards.index',
         'store' => 'api.cards.store',
         'show' => 'api.cards.show',
         'update' => 'api.cards.update',
@@ -72,6 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('subscription', [SubscriptionController::class, 'show'])
         ->name('api.subscription.show');
+    Route::post('subscription/sync', [SubscriptionController::class, 'sync'])
+        ->name('api.subscription.sync');
     Route::post('subscription/cancel', [SubscriptionController::class, 'cancel'])
         ->name('api.subscription.cancel');
 });

@@ -4,7 +4,6 @@ namespace App\Filament\Widgets;
 
 use App\Models\AnalyticsEvent;
 use App\Models\BusinessCard;
-use App\Models\Payment;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;

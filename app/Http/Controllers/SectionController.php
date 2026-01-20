@@ -49,7 +49,7 @@ class SectionController extends Controller
             foreach ($request->file('item_images') as $index => $file) {
                 if (isset($content['items'][$index])) {
                     // Delete old item image if it exists in the storage
-                    if (!empty($content['items'][$index]['image_path'])) {
+                    if (! empty($content['items'][$index]['image_path'])) {
                         \Illuminate\Support\Facades\Storage::delete($content['items'][$index]['image_path']);
                     }
                     $path = $file->store('section_items', 'public');
@@ -72,7 +72,7 @@ class SectionController extends Controller
         $this->cardService->deleteSection($section);
 
         return response()->json([
-            'message' => 'Section deleted successfully'
+            'message' => 'Section deleted successfully',
         ], 200);
     }
 
@@ -94,7 +94,7 @@ class SectionController extends Controller
         }
 
         return response()->json([
-            'message' => 'Sections reordered successfully'
+            'message' => 'Sections reordered successfully',
         ], 200);
     }
 }

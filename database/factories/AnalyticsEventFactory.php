@@ -14,7 +14,7 @@ class AnalyticsEventFactory extends Factory
     public function definition(): array
     {
         $eventTypes = array_keys(AnalyticsEvent::EVENT_TYPES);
-        
+
         return [
             'business_card_id' => BusinessCard::factory(),
             'card_section_id' => null,

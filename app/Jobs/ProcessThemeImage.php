@@ -16,6 +16,7 @@ class ProcessThemeImage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 120;
+
     public int $tries = 3;
 
     public function __construct(
@@ -27,14 +28,14 @@ class ProcessThemeImage implements ShouldQueue
     {
         $sourcePath = $this->themeImage->file_path;
 
-        if (!Storage::disk('public')->exists($sourcePath)) {
+        if (! Storage::disk('public')->exists($sourcePath)) {
             return;
         }
 
         $imageContent = Storage::disk('public')->get($sourcePath);
         $imageInfo = @getimagesizefromstring($imageContent);
 
-        if (!$imageInfo) {
+        if (! $imageInfo) {
             return;
         }
 

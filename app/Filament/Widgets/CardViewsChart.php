@@ -9,7 +9,7 @@ class CardViewsChart extends ChartWidget
 {
     protected ?string $heading = 'Card Views (Last 7 Days)';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     public static function getSort(): int
     {

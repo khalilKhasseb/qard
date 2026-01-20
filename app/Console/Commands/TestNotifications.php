@@ -39,8 +39,9 @@ class TestNotifications extends Command
         // Find or create a test user
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->error("User with email {$email} not found. Please create a user first.");
+
             return Command::FAILURE;
         }
 
@@ -49,13 +50,13 @@ class TestNotifications extends Command
 
         // 1. Welcome Email
         $this->info('1. Sending Welcome Email...');
-        $user->notify(new WelcomeEmail());
+        $user->notify(new WelcomeEmail);
         $this->line('   ✓ WelcomeEmail queued');
         $this->newLine();
 
         // 2. Email Verification
         $this->info('2. Sending Email Verification...');
-        $user->notify(new VerifyEmail());
+        $user->notify(new VerifyEmail);
         $this->line('   ✓ VerifyEmail queued');
         $this->newLine();
 
@@ -70,7 +71,7 @@ class TestNotifications extends Command
         $payment = $user->payments()->completed()->with('plan')->first();
         if ($payment) {
             $user->notify(new PaymentConfirmed($payment));
-            $this->line('   ✓ PaymentConfirmed queued (using payment #' . $payment->id . ')');
+            $this->line('   ✓ PaymentConfirmed queued (using payment #'.$payment->id.')');
         } else {
             $this->line('   ⚠ No completed payments found. Creating mock notification...');
             // Create a mock payment for testing
@@ -92,7 +93,7 @@ class TestNotifications extends Command
         $subscription = $user->subscriptions()->active()->with('plan')->first();
         if ($subscription) {
             $user->notify(new SubscriptionExpiring($subscription, 7));
-            $this->line('   ✓ SubscriptionExpiring queued (using subscription #' . $subscription->id . ')');
+            $this->line('   ✓ SubscriptionExpiring queued (using subscription #'.$subscription->id.')');
         } else {
             $this->line('   ⚠ No active subscriptions found. Creating mock notification...');
             // Create a mock subscription for testing
@@ -101,7 +102,7 @@ class TestNotifications extends Command
                 'ends_at' => now()->addDays(7),
             ]);
             $mockSubscription->exists = true;
-            $mockSubscription->setRelation('plan', (object)[
+            $mockSubscription->setRelation('plan', (object) [
                 'name' => 'Pro Plan',
                 'price' => 29.99,
                 'billing_cycle' => 'monthly',
@@ -115,10 +116,10 @@ class TestNotifications extends Command
         $this->info('6. Sending Subscription Activated...');
         if ($subscription) {
             $user->notify(new SubscriptionActivated($subscription));
-            $this->line('   ✓ SubscriptionActivated queued (using subscription #' . $subscription->id . ')');
+            $this->line('   ✓ SubscriptionActivated queued (using subscription #'.$subscription->id.')');
         } else {
             $this->line('   ⚠ No subscriptions found. Creating mock notification...');
-            $user->notify(new SubscriptionActivated($mockSubscription ?? new UserSubscription()));
+            $user->notify(new SubscriptionActivated($mockSubscription ?? new UserSubscription));
             $this->line('   ✓ SubscriptionActivated queued (with mock data)');
         }
         $this->newLine();

@@ -7,8 +7,8 @@ use App\Models\Theme;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Schemas;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -16,9 +16,9 @@ class ThemeResource extends Resource
 {
     protected static ?string $model = Theme::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-paint-brush';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-paint-brush';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Cards';
+    protected static string|\UnitEnum|null $navigationGroup = 'Cards';
 
     protected static ?int $navigationSort = 2;
 

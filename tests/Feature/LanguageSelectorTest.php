@@ -37,7 +37,7 @@ class LanguageSelectorTest extends TestCase
     {
         // Test that the language model returns active languages correctly
         $languages = \App\Models\Language::active()->get();
-        
+
         $this->assertCount(2, $languages); // English and Arabic are active
         $this->assertContains('English', $languages->pluck('name'));
         $this->assertContains('Arabic', $languages->pluck('name'));
@@ -49,7 +49,7 @@ class LanguageSelectorTest extends TestCase
 
         $response = $this->actingAs($user)
             ->post('/language/switch', [
-                'language_code' => 'ar'
+                'language_code' => 'ar',
             ]);
 
         $response->assertStatus(200); // API response

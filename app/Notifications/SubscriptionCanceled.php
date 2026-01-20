@@ -25,9 +25,9 @@ class SubscriptionCanceled extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Subscription Canceled - TapIt')
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('Your subscription has been canceled.')
-            ->line('You will continue to have access to your plan features until ' . $this->subscription->ends_at->format('F j, Y') . '.')
+            ->line('You will continue to have access to your plan features until '.$this->subscription->ends_at->format('F j, Y').'.')
             ->action('Reactivate Subscription', url('/payments'))
             ->line('We hope to see you again soon!');
     }

@@ -23,7 +23,7 @@ return new class extends Migration
                 'video',
                 'links',
                 'about',
-                'custom'
+                'custom',
             ]);
             $table->string('title');
             $table->json('content');

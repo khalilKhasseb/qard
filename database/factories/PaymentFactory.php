@@ -21,7 +21,7 @@ class PaymentFactory extends Factory
             'currency' => 'USD',
             'payment_method' => fake()->randomElement(['cash', 'bank_transfer', 'gateway']),
             'status' => 'pending',
-            'transaction_id' => 'TXN-' . strtoupper(Str::random(12)),
+            'transaction_id' => 'TXN-'.strtoupper(Str::random(12)),
             'gateway_reference' => null,
             'notes' => null,
             'metadata' => null,

@@ -29,11 +29,11 @@ class VerifyEmail extends Notification implements ShouldQueue
         $verificationUrl = $this->verificationUrl($notifiable);
 
         return (new MailMessage)
-            ->subject('Verify Email Address - ' . config('app.name'))
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->subject('Verify Email Address - '.config('app.name'))
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('Please click the button below to verify your email address.')
             ->action('Verify Email Address', $verificationUrl)
-            ->line('This verification link will expire in ' . Config::get('auth.verification.expire', 60) . ' minutes.')
+            ->line('This verification link will expire in '.Config::get('auth.verification.expire', 60).' minutes.')
             ->line('If you did not create an account, no further action is required.');
     }
 

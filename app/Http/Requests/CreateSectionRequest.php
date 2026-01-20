@@ -17,7 +17,7 @@ class CreateSectionRequest extends FormRequest
         return [
             'section_type' => ['required', Rule::in([
                 'contact', 'social', 'services', 'products',
-                'testimonials', 'hours', 'appointments', 'gallery'
+                'testimonials', 'hours', 'appointments', 'gallery',
             ])],
             'title' => ['required', 'string', 'max:255'],
             'content' => ['nullable'],  // Allow empty/null, service handles defaults

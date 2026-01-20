@@ -14,12 +14,12 @@ class Language extends Model
         'code',
         'direction',
         'is_active',
-        'is_default'
+        'is_default',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'is_default' => 'boolean'
+        'is_default' => 'boolean',
     ];
 
     public function users()

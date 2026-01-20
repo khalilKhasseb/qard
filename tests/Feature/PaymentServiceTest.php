@@ -14,7 +14,7 @@ beforeEach(function () {
         'price' => 9.99,
         'billing_cycle' => 'monthly',
     ]);
-    $this->paymentService = new PaymentService();
+    $this->paymentService = new PaymentService;
 });
 
 test('can create subscription payment', function () {
@@ -50,7 +50,7 @@ test('can confirm payment and activate subscription', function () {
 });
 
 test('cash gateway creates pending payment', function () {
-    $gateway = new CashPaymentGateway();
+    $gateway = new CashPaymentGateway;
     $payment = $gateway->createPayment($this->user, 19.99, [
         'subscription_plan_id' => $this->plan->id,
     ]);

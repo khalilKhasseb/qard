@@ -7,9 +7,9 @@ use App\Models\Language;
 use App\Models\Theme;
 use App\Services\CardService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\DB;
 
 class CardController extends Controller
 {
@@ -58,7 +58,7 @@ class CardController extends Controller
         // Wrap title and subtitle into JSON based on selected language
         $language = Language::find($validated['language_id']);
         $validated['title'] = [$language->code => $validated['title']];
-        if (!empty($validated['subtitle'])) {
+        if (! empty($validated['subtitle'])) {
             $validated['subtitle'] = [$language->code => $validated['subtitle']];
         }
 
@@ -72,7 +72,7 @@ class CardController extends Controller
     {
         $this->authorize('update', $card);
 
-        $card->load(['sections' => fn($q) => $q->ordered(), 'theme', 'language']);
+        $card->load(['sections' => fn ($q) => $q->ordered(), 'theme', 'language']);
 
         $themes = Theme::forUser($request->user()->id)->get();
         $languages = Language::active()->get();
@@ -101,7 +101,7 @@ class CardController extends Controller
             'profile_image' => 'nullable|image|max:2048',
             'theme_id' => 'nullable|exists:themes,id',
             'language_id' => 'sometimes|exists:languages,id',
-            'custom_slug' => 'nullable|string|max:255|unique:business_cards,custom_slug,' . $card->id,
+            'custom_slug' => 'nullable|string|max:255|unique:business_cards,custom_slug,'.$card->id,
         ]);
 
         if ($request->hasFile('cover_image')) {
@@ -134,7 +134,7 @@ class CardController extends Controller
         $this->authorize('update', $card);
 
         $request->validate([
-            'is_published' => 'required|boolean'
+            'is_published' => 'required|boolean',
         ]);
 
         $card->is_published = $request->input('is_published');

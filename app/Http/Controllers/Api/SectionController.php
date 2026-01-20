@@ -45,7 +45,7 @@ class SectionController extends Controller
         $this->cardService->deleteSection($section);
 
         return response()->json([
-            'message' => 'Section deleted successfully'
+            'message' => 'Section deleted successfully',
         ], 200);
     }
 
@@ -61,7 +61,7 @@ class SectionController extends Controller
         $this->cardService->reorderSections($card, $request->input('section_ids'));
 
         return response()->json([
-            'message' => 'Sections reordered successfully'
+            'message' => 'Sections reordered successfully',
         ], 200);
     }
 }

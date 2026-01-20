@@ -15,7 +15,7 @@ class UpdateCardRequest extends FormRequest
     public function rules(): array
     {
         $cardId = $this->route('card');
-        
+
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],

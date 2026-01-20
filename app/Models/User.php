@@ -14,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -84,12 +84,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function canCreateCard(): bool
     {
         $limit = $this->getCardLimit();
+
         return $this->cards()->count() < $limit;
     }
 
     public function canCreateTheme(): bool
     {
         $limit = $this->getThemeLimit();
+
         return $this->themes()->count() < $limit;
     }
 
@@ -152,7 +154,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification()
     {
-        $this->notify(new VerifyEmail());
+        $this->notify(new VerifyEmail);
     }
 
     /**

@@ -37,9 +37,9 @@ class RateLimitApi
     protected function resolveRequestSignature(Request $request): string
     {
         if ($user = $request->user()) {
-            return 'api:' . $user->id;
+            return 'api:'.$user->id;
         }
 
-        return 'api:' . $request->ip();
+        return 'api:'.$request->ip();
     }
 }

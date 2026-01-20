@@ -20,10 +20,10 @@ class UserSubscriptionResource extends JsonResource
             'canceled_at' => $this->canceled_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            
+
             // Relationships
             'plan' => new SubscriptionPlanResource($this->whenLoaded('subscriptionPlan')),
-            
+
             // Computed
             'is_active' => $this->isActive(),
             'is_trial' => $this->isOnTrial(),

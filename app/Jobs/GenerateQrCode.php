@@ -15,6 +15,7 @@ class GenerateQrCode implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 60;
+
     public int $tries = 3;
 
     public function __construct(
@@ -36,7 +37,7 @@ class GenerateQrCode implements ShouldQueue
         $qrcode = new \chillerlan\QRCode\QRCode($options);
         $imageData = $qrcode->render($url);
 
-        $filename = "qrcodes/{$this->card->id}_" . time() . '.png';
+        $filename = "qrcodes/{$this->card->id}_".time().'.png';
         Storage::disk('public')->put($filename, $imageData);
 
         $this->card->update([

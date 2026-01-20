@@ -40,7 +40,7 @@ class AnalyticsService
     public function getViewsOverTime(BusinessCard $card, string $period = 'month', string $groupBy = 'day'): Collection
     {
         $driver = DB::connection()->getDriverName();
-        
+
         $dateExpression = match ([$driver, $groupBy]) {
             ['sqlite', 'hour'] => "strftime('%Y-%m-%d %H:00', created_at)",
             ['sqlite', 'day'] => "strftime('%Y-%m-%d', created_at)",
@@ -155,6 +155,7 @@ class AnalyticsService
     public function getTotalViews(User $user): int
     {
         $cardIds = $user->cards()->pluck('id');
+
         return AnalyticsEvent::whereIn('business_card_id', $cardIds)
             ->ofType('view')
             ->count();
@@ -163,6 +164,7 @@ class AnalyticsService
     public function getTotalShares(User $user): int
     {
         $cardIds = $user->cards()->pluck('id');
+
         return AnalyticsEvent::whereIn('business_card_id', $cardIds)
             ->ofType('social_share')
             ->count();
@@ -171,6 +173,7 @@ class AnalyticsService
     public function getTotalNfcTaps(User $user): int
     {
         $cardIds = $user->cards()->pluck('id');
+
         return AnalyticsEvent::whereIn('business_card_id', $cardIds)
             ->ofType('nfc_tap')
             ->count();
@@ -179,6 +182,7 @@ class AnalyticsService
     public function getTotalByType(User $user, string $type): int
     {
         $cardIds = $user->cards()->pluck('id');
+
         return AnalyticsEvent::whereIn('business_card_id', $cardIds)
             ->ofType($type)
             ->count();
@@ -187,6 +191,7 @@ class AnalyticsService
     public function getUserRecentEvents(User $user, int $limit = 10): Collection
     {
         $cardIds = $user->cards()->pluck('id');
+
         return AnalyticsEvent::whereIn('business_card_id', $cardIds)
             ->with(['businessCard:id,title', 'section:id,title'])
             ->orderByDesc('created_at')
@@ -197,7 +202,7 @@ class AnalyticsService
     public function getCardViewsChart(User $user, int $days = 7): array
     {
         $cardIds = $user->cards()->pluck('id');
-        
+
         $data = AnalyticsEvent::whereIn('business_card_id', $cardIds)
             ->ofType('view')
             ->where('created_at', '>=', now()->subDays($days))
@@ -208,12 +213,12 @@ class AnalyticsService
 
         $dates = [];
         $counts = [];
-        
+
         // Fill in all dates even if no data
         for ($i = $days - 1; $i >= 0; $i--) {
             $date = now()->subDays($i)->format('Y-m-d');
             $dates[] = $date;
-            
+
             $dayData = $data->firstWhere('date', $date);
             $counts[] = $dayData ? $dayData->count : 0;
         }

@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->foreignId('language_id')
-                  ->nullable()
-                  ->after('id')
-                  ->constrained('languages')
-                  ->nullOnDelete();
+                ->nullable()
+                ->after('id')
+                ->constrained('languages')
+                ->nullOnDelete();
         });
     }
 

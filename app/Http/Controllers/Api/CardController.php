@@ -44,7 +44,7 @@ class CardController extends Controller
     public function show(Request $request, BusinessCard $card): CardResource
     {
         $this->authorize('view', $card);
-        
+
         return new CardResource($card->load(['sections', 'theme']));
     }
 
@@ -64,7 +64,7 @@ class CardController extends Controller
         $this->cardService->deleteCard($card);
 
         return response()->json([
-            'message' => 'Card deleted successfully'
+            'message' => 'Card deleted successfully',
         ], 200);
     }
 
@@ -73,7 +73,7 @@ class CardController extends Controller
         $this->authorize('update', $card);
 
         $request->validate([
-            'is_published' => 'required|boolean'
+            'is_published' => 'required|boolean',
         ]);
 
         $card->is_published = $request->input('is_published');
@@ -101,7 +101,7 @@ class CardController extends Controller
 
         return response()->json([
             'card_id' => $card->id,
-            'analytics' => $analytics
+            'analytics' => $analytics,
         ]);
     }
 }

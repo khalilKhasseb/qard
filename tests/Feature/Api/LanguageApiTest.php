@@ -49,8 +49,8 @@ class LanguageApiTest extends TestCase
             ->assertJsonCount(2, 'data')
             ->assertJsonStructure([
                 'data' => [
-                    '*' => ['id', 'name', 'code', 'direction', 'is_active', 'is_default', 'created_at', 'updated_at']
-                ]
+                    '*' => ['id', 'name', 'code', 'direction', 'is_active', 'is_default', 'created_at', 'updated_at'],
+                ],
             ]);
     }
 
@@ -66,7 +66,7 @@ class LanguageApiTest extends TestCase
                     'code' => 'en',
                     'name' => 'English',
                     'direction' => 'ltr',
-                ]
+                ],
             ]);
     }
 
@@ -76,7 +76,7 @@ class LanguageApiTest extends TestCase
 
         $response = $this->actingAs($user)
             ->postJson('/api/language/switch', [
-                'language_code' => 'ar'
+                'language_code' => 'ar',
             ]);
 
         $response->assertStatus(200)
@@ -89,7 +89,7 @@ class LanguageApiTest extends TestCase
                     'direction' => 'rtl',
                     'is_active' => true,
                     'is_default' => false,
-                ]
+                ],
             ]);
     }
 
@@ -99,7 +99,7 @@ class LanguageApiTest extends TestCase
 
         $response = $this->actingAs($user)
             ->postJson('/api/language/switch', [
-                'language_code' => 'xx'
+                'language_code' => 'xx',
             ]);
 
         $response->assertStatus(422)
@@ -112,7 +112,7 @@ class LanguageApiTest extends TestCase
 
         $response = $this->actingAs($user)
             ->postJson('/api/language/switch', [
-                'language_code' => 'fr'
+                'language_code' => 'fr',
             ]);
 
         $response->assertStatus(422);

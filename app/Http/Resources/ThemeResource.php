@@ -20,7 +20,7 @@ class ThemeResource extends JsonResource
             'used_by_cards_count' => $this->used_by_cards_count,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            
+
             // User info
             'user' => [
                 'id' => $this->user_id,

@@ -6,8 +6,6 @@ use App\Filament\Widgets\LanguageSelectorWidget;
 use App\Filament\Widgets\TranslationOverview;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Illuminate\Contracts\View\View;
-use Illuminate\Routing\Router;
 
 class FilamentServiceProvider extends PanelProvider
 {
@@ -35,7 +33,7 @@ class FilamentServiceProvider extends PanelProvider
                 'System Management',
                 'Content Management',
                 'User Management',
-                'Settings'
+                'Settings',
             ])
             ->brandName('Qard Admin')
             ->favicon(asset('images/favicon.ico'))
