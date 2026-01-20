@@ -15,9 +15,9 @@
                     @if($language->code === $this->getCurrentLanguage())
                         <span class="text-green-600 dark:text-green-400 text-sm">Active</span>
                     @else
-                        <a href="{{ route('filament.admin.pages.language-switch', ['language' => $language->code]) }}" class="text-blue-600 dark:text-blue-400 text-sm hover:underline">
-                            Switch
-                        </a>
+                            {{-- <a href="{{ route('filament.admin.pages.language-switch', ['language' => $language->code]) }}" class="text-blue-600 dark:text-blue-400 text-sm hover:underline">
+                                Switch
+                            </a> --}}
                     @endif
                 </div>
             @endforeach
