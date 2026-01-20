@@ -327,9 +327,12 @@
 </template>
 
 <script setup>
+  
 import { ref, onMounted, computed } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router ,usePage} from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import axios from 'axios';
+const page = usePage()
 
 const props = defineProps({
   availablePlans: {
@@ -365,6 +368,14 @@ const loadSubscription = async () => {
     const csrfToken = xsrfToken ? decodeURIComponent(xsrfToken) : null;
     
     // Load subscription data
+    // await axios.get('/sanctum/csrf-cookie');
+
+    // const t =await  axios.get('/api/subscription',{
+    //    withCredentials: true,
+    // });
+    //   console.log(t);
+
+    //   return ;
     const response = await fetch('/api/subscription', {
       headers: {
         'Accept': 'application/json',
@@ -503,6 +514,7 @@ const formatDate = (dateString) => {
 };
 
 onMounted(() => {
+
   loadSubscription();
 });
 </script>

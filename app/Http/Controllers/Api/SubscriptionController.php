@@ -11,12 +11,18 @@ class SubscriptionController extends Controller
     public function show(Request $request)
     {
 
+        logger('Auth check:', [
+            'authenticated' => auth()->check(),
+            'user' => auth()->user(),
+            'guard' => auth()->getDefaultDriver(),
+            'session_id' => session()->getId(),
+        ]);
         $subscription = $request->user()
             ->activeSubscription()
             ->with('subscriptionPlan')
             ->first();
 
-        if (! $subscription) {
+        if (!$subscription) {
             return new UserSubscriptionResource(null);
         }
 
@@ -27,7 +33,7 @@ class SubscriptionController extends Controller
     {
         $subscription = $request->user()->activeSubscription;
 
-        if (! $subscription) {
+        if (!$subscription) {
             return response()->json([
                 'message' => 'No active subscription to cancel',
             ], 404);
@@ -52,7 +58,7 @@ class SubscriptionController extends Controller
         $user = $request->user();
         $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
 
-        if (! $subscription) {
+        if (!$subscription) {
             return response()->json([
                 'message' => 'No active subscription found',
             ], 404);

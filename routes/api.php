@@ -13,7 +13,7 @@ Route::post('/analytics/track', [AnalyticsController::class, 'track'])
     ->name('api.analytics.track');
 
 // Authenticated API routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('web')->group(function () {
     // Business Cards
     Route::apiResource('cards', CardController::class)->names([
         'index' => 'api.cards.index',
