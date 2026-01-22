@@ -157,8 +157,8 @@ class UserResource extends Resource
                         'expired' => 'Expired',
                     ]),
             ])
-            ->actions([
-                Tables\Actions\Action::make('verify')
+            ->recordActions([
+                  \Filament\Actions\Action::make('verify')
                     ->label('Verify Email')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
@@ -172,7 +172,7 @@ class UserResource extends Resource
                             ->send();
                     })
                     ->requiresConfirmation(),
-                Tables\Actions\Action::make('unverify')
+                \Filament\Actions\Action::make('unverify')
                     ->label('Unverify Email')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
@@ -189,9 +189,9 @@ class UserResource extends Resource
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('verify_selected')
+            ->toolbarActions([
+                 \Filament\Actions\BulkActionGroup::make([
+                   \Filament\Actions\BulkAction::make('verify_selected')
                         ->label('Verify Selected')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -211,7 +211,7 @@ class UserResource extends Resource
                                 ->send();
                         })
                         ->requiresConfirmation(),
-                    Actions\DeleteBulkAction::make(),
+                    \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
