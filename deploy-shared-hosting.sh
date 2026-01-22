@@ -6,7 +6,7 @@
 echo "🚀 Starting QCard Deployment for Shared Hosting..."
 
 # Update app path for your hosting
-APP_PATH="/home/yourusername/public_html/qcard"  # Update this path
+APP_PATH="/home/weno/www"  # Updated for your hosting environment
 cd "$APP_PATH" || exit 1
 
 # Check if .env exists

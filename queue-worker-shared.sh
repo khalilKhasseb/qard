@@ -3,7 +3,7 @@
 # Shared Hosting Queue Worker Solution
 # Works without supervisor or root access
 
-APP_PATH="/home/yourusername/public_html/qcard"  # Update this path
+APP_PATH="/home/weno/www"  # Updated for your hosting environment
 WORKER_PID_FILE="$APP_PATH/storage/queue-worker.pid"
 WORKER_LOG="$APP_PATH/storage/logs/queue-worker.log"
 MAX_RUNTIME=3600  # 1 hour
