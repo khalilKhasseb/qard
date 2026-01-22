@@ -19,7 +19,37 @@ class SectionController extends Controller
     {
         $this->authorize('update', $card);
 
-        $section = $this->cardService->addSection($card, $request->validated());
+        $data = $request->validated();
+
+        // Normalize content if it's JSON string
+        if (isset($data['content']) && is_string($data['content'])) {
+            $data['content'] = json_decode($data['content'], true);
+        }
+
+        // Handle item_images for new sections (e.g., gallery uploads on creation)
+        if ($request->hasFile('item_images')) {
+            $content = $data['content'] ?? [];
+            if (!isset($content['items']) || !is_array($content['items'])) {
+                $content['items'] = [];
+            }
+
+            foreach ($request->file('item_images') as $index => $file) {
+                $path = $file->store("users/{$request->user()->id}/cards/{$card->id}/gallery", 'public');
+                $url = \Illuminate\Support\Facades\Storage::url($path);
+
+                if (isset($content['items'][$index])) {
+                    $content['items'][$index]['image_path'] = $path;
+                    $content['items'][$index]['image_url'] = $url;
+                    $content['items'][$index]['url'] = $url;
+                } else {
+                    $content['items'][$index] = ['url' => $url, 'image_url' => $url, 'image_path' => $path];
+                }
+            }
+
+            $data['content'] = $content;
+        }
+
+        $section = $this->cardService->addSection($card, $data);
 
         return response()->json($section, 201);
     }
@@ -55,6 +85,8 @@ class SectionController extends Controller
                     $path = $file->store('section_items', 'public');
                     $content['items'][$index]['image_path'] = $path;
                     $content['items'][$index]['image_url'] = \Illuminate\Support\Facades\Storage::url($path);
+                    // Ensure legacy 'url' key is set for immediate frontend rendering
+                    $content['items'][$index]['url'] = \Illuminate\Support\Facades\Storage::url($path);
                 }
             }
             $data['content'] = $content;

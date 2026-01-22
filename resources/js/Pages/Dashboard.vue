@@ -1,8 +1,9 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link ,usePage} from '@inertiajs/vue3';
+import { computed, onMounted } from 'vue';
 
+const page = usePage();
 const props = defineProps({
     stats: {
         type: Object,
@@ -26,9 +27,15 @@ const props = defineProps({
 const subscriptionStatus = computed(() => {
     if (!props.subscription) return { text: 'Free Plan', color: 'gray' };
     if (props.subscription.is_trial) return { text: 'Trial', color: 'blue' };
-    if (props.subscription.is_active) return { text: 'Active', color: 'green' };
+    if (props.subscription.status === 'active') return { text: 'Active', color: 'green' };
     return { text: 'Inactive', color: 'red' };
 });
+const local = computed(() => page.props.currentLanguage|| 'en');
+
+onMounted(() => {
+console.log(props.subscription);
+}); 
+
 </script>
 
 <template>
@@ -143,23 +150,23 @@ const subscriptionStatus = computed(() => {
                                           }">
                                         {{ subscriptionStatus.text }}
                                     </span>
-                                    <span v-if="subscription && subscription.plan" class="ml-2">
-                                        {{ subscription.plan.name }}
+                                    <span v-if="subscription && subscription.subscription_plan" class="ml-2">
+                                        {{ subscription.subscription_plan.name }}
                                     </span>
                                 </p>
                                 
                                 <!-- Usage Bar -->
-                                <div v-if="subscription && subscription.plan" class="mt-3">
+                                <div v-if="subscription && subscription.subscription_plan" class="mt-3">
                                     <div class="flex justify-between text-xs text-gray-600 mb-1">
-                                        <span>Business Cards: {{ stats.total_cards }} / {{ subscription.plan.cards_limit }}</span>
-                                        <span :class="stats.total_cards >= subscription.plan.cards_limit ? 'text-red-600 font-semibold' : ''">
-                                            {{ subscription.plan.cards_limit - stats.total_cards }} remaining
+                                        <span>Business Cards: {{ stats.total_cards }} / {{ subscription.subscription_plan.cards_limit }}</span>
+                                        <span :class="stats.total_cards >= subscription.subscription_plan.cards_limit ? 'text-red-600 font-semibold' : ''">
+                                            {{ subscription.subscription_plan.cards_limit - stats.total_cards }} remaining
                                         </span>
                                     </div>
                                     <div class="w-full bg-gray-200 rounded-full h-2">
                                         <div class="h-2 rounded-full transition-all"
-                                             :class="stats.total_cards >= subscription.plan.cards_limit ? 'bg-red-500' : 'bg-green-500'"
-                                             :style="`width: ${(stats.total_cards / subscription.plan.cards_limit) * 100}%`"></div>
+                                             :class="stats.total_cards >= subscription.subscription_plan.cards_limit ? 'bg-red-500' : 'bg-green-500'"
+                                             :style="`width: ${(stats.total_cards / subscription.subscription_plan.cards_limit) * 100}%`"></div>
                                     </div>
                                 </div>
 
@@ -236,10 +243,10 @@ const subscriptionStatus = computed(() => {
                                   class="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="font-semibold text-gray-900">{{ card.title }}</p>
-                                        <p class="text-sm text-gray-500">{{ card.subtitle }}</p>
-                                    </div>
-                                    <div class="text-right">
+                                        <p class="font-semibold text-gray-900">{{ card.title[local] }}</p>
+                                        <p class="text-sm text-gray-500">{{ card.subtitle[local] }}</p>
+                                    </div> 
+                                    <div class="text-right"> 
                                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                                               :class="card.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
                                             {{ card.is_published ? 'Published' : 'Draft' }}

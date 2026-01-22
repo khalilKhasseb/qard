@@ -9,6 +9,55 @@ class UserSubscriptionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Handle free plan (SubscriptionPlan model instead of UserSubscription)
+        if ($this->resource && $this->resource instanceof \App\Models\SubscriptionPlan) {
+            return [
+                'id' => null,
+                'user_id' => null,
+                'subscription_plan_id' => $this->id,
+                'status' => 'free',
+                'starts_at' => null,
+                'ends_at' => null,
+                'trial_ends_at' => null,
+                'canceled_at' => null,
+                'created_at' => null,
+                'updated_at' => null,
+
+                // Relationships
+                'plan' => new SubscriptionPlanResource($this),
+
+                // Computed
+                'is_active' => false,
+                'is_trial' => false,
+                'days_remaining' => null,
+            ];
+        }
+
+        // Handle null (fallback)
+        if ($this->resource === null) {
+            return [
+                'id' => null,
+                'user_id' => null,
+                'subscription_plan_id' => null,
+                'status' => 'free',
+                'starts_at' => null,
+                'ends_at' => null,
+                'trial_ends_at' => null,
+                'canceled_at' => null,
+                'created_at' => null,
+                'updated_at' => null,
+
+                // Relationships
+                'plan' => null,
+
+                // Computed
+                'is_active' => false,
+                'is_trial' => false,
+                'days_remaining' => null,
+            ];
+        }
+
+        // Handle active subscription
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,

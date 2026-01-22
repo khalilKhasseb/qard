@@ -6,6 +6,7 @@ import TextInput from './TextInput.vue';
 import Textarea from './Textarea.vue';
 import PrimaryButton from './PrimaryButton.vue';
 import SecondaryButton from './SecondaryButton.vue';
+import ImageUpload from './ImageUpload.vue';
 
 const props = defineProps({
     sections: {
@@ -149,6 +150,18 @@ const addSection = async () => {
     }
 };
 
+const getDisplayTitle = (section) => {
+    if (!section.title) return '';
+    
+    // Handle JSON title structure
+    if (typeof section.title === 'object') {
+        // Try to get title in current language (assuming English for now)
+        return section.title.en || Object.values(section.title)[0] || '';
+    }
+    
+    return section.title;
+};
+
 // Edit section
 const openEditModal = async (section) => {
     const cloned = JSON.parse(JSON.stringify(section));
@@ -207,6 +220,49 @@ const updateSection = async () => {
     } catch (error) {
         console.error('Failed to update section:', error);
         alert(error.response?.data?.message || 'Failed to update section.');
+    }
+};
+
+// Upload a single gallery image immediately (shows progress and assigns returned url)
+const uploadGalleryImage = async (file, sectionId, idx) => {
+    const section = editingSection.value;
+    if (!section || section.id !== sectionId) return;
+
+    if (!section.content) section.content = {};
+    if (!Array.isArray(section.content.items)) section.content.items = [];
+
+    const item = section.content.items[idx] = section.content.items[idx] || { url: '', caption: '' };
+    item.uploadProgress = 0;
+    item.uploadError = null;
+
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('index', idx);
+        formData.append('card_id', props.cardId);
+
+        const response = await axios.post(
+            route('api.sections.gallery.upload', section.id),
+            formData,
+            {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (e) => {
+                    if (e.lengthComputable) {
+                        item.uploadProgress = Math.round((e.loaded / e.total) * 100);
+                    }
+                }
+            }
+        );
+
+        item.url = response.data.url;
+        item.image_url = response.data.url;
+        item.image_path = response.data.path ?? item.image_path;
+        delete item.uploadProgress;
+        delete item.uploadError;
+    } catch (err) {
+        item.uploadError = err.response?.data?.message || 'Upload failed';
+        item.uploadProgress = 0;
+        console.error('Gallery upload failed', err);
     }
 };
 
@@ -377,7 +433,7 @@ const removeEditItem = (index) => {
                     <!-- Section Info -->
                     <div class="flex-1">
                         <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-gray-900">{{ section.title }}</h4>
+                            <h4 class="font-semibold text-gray-900">{{ getDisplayTitle(section) }}</h4>
                             <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
                                 {{ getSectionLabel(section.section_type) }}
                             </span>
@@ -585,12 +641,29 @@ const removeEditItem = (index) => {
                                             v-model="item.url" 
                                             placeholder="Image URL"
                                             class="w-full"
+                                            :disabled="item.temp_file"
                                         />
-                                        <TextInput 
-                                            v-model="item.caption" 
-                                            placeholder="Caption (optional)"
-                                            class="w-full"
-                                        />
+
+                                        <div class="flex items-start gap-4">
+                                            <div class="flex-1">
+                                                <TextInput 
+                                                    v-model="item.caption" 
+                                                    placeholder="Caption (optional)"
+                                                    class="w-full"
+                                                />
+                                            </div>
+
+                                            <div class="w-40">
+                                                <ImageUpload
+                                                    :modelValue="item.url"
+                                                    :id="`new-gallery-${idx}`"
+                                                    @upload="(file) => item.temp_file = file"
+                                                    accept="image/*"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <p v-if="item.temp_file" class="text-xs text-gray-500">File attached; will be uploaded when you create the section.</p>
                                     </div>
                                     <button @click="removeItem(idx)" class="text-red-600 text-sm mt-2 hover:underline">Remove</button>
                                 </div>
@@ -798,12 +871,37 @@ const removeEditItem = (index) => {
                                             v-model="item.url" 
                                             placeholder="Image URL"
                                             class="w-full"
+                                            :disabled="item.uploadProgress > 0"
                                         />
-                                        <TextInput 
-                                            v-model="item.caption" 
-                                            placeholder="Caption (optional)"
-                                            class="w-full"
-                                        />
+
+                                        <div class="flex items-start gap-4">
+                                            <div class="flex-1">
+                                                <TextInput 
+                                                    v-model="item.caption" 
+                                                    placeholder="Caption (optional)"
+                                                    class="w-full"
+                                                />
+                                            </div>
+
+                                            <div class="w-40">
+                                                <ImageUpload 
+                                                    :modelValue="item.url"
+                                                    :id="`gallery-${editingSection.id}-${idx}`"
+                                                    @upload="(file) => uploadGalleryImage(file, editingSection.id, idx)"
+                                                    accept="image/*"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div v-if="item.uploadProgress !== undefined" class="mt-2">
+                                            <div class="h-2 bg-gray-200 rounded overflow-hidden">
+                                                <div :style="{ width: item.uploadProgress + '%' }" class="h-full bg-indigo-600"></div>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">Uploading: {{ item.uploadProgress }}%</p>
+                                        </div>
+
+                                        <p v-if="item.uploadError" class="text-xs text-red-600 mt-1">{{ item.uploadError }}</p>
+
                                     </div>
                                     <button @click="removeEditItem(idx)" class="text-red-600 text-sm mt-2 hover:underline">Remove</button>
                                 </div>

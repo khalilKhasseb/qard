@@ -114,23 +114,23 @@
                       <div>
                         <p class="font-medium text-gray-900">Business Cards</p>
                         <p class="text-sm text-gray-600">
-                          {{ usageStats.cardCount }} of {{ subscription.data.plan?.cards_limit }} used
+                          {{ usageStats.cardCount }} of {{ subscription.data.plan?.card_limit }} used
                         </p>
                       </div>
                       <div class="flex items-center gap-2">
                         <span 
                           class="px-2 py-1 text-xs font-medium rounded-full"
-                          :class="usageStats.cardCount >= subscription.data.plan?.cards_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+                          :class="usageStats.cardCount >= subscription.data.plan?.card_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
                         >
-                          {{ subscription.data.plan?.cards_limit - usageStats.cardCount }} remaining
+                          {{ subscription.data.plan?.card_limit - usageStats.cardCount }} remaining
                         </span>
                       </div>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         class="h-2 rounded-full transition-all"
-                        :class="usageStats.cardCount >= subscription.data.plan?.cards_limit ? 'bg-red-500' : 'bg-green-500'"
-                        :style="`width: ${(usageStats.cardCount / subscription.data.plan?.cards_limit) * 100}%`"
+                        :class="usageStats.cardCount >= subscription.data.plan?.card_limit ? 'bg-red-500' : 'bg-green-500'"
+                        :style="`width: ${(usageStats.cardCount / subscription.data.plan?.card_limit) * 100}%`"
                       ></div>
                     </div>
 
@@ -139,20 +139,20 @@
                       <div>
                         <p class="font-medium text-gray-900">Custom Themes</p>
                         <p class="text-sm text-gray-600">
-                          {{ usageStats.themeCount }} of {{ subscription.data.plan?.themes_limit }} used
+                          {{ usageStats.themeCount }} of {{ subscription.data.plan?.theme_limit }} used
                         </p>
                       </div>
                       <span 
                         class="px-2 py-1 text-xs font-medium rounded-full"
-                        :class="usageStats.themeCount >= subscription.data.plan?.themes_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+                        :class="usageStats.themeCount >= subscription.data.plan?.theme_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
                       >
-                        {{ subscription.data.plan?.themes_limit - usageStats.themeCount }} remaining
+                        {{ subscription.data.plan?.theme_limit - usageStats.themeCount }} remaining
                       </span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         class="h-2 rounded-full bg-green-500 transition-all"
-                        :style="`width: ${(usageStats.themeCount / subscription.data.plan?.themes_limit) * 100}%`"
+                        :style="`width: ${(usageStats.themeCount / subscription.data.plan?.theme_limit) * 100}%`"
                       ></div>
                     </div>
                   </div>
@@ -160,9 +160,9 @@
               </div>
 
               <!-- Plan Features -->
-              <div v-if="subscription.data.plan?.features" class="mb-6">
+              <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Included Features</label>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div v-if="subscription.data.plan?.features && Array.isArray(subscription.data.plan.features)" class="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div 
                     v-for="feature in subscription.data.plan.features" 
                     :key="feature"
@@ -173,6 +173,16 @@
                     </svg>
                     {{ feature }}
                   </div>
+                </div>
+                <div v-else class="bg-gray-50 rounded-lg p-4 text-center">
+                  <p class="text-gray-600 text-sm">
+                    <span v-if="subscription.data.status === 'free'">
+                      No premium features included in the free plan. Upgrade to unlock advanced features.
+                    </span>
+                    <span v-else>
+                      No additional features available in this plan.
+                    </span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -391,6 +401,7 @@ const loadSubscription = async () => {
     const data = await response.json();
     
     if (data.data) {
+      console.log(data);
       subscription.value = data;
     }
 

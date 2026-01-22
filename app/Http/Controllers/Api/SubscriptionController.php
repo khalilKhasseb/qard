@@ -23,8 +23,12 @@ class SubscriptionController extends Controller
             ->first();
 
         if (!$subscription) {
-            return new UserSubscriptionResource(null);
+            // Fetch free plan data
+            $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')->first();
+            return new UserSubscriptionResource($freePlan);
         }
+
+        // dd( (new UserSubscriptionResource($subscription))->toArray($request));
 
         return new UserSubscriptionResource($subscription);
     }

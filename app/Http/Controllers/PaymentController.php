@@ -80,7 +80,19 @@ class PaymentController extends Controller
 
             $checkoutUrl = $this->paymentService->getCheckoutUrlForPayment($payment);
 
+            // Fallback: Try multiple nested locations if getCheckoutUrl failed
             if (! $checkoutUrl) {
+                $checkoutUrl = $payment->metadata['authorization_url'] 
+                    ?? $payment->metadata['api_response']['data']['authorization_url'] 
+                    ?? null;
+            }
+
+            if (! $checkoutUrl) {
+                Log::error('Failed to generate checkout URL', [
+                    'payment_id' => $payment->id,
+                    'metadata' => $payment->metadata,
+                ]);
+
                 return response()->json([
                     'message' => 'Failed to generate checkout URL. Please try again.',
                     'payment' => $payment,

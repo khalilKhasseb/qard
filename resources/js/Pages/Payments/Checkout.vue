@@ -246,23 +246,31 @@ const initLahzaPayment = () => {
   paymentProcessing.value = true;
   checkoutError.value = null;
 
-  form.post(route('payments.initialize', { plan: props.plan.id }), {
-    preserveState: true,
-    onSuccess: (response) => {
-      showCheckoutModal.value = true;
-      checkoutUrl.value = response.checkout_url;
-      paymentProcessing.value = false;
+  // Use axios (already configured with CSRF token handling in bootstrap.js)
+  window.axios.post(route('payments.initialize', { plan: props.plan.id }))
+    .then(response => {
+      const data = response.data;
+      
+      if (data.checkout_url) {
+        showCheckoutModal.value = true;
+        checkoutUrl.value = data.checkout_url;
+        paymentProcessing.value = false;
 
-      // Store payment reference for verification
-      if (response.reference) {
-        sessionStorage.setItem('lahza_reference', response.reference);
+        // Store payment reference for verification
+        if (data.reference) {
+          sessionStorage.setItem('lahza_reference', data.reference);
+        }
+      } else {
+        throw new Error('No checkout URL received');
       }
-    },
-    onError: (errors) => {
-      checkoutError.value = errors.message || 'Failed to initialize payment. Please try again.';
+    })
+    .catch(error => {
+      const message = error.response?.data?.message 
+        || error.message 
+        || 'Failed to initialize payment. Please try again.';
+      checkoutError.value = message;
       paymentProcessing.value = false;
-    },
-  });
+    });
 };
 
 const openLahzaCheckout = () => {

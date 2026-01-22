@@ -32,6 +32,7 @@ class PublicCardController extends Controller
 
     public function byShareUrl(string $shareUrl)
     {
+        
         $card = $this->cardService->getCardByShareUrl($shareUrl);
 
         if (! $card) {

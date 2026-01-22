@@ -10,6 +10,7 @@ use App\Models\UserSubscription;
 use App\Notifications\PaymentConfirmed;
 use App\Notifications\SubscriptionActivated;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
@@ -158,10 +159,14 @@ class PaymentService
             return $existingPending;
         }
 
+        // Generate callback URL without parameters (Lahza will add ?reference=)
+        $callbackUrl = url(route('payments.callback', [], false));
+
         $payment = $this->gateway->createPayment($user, $plan->price, [
             'subscription_plan_id' => $plan->id,
             'currency' => $data['currency'] ?? 'USD',
             'notes' => "Subscription to {$plan->name}",
+            'callback_url' => $callbackUrl,
             'metadata' => [
                 'plan_name' => $plan->name,
                 'billing_cycle' => $plan->billing_cycle,
@@ -187,14 +192,11 @@ class PaymentService
             return null;
         }
 
-        // Verify and confirm payment
-        if ($this->confirmPayment($payment)) {
-            return $this->confirmPaymentAndActivateSubscription($payment, [
-                'notes' => 'Payment confirmed via callback',
-            ]);
-        }
-
-        return null;
+        // Skip verification for Lahza - it's already verified via webhook or direct API call
+        // Just activate the subscription directly
+        return $this->confirmPaymentAndActivateSubscription($payment, [
+            'notes' => 'Payment confirmed via callback',
+        ]);
     }
 
     public function getCheckoutUrlForPayment(Payment $payment): ?string

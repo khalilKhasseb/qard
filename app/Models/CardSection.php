@@ -40,6 +40,7 @@ class CardSection extends Model
     protected function casts(): array
     {
         return [
+            'title' => 'array',
             'content' => 'array',
             'metadata' => 'array',
             'is_active' => 'boolean',

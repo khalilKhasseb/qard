@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\HealthController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
     // Business Cards
     Route::resource('cards', App\Http\Controllers\CardController::class);
     Route::post('/cards/{card}/publish', [App\Http\Controllers\CardController::class, 'publish'])->name('cards.publish');
+    Route::post('/cards/{card}/publish-draft', [App\Http\Controllers\CardController::class, 'publishDraft'])->name('cards.publish-draft');
     Route::put('/cards/{card}/sections', [App\Http\Controllers\CardController::class, 'updateSections'])->name('cards.sections.update');
     Route::post('/cards/{card}/sections', [App\Http\Controllers\SectionController::class, 'store'])->name('cards.sections.store');
     Route::post('/cards/{card}/sections/reorder', [App\Http\Controllers\SectionController::class, 'reorder'])->name('cards.sections.reorder');
@@ -74,6 +76,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/language/switch', [App\Http\Controllers\Api\LanguageController::class, 'switchLanguage'])
         ->name('language.switch');
 });
+
+// Health Check Routes (no authentication required)
+Route::get('/health', [HealthController::class, 'check'])->name('health.check');
+Route::get('/version', [HealthController::class, 'version'])->name('health.version');
 
 // Public Card Routes
 Route::get('/u/{slug}', [App\Http\Controllers\PublicCardController::class, 'bySlug'])

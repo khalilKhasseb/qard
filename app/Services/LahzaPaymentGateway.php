@@ -48,10 +48,27 @@ class LahzaPaymentGateway implements PaymentGatewayInterface
         try {
             $response = $this->initializeTransaction($user, $amount, $payment->transaction_id, $data);
 
+            // Log the full response for debugging
+            Log::debug('Lahza API Response Structure:', [
+                'response' => $response,
+                'data' => $response['data'] ?? null,
+                'authorization_url' => $response['data']['authorization_url'] ?? 'NOT FOUND',
+            ]);
+
+            // Extract the authorization URL from Lahza API response
+            $authorizationUrl = $response['data']['authorization_url'] ?? null;
+
+            Log::debug('Extracted authorization URL:', [
+                'authorizationUrl' => $authorizationUrl,
+                'payment_id' => $payment->id,
+            ]);
+
             $payment->update([
                 'gateway_reference' => $response['data']['reference'] ?? null,
                 'metadata' => array_merge($payment->metadata ?? [], [
-                    'checkout_url' => $response['data']['checkout_url'] ?? null,
+                    'checkout_url' => $authorizationUrl,
+                    'authorization_url' => $authorizationUrl,
+                    'access_code' => $response['data']['access_code'] ?? null,
                     'api_response' => $response,
                 ]),
             ]);
@@ -60,6 +77,7 @@ class LahzaPaymentGateway implements PaymentGatewayInterface
                 'payment_id' => $payment->id,
                 'reference' => $payment->transaction_id,
                 'gateway_reference' => $payment->gateway_reference,
+                'checkout_url' => $authorizationUrl,
                 'amount' => $amount,
                 'user_id' => $user->id,
             ]);
@@ -292,7 +310,29 @@ class LahzaPaymentGateway implements PaymentGatewayInterface
 
     public function getCheckoutUrl(Payment $payment): ?string
     {
-        return $payment->metadata['checkout_url'] ?? null;
+        // Try multiple locations where the checkout URL might be stored
+        
+        // First try direct checkout_url
+        if (!empty($payment->metadata['checkout_url'])) {
+            return $payment->metadata['checkout_url'];
+        }
+
+        // Second try direct authorization_url
+        if (!empty($payment->metadata['authorization_url'])) {
+            return $payment->metadata['authorization_url'];
+        }
+
+        // Third try nested inside api_response (where Lahza puts it)
+        if (!empty($payment->metadata['api_response']['data']['authorization_url'])) {
+            return $payment->metadata['api_response']['data']['authorization_url'];
+        }
+
+        Log::debug('Checkout URL not found in any location', [
+            'payment_id' => $payment->id,
+            'metadata' => $payment->metadata,
+        ]);
+
+        return null;
     }
 
     public function generateCallbackUrl(string $reference): string

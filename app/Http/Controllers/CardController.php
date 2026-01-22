@@ -110,9 +110,13 @@ class CardController extends Controller
             'cover_image' => 'nullable|image|max:2048',
             'profile_image' => 'nullable|image|max:2048',
             'theme_id' => 'nullable|exists:themes,id',
-            'language_id' => 'sometimes|exists:languages,id',
+            'language_id' => 'nullable|exists:languages,id',
             'custom_slug' => 'nullable|string|max:255|unique:business_cards,custom_slug,'.$card->id,
+            'save_as_draft' => 'sometimes|boolean',
         ]);
+
+        // Remove the file keys from validated since we're not storing them
+        unset($validated['cover_image'], $validated['profile_image']);
 
         if ($request->hasFile('cover_image')) {
             $path = $request->file('cover_image')->store('covers', 'public');
@@ -122,6 +126,13 @@ class CardController extends Controller
         if ($request->hasFile('profile_image')) {
             $path = $request->file('profile_image')->store('profiles', 'public');
             $validated['profile_image_path'] = $path;
+        }
+
+        // If saving as draft, store in draft_data instead of updating live data
+        if ($request->boolean('save_as_draft')) {
+            $card->draft_data = $validated;
+            $card->save();
+            return back()->with('success', 'Draft saved successfully!');
         }
 
         $this->cardService->updateCard($card, $validated);
@@ -153,6 +164,21 @@ class CardController extends Controller
         return back()->with('success', $card->is_published ? 'Card published successfully!' : 'Card unpublished successfully!');
     }
 
+    public function publishDraft(Request $request, BusinessCard $card)
+    {
+        $this->authorize('update', $card);
+
+        if (!$card->draft_data) {
+            return back()->with('error', 'No draft changes to publish.');
+        }
+
+        $this->cardService->updateCard($card, $card->draft_data);
+        $card->draft_data = null;
+        $card->save();
+
+        return back()->with('success', 'Draft changes published successfully!');
+    }
+
     public function updateSections(Request $request, BusinessCard $card)
     {
         $this->authorize('update', $card);
@@ -160,8 +186,8 @@ class CardController extends Controller
         $validated = $request->validate([
             'sections' => 'required|array',
             'sections.*.id' => 'nullable',
-            'sections.*.type' => 'required|string',
-            'sections.*.title' => 'nullable|string',
+            'sections.*.section_type' => 'required|string',
+            'sections.*.title' => 'nullable',
             'sections.*.content' => 'required|array',
             'sections.*.order' => 'nullable|integer',
         ]);
@@ -171,8 +197,8 @@ class CardController extends Controller
 
             foreach ($validated['sections'] as $index => $sectionData) {
                 $card->sections()->create([
-                    'section_type' => $sectionData['type'],
-                    'title' => $sectionData['title'] ?? ucfirst($sectionData['type']),
+                    'section_type' => $sectionData['section_type'],
+                    'title' => $sectionData['title'] ?? ucfirst($sectionData['section_type']),
                     'content' => $sectionData['content'],
                     'sort_order' => $sectionData['order'] ?? ($index + 1),
                     'is_active' => true,

@@ -68,6 +68,27 @@ class SubscriptionPlanResource extends Resource
                             ->required(),
                     ])->columns(2),
 
+                Schemas\Components\Section::make('AI Translation')
+                    ->schema([
+                        Forms\Components\TextInput::make('translation_credits_monthly')
+                            ->label('Monthly Translation Credits')
+                            ->numeric()
+                            ->default(10)
+                            ->required()
+                            ->helperText('Number of free translations per month.'),
+                        Forms\Components\Toggle::make('unlimited_translations')
+                            ->label('Unlimited Translations')
+                            ->default(false),
+                        Forms\Components\TextInput::make('per_credit_cost')
+                            ->label('Cost Per Credit')
+                            ->numeric()
+                            ->default(0.01)
+                            ->step(0.0001)
+                            ->prefix('$')
+                            ->required()
+                            ->helperText('Cost for translations after using free credits.'),
+                    ])->columns(3),
+
                 Schemas\Components\Section::make('Features')
                     ->schema([
                         Forms\Components\Toggle::make('custom_css_allowed')
@@ -88,7 +109,11 @@ class SubscriptionPlanResource extends Resource
                         Forms\Components\KeyValue::make('features')
                             ->keyLabel('Feature')
                             ->valueLabel('Value')
-                            ->nullable(),
+                            ->addButtonLabel('Add Feature')
+                            ->nullable()
+                            ->deletable(true)
+                            ->reorderable(false)
+                            ->default([]),
                     ]),
             ]);
     }
@@ -119,6 +144,13 @@ class SubscriptionPlanResource extends Resource
                 Tables\Columns\TextColumn::make('themes_limit')
                     ->numeric()
                     ->label('Themes'),
+                Tables\Columns\TextColumn::make('translation_credits_monthly')
+                    ->numeric()
+                    ->label('AI Credits')
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('unlimited_translations')
+                    ->boolean()
+                    ->label('Unlimited AI'),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
                     ->label('Active'),
