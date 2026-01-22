@@ -46,6 +46,9 @@ echo "🔒 Setting file permissions..."
 chmod -R 755 storage bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
+# Make queue setup script executable
+chmod +x setup-queues.sh
+
 # Clear all caches
 echo "🧹 Clearing caches..."
 php artisan cache:clear
@@ -59,9 +62,9 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Queue worker setup (optional - you may want to use supervisor instead)
-echo "⚙️  Setting up queue worker..."
-# php artisan queue:work --daemon
+# Setup queues and scheduler (requires sudo/root)
+echo "🔄 Queue setup available..."
+echo "Run 'sudo ./setup-queues.sh' to set up queue workers and scheduler"
 
 echo "✅ Deployment complete!"
 echo ""
