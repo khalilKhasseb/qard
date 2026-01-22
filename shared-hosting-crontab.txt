@@ -1,0 +1,20 @@
+# Cron Jobs for Shared Hosting
+# Add these to your crontab: crontab -e
+
+# Laravel Scheduler (required) - runs every minute
+* * * * * cd /home/yourusername/public_html/qcard && php artisan schedule:run >/dev/null 2>&1
+
+# Queue Worker Monitor - checks every 2 minutes and restarts if needed
+*/2 * * * * cd /home/yourusername/public_html/qcard && ./queue-worker-shared.sh monitor >/dev/null 2>&1
+
+# Queue Worker Restart - restart every hour to prevent memory issues
+0 * * * * cd /home/yourusername/public_html/qcard && ./queue-worker-shared.sh restart >/dev/null 2>&1
+
+# Clean up old logs - runs daily at 2 AM
+0 2 * * * find /home/yourusername/public_html/qcard/storage/logs -name "*.log" -mtime +7 -delete
+
+# Optional: Failed job retry - retry failed jobs every 6 hours
+0 */6 * * * cd /home/yourusername/public_html/qcard && php artisan queue:retry all >/dev/null 2>&1
+
+# Optional: Queue health check - send email alert if too many failed jobs
+0 9 * * * cd /home/yourusername/public_html/qcard && php artisan queue:health-check | grep -q "ERROR" && echo "Queue issues detected" | mail -s "QCard Queue Alert" your-email@domain.com
