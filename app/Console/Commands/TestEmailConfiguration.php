@@ -56,14 +56,8 @@ class TestEmailConfiguration extends Command
         $this->info('🔌 Testing SMTP connection...');
         
         try {
-            $transport = Mail::getSwiftMailer()->getTransport();
-            
-            if (method_exists($transport, 'start')) {
-                $transport->start();
-                $this->info('✅ SMTP connection successful');
-            } else {
-                $this->info('ℹ️  Cannot test SMTP connection with this driver');
-            }
+            // Laravel 12 uses Symfony Mailer - test with actual email send
+            $this->info('ℹ️  Testing connection by sending test email...');
         } catch (\Exception $e) {
             $this->error('❌ SMTP connection failed: ' . $e->getMessage());
         }
