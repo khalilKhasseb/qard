@@ -164,7 +164,9 @@ class UserResource extends Resource
                     ->color('success')
                     ->visible(fn (User $record): bool => is_null($record->email_verified_at))
                     ->action(function (User $record) {
-                        $record->update(['email_verified_at' => now()]);
+                    $record->email_verified_at = now();
+                    $record->save();    
+                    // $record->update(['email_verified_at' => now()]);
                         \Filament\Notifications\Notification::make()
                             ->title('User verified successfully')
                             ->body("Email for {$record->name} has been verified.")
@@ -178,7 +180,8 @@ class UserResource extends Resource
                     ->color('danger')
                     ->visible(fn (User $record): bool => !is_null($record->email_verified_at))
                     ->action(function (User $record) {
-                        $record->update(['email_verified_at' => null]);
+                     $record->email_verified_at = null;   
+                     $record->save();
                         \Filament\Notifications\Notification::make()
                             ->title('User unverified')
                             ->body("Email verification for {$record->name} has been removed.")
