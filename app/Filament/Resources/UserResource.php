@@ -46,6 +46,9 @@ class UserResource extends Resource
                             ->label('Administrator')
                             ->helperText('Administrators have full access to the admin panel')
                             ->default(false),
+                        Forms\Components\DateTimePicker::make('email_verified_at')
+                            ->label('Email Verified At')
+                            ->helperText('Set this to manually verify the user\'s email'),
                     ])->columns(2),
 
                 Schemas\Components\Section::make('Subscription')
@@ -97,6 +100,14 @@ class UserResource extends Resource
                     ->boolean()
                     ->label('Admin')
                     ->sortable(),
+                Tables\Columns\IconColumn::make('email_verified_at')
+                    ->label('Verified')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('subscription_tier')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -126,6 +137,12 @@ class UserResource extends Resource
                     ->toggleable(),
             ])
             ->filters([
+                Tables\Filters\Filter::make('unverified')
+                    ->label('Unverified Users')
+                    ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereNull('email_verified_at')),
+                Tables\Filters\Filter::make('verified')
+                    ->label('Verified Users')
+                    ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereNotNull('email_verified_at')),
                 Tables\Filters\SelectFilter::make('subscription_tier')
                     ->options([
                         'free' => 'Free',
@@ -141,11 +158,59 @@ class UserResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('verify')
+                    ->label('Verify Email')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (User $record): bool => is_null($record->email_verified_at))
+                    ->action(function (User $record) {
+                        $record->update(['email_verified_at' => now()]);
+                        \Filament\Notifications\Notification::make()
+                            ->title('User verified successfully')
+                            ->body("Email for {$record->name} has been verified.")
+                            ->success()
+                            ->send();
+                    })
+                    ->requiresConfirmation(),
+                Tables\Actions\Action::make('unverify')
+                    ->label('Unverify Email')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn (User $record): bool => !is_null($record->email_verified_at))
+                    ->action(function (User $record) {
+                        $record->update(['email_verified_at' => null]);
+                        \Filament\Notifications\Notification::make()
+                            ->title('User unverified')
+                            ->body("Email verification for {$record->name} has been removed.")
+                            ->success()
+                            ->send();
+                    })
+                    ->requiresConfirmation(),
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('verify_selected')
+                        ->label('Verify Selected')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(function ($records) {
+                            $count = $records->whereNull('email_verified_at')->count();
+                            
+                            foreach ($records as $record) {
+                                if (is_null($record->email_verified_at)) {
+                                    $record->update(['email_verified_at' => now()]);
+                                }
+                            }
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title('Users verified')
+                                ->body("{$count} users have been verified.")
+                                ->success()
+                                ->send();
+                        })
+                        ->requiresConfirmation(),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ]);
@@ -166,5 +231,17 @@ class UserResource extends Resource
             'view' => Pages\ViewUser::route('/{record}'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+    
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::whereNull('email_verified_at')->count();
+    }
+    
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $unverifiedCount = static::getModel()::whereNull('email_verified_at')->count();
+        
+        return $unverifiedCount > 0 ? 'warning' : 'success';
     }
 }
