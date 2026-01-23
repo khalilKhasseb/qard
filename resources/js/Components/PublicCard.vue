@@ -374,7 +374,9 @@ const themeStyles = computed(() => ({
                         rel="noopener noreferrer"
                         :aria-label="item.key"
                     >
-                        <span class="social-icon" v-html="FIGMA_ICONS[item.key] || ''" />
+                    
+		    <span>test </span>
+		    <span class="social-icon" v-html="FIGMA_ICONS[item.key] || ''" />
                     </a>
                 </div>
 
