@@ -12,7 +12,7 @@ class EnsureUserHasActiveSubscription
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 

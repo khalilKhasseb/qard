@@ -59,8 +59,8 @@ class Theme extends Model
     {
         return $query->where(function ($q) use ($userId) {
             $q->where('user_id', $userId)
-              ->orWhere('is_system_default', true)
-              ->orWhere('is_public', true);
+                ->orWhere('is_system_default', true)
+                ->orWhere('is_public', true);
         });
     }
 

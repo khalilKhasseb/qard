@@ -12,17 +12,20 @@ test('api: user can view their subscription', function () {
         'user_id' => $this->user->id,
         'status' => 'active',
     ]);
-    
+
     $response = $this->actingAs($this->user, 'sanctum')
         ->getJson(route('api.subscription.show'));
-    
+
     $response->assertOk()
         ->assertJsonStructure([
             'data' => [
                 'id',
                 'status',
-                'tier',
-            ]
+                'is_active',
+                'is_trial',
+                'days_remaining',
+                'plan',
+            ],
         ]);
 });
 
@@ -36,10 +39,10 @@ test('api: user can cancel their subscription', function () {
         'user_id' => $this->user->id,
         'status' => 'active',
     ]);
-    
+
     $response = $this->actingAs($this->user, 'sanctum')
         ->postJson(route('api.subscription.cancel'));
-    
+
     $response->assertOk();
     $this->assertDatabaseHas('user_subscriptions', [
         'user_id' => $this->user->id,
@@ -49,5 +52,32 @@ test('api: user can cancel their subscription', function () {
 
 test('api: subscription cancel requires authentication', function () {
     $this->postJson(route('api.subscription.cancel'))
+        ->assertUnauthorized();
+});
+
+test('api: user can sync their subscription', function () {
+    UserSubscription::factory()->create([
+        'user_id' => $this->user->id,
+        'status' => 'active',
+    ]);
+
+    $response = $this->actingAs($this->user, 'sanctum')
+        ->postJson(route('api.subscription.sync'));
+
+    $response->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                'id',
+                'status',
+                'is_active',
+                'is_trial',
+                'days_remaining',
+                'plan',
+            ],
+        ]);
+});
+
+test('api: subscription sync requires authentication', function () {
+    $this->postJson(route('api.subscription.sync'))
         ->assertUnauthorized();
 });

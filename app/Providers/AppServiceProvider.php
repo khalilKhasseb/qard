@@ -8,7 +8,10 @@ use App\Models\Theme;
 use App\Policies\BusinessCardPolicy;
 use App\Policies\PaymentPolicy;
 use App\Policies\ThemePolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,6 +40,28 @@ class AppServiceProvider extends ServiceProvider
         // Register Blade directive for HTML sanitization
         \Illuminate\Support\Facades\Blade::directive('sanitize', function ($expression) {
             return "<?php echo app(\App\Services\HtmlSanitizer::class)->sanitize($expression); ?>";
+        });
+
+        // Configure rate limiters for AI translation
+        $this->configureRateLimiting();
+    }
+
+    /**
+     * Configure rate limiting for translation endpoints.
+     */
+    protected function configureRateLimiting(): void
+    {
+        // AI Translation rate limiter - 10 translations per minute per user
+        RateLimiter::for('ai-translation', function (Request $request) {
+            return [
+                Limit::perMinute(10)->by($request->user()?->id ?: $request->ip()),
+                Limit::perHour(100)->by($request->user()?->id ?: $request->ip()),
+            ];
+        });
+
+        // Translation history viewing - higher limit
+        RateLimiter::for('translation-history', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
     }
 }

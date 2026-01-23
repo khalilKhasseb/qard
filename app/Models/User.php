@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -71,6 +72,23 @@ class User extends Authenticatable implements MustVerifyEmail
             ->latest();
     }
 
+    public function translationUsage(): HasMany
+    {
+        return $this->hasMany(UserTranslationUsage::class);
+    }
+
+    public function currentTranslationUsage(): HasOne
+    {
+        return $this->hasOne(UserTranslationUsage::class)
+            ->where('is_active', true)
+            ->latest();
+    }
+
+    public function translationHistory(): HasMany
+    {
+        return $this->hasMany(TranslationHistory::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('subscription_status', 'active');
@@ -84,38 +102,50 @@ class User extends Authenticatable implements MustVerifyEmail
     public function canCreateCard(): bool
     {
         $limit = $this->getCardLimit();
+
         return $this->cards()->count() < $limit;
     }
 
     public function canCreateTheme(): bool
     {
         $limit = $this->getThemeLimit();
+
         return $this->themes()->count() < $limit;
     }
 
     public function canUseCustomCss(): bool
     {
-        return in_array($this->subscription_tier, ['pro', 'business']);
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            return $subscription->subscriptionPlan->custom_css_allowed ?? false;
+        }
+
+        return false;
     }
 
     public function getCardLimit(): int
     {
-        return match ($this->subscription_tier) {
-            'free' => 1,
-            'pro' => 5,
-            'business' => 20,
-            default => 1,
-        };
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            return $subscription->subscriptionPlan->cards_limit ?? 1;
+        }
+
+        // Free tier default (no subscription)
+        return 1;
     }
 
     public function getThemeLimit(): int
     {
-        return match ($this->subscription_tier) {
-            'free' => 1,
-            'pro' => 10,
-            'business' => 50,
-            default => 1,
-        };
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            return $subscription->subscriptionPlan->themes_limit ?? 1;
+        }
+
+        // Free tier default (no subscription)
+        return 1;
     }
 
     public function isSubscriptionActive(): bool
@@ -152,7 +182,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification()
     {
-        $this->notify(new VerifyEmail());
+        $this->notify(new VerifyEmail);
     }
 
     /**
@@ -164,5 +194,154 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPassword($token));
+    }
+
+    /**
+     * Get remaining translation credits for the current period.
+     */
+    public function getRemainingTranslationCredits(): int
+    {
+        return Cache::remember(
+            "translation_credits:user:{$this->id}",
+            300, // 5 minutes
+            function () {
+                // Check if user has unlimited translations
+                if ($this->hasUnlimitedTranslations()) {
+                    return PHP_INT_MAX;
+                }
+
+                $usage = $this->currentTranslationUsage()->first();
+
+                if (!$usage) {
+                    // Initialize usage for current period
+                    $this->initializeTranslationUsage();
+                    $usage = $this->currentTranslationUsage()->first();
+                }
+
+                // Check if period expired
+                if ($usage && $usage->isExpired()) {
+                    $usage->markAsExpired();
+                    $this->initializeTranslationUsage();
+                    $usage = $this->currentTranslationUsage()->first();
+                }
+
+                // Sync credits if plan was upgraded during period
+                $limit = $this->getTranslationCreditLimit();
+                if ($usage && !$this->hasUnlimitedTranslations() && $usage->credits_available < $limit) {
+                    $usage->update(['credits_available' => $limit]);
+                }
+
+                return $usage ? $usage->getRemainingCredits() : 0;
+            }
+        );
+    }
+
+    /**
+     * Check if user has enough translation credits.
+     */
+    public function hasTranslationCredits(int $required = 1): bool
+    {
+        if ($this->hasUnlimitedTranslations()) {
+            return true;
+        }
+
+        return $this->getRemainingTranslationCredits() >= $required;
+    }
+
+    /**
+     * Deduct translation credits.
+     */
+    public function deductTranslationCredits(int $amount = 1): bool
+    {
+        if ($this->hasUnlimitedTranslations()) {
+            return true;
+        }
+
+        $usage = $this->currentTranslationUsage()->first();
+
+        if (!$usage || !$usage->hasCredits($amount)) {
+            return false;
+        }
+
+        $result = $usage->deductCredits($amount);
+
+        // Clear cache
+        Cache::forget("translation_credits:user:{$this->id}");
+        
+        // Trigger real-time credit update for all user sessions
+        Cache::put("credits_updated:{$this->id}", true, now()->addMinutes(5));
+
+        return $result;
+    }
+
+    /**
+     * Check if user has translation feature enabled.
+     */
+    public function hasTranslationFeature(): bool
+    {
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            // Check if explicitly enabled in features JSON
+            if (isset($subscription->subscriptionPlan->features['ai_translation']) && $subscription->subscriptionPlan->features['ai_translation']) {
+                return true;
+            }
+            
+            // Or if they have credits/unlimited set
+            return $subscription->subscriptionPlan->translation_credits_monthly > 0 || 
+                   $subscription->subscriptionPlan->unlimited_translations;
+        }
+
+        // Free tier has basic access (10 credits)
+        return true;
+    }
+
+    /**
+     * Get translation credit limit from subscription.
+     */
+    public function getTranslationCreditLimit(): int
+    {
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        if ($subscription && $subscription->subscriptionPlan) {
+            if ($subscription->subscriptionPlan->unlimited_translations) {
+                return PHP_INT_MAX;
+            }
+
+            return $subscription->subscriptionPlan->translation_credits_monthly ?? 0;
+        }
+
+        // Free tier default (10 credits)
+        return 10;
+    }
+
+    /**
+     * Check if user has unlimited translations.
+     */
+    public function hasUnlimitedTranslations(): bool
+    {
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        return $subscription && $subscription->subscriptionPlan && $subscription->subscriptionPlan->unlimited_translations;
+    }
+
+    /**
+     * Initialize translation usage for current period.
+     */
+    protected function initializeTranslationUsage(): void
+    {
+        $credits = $this->getTranslationCreditLimit();
+        $startDate = now()->startOfMonth();
+        $endDate = now()->endOfMonth();
+
+        UserTranslationUsage::create([
+            'user_id' => $this->id,
+            'credits_available' => $credits,
+            'credits_used' => 0,
+            'total_translations' => 0,
+            'period_start' => $startDate,
+            'period_end' => $endDate,
+            'is_active' => true,
+        ]);
     }
 }

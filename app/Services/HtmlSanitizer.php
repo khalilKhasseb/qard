@@ -46,11 +46,11 @@ class HtmlSanitizer
         }
 
         // Load HTML into DOMDocument
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         libxml_use_internal_errors(true);
-        
+
         // Wrap in UTF-8 declaration to handle encoding properly
-        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $dom->loadHTML('<?xml encoding="utf-8" ?>'.$html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
 
         // Process all nodes recursively
@@ -58,11 +58,11 @@ class HtmlSanitizer
 
         // Get the sanitized HTML
         $sanitized = $dom->saveHTML();
-        
+
         // Remove the XML declaration we added
         $sanitized = preg_replace('/^<!DOCTYPE.+?>/', '', $sanitized);
         $sanitized = str_replace(['<?xml encoding="utf-8" ?>', '<html>', '</html>', '<body>', '</body>'], '', $sanitized);
-        
+
         return trim($sanitized);
     }
 
@@ -73,10 +73,11 @@ class HtmlSanitizer
     {
         if ($node->nodeType === XML_ELEMENT_NODE) {
             $tagName = strtolower($node->nodeName);
-            
+
             // If tag is not allowed, remove it but keep its children
-            if (!in_array($tagName, self::ALLOWED_TAGS)) {
+            if (! in_array($tagName, self::ALLOWED_TAGS)) {
                 $this->replaceWithChildren($node);
+
                 return;
             }
 
@@ -112,7 +113,7 @@ class HtmlSanitizer
     private function processAttributes(\DOMNode $node, string $tagName): void
     {
         $allowedAttrs = self::ALLOWED_ATTRIBUTES[$tagName] ?? [];
-        
+
         if ($node->attributes === null) {
             return;
         }
@@ -120,26 +121,29 @@ class HtmlSanitizer
         $attrsToRemove = [];
         foreach ($node->attributes as $attr) {
             $attrName = strtolower($attr->name);
-            
+
             // Remove dangerous event handlers
             if (preg_match('/^on/i', $attrName)) {
                 $attrsToRemove[] = $attrName;
+
                 continue;
             }
 
             // Check if attribute is allowed for this tag
-            if (!in_array($attrName, $allowedAttrs)) {
+            if (! in_array($attrName, $allowedAttrs)) {
                 $attrsToRemove[] = $attrName;
+
                 continue;
             }
 
             // Sanitize attribute values
             $value = $attr->value;
-            
+
             // Remove javascript: and data: URLs
             if (in_array($attrName, ['href', 'src'])) {
                 if (preg_match('/^(javascript|data|vbscript):/i', $value)) {
                     $attrsToRemove[] = $attrName;
+
                     continue;
                 }
             }
@@ -168,27 +172,27 @@ class HtmlSanitizer
     {
         $sanitized = [];
         $declarations = explode(';', $style);
-        
+
         foreach ($declarations as $declaration) {
             $parts = explode(':', $declaration, 2);
             if (count($parts) !== 2) {
                 continue;
             }
-            
+
             $property = trim(strtolower($parts[0]));
             $value = trim($parts[1]);
-            
+
             // Skip dangerous patterns
             if (preg_match('/(javascript|expression|behavior|binding)/i', $value)) {
                 continue;
             }
-            
+
             // Only allow whitelisted properties
             if (in_array($property, self::ALLOWED_CSS_PROPERTIES)) {
                 $sanitized[] = "$property: $value";
             }
         }
-        
+
         return implode('; ', $sanitized);
     }
 
@@ -199,7 +203,7 @@ class HtmlSanitizer
     {
         if ($node->hasAttribute('href')) {
             $href = $node->getAttribute('href');
-            
+
             // Ensure external links open in new tab and have security attributes
             if (preg_match('/^https?:\/\//i', $href)) {
                 $node->setAttribute('target', '_blank');
@@ -215,9 +219,9 @@ class HtmlSanitizer
     {
         if ($node->hasAttribute('src')) {
             $src = $node->getAttribute('src');
-            
+
             // Only allow HTTPS URLs and data URIs for images
-            if (!preg_match('/^(https:\/\/|data:image\/(png|jpg|jpeg|gif|webp|svg\+xml);base64,|\/)/i', $src)) {
+            if (! preg_match('/^(https:\/\/|data:image\/(png|jpg|jpeg|gif|webp|svg\+xml);base64,|\/)/i', $src)) {
                 // Remove the entire image if src is not safe
                 $node->parentNode->removeChild($node);
             }
@@ -230,7 +234,7 @@ class HtmlSanitizer
     private function replaceWithChildren(\DOMNode $node): void
     {
         $parent = $node->parentNode;
-        
+
         if ($parent === null) {
             return;
         }
@@ -239,7 +243,7 @@ class HtmlSanitizer
             $child = $node->firstChild;
             $parent->insertBefore($child, $node);
         }
-        
+
         $parent->removeChild($node);
     }
 }

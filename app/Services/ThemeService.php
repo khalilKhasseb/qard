@@ -7,16 +7,16 @@ use App\Models\Theme;
 use App\Models\ThemeImage;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class ThemeService
 {
     public function __construct(
         private CssSanitizer $cssSanitizer
     ) {}
+
     public function createTheme(User $user, array $data): Theme
     {
-        if (!$user->canCreateTheme()) {
+        if (! $user->canCreateTheme()) {
             throw new \Exception('Theme limit reached for your plan');
         }
 
@@ -43,24 +43,25 @@ class ThemeService
                 $theme->config,
                 $data['config']
             );
-            
+
             // Sanitize custom CSS to prevent XSS
             $data['config'] = $this->cssSanitizer->sanitizeThemeConfig($data['config']);
         }
 
         $theme->update($data);
+
         return $theme->fresh();
     }
 
     public function duplicateTheme(Theme $theme, User $user, ?string $newName = null): Theme
     {
-        if (!$user->canCreateTheme()) {
+        if (! $user->canCreateTheme()) {
             throw new \Exception('Theme limit reached for your plan');
         }
 
         return Theme::create([
             'user_id' => $user->id,
-            'name' => $newName ?? $theme->name . ' (Copy)',
+            'name' => $newName ?? $theme->name.' (Copy)',
             'config' => $theme->config,
             'is_public' => false,
         ]);
@@ -73,7 +74,7 @@ class ThemeService
         ?Theme $theme = null
     ): ThemeImage {
         $allowedTypes = ThemeImage::FILE_TYPES;
-        if (!in_array($type, $allowedTypes)) {
+        if (! in_array($type, $allowedTypes)) {
             throw new \InvalidArgumentException('Invalid image type');
         }
 
@@ -83,7 +84,7 @@ class ThemeService
         }
 
         $directory = "themes/{$user->id}";
-        $filename = uniqid($type . '_') . '.' . $file->getClientOriginalExtension();
+        $filename = uniqid($type.'_').'.'.$file->getClientOriginalExtension();
         $path = $file->storeAs($directory, $filename, 'public');
 
         $imageInfo = @getimagesize($file->getRealPath());
@@ -134,7 +135,7 @@ class ThemeService
         $css .= "  color: var(--text);\n";
         $css .= "  min-height: 100vh;\n";
 
-        if (!empty($config['images']['background']['url'])) {
+        if (! empty($config['images']['background']['url'])) {
             $bg = $config['images']['background'];
             $css .= "  background-image: url({$bg['url']});\n";
             $css .= "  background-size: cover;\n";
@@ -183,7 +184,7 @@ class ThemeService
         $css .= "  margin-bottom: 1rem;\n";
         $css .= "}\n\n";
 
-        if (!empty($config['custom_css'])) {
+        if (! empty($config['custom_css'])) {
             $css .= "/* Custom CSS */\n{$config['custom_css']}\n";
         }
 

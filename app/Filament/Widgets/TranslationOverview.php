@@ -8,7 +8,7 @@ class TranslationOverview extends Widget
 {
     protected string $view = 'filament.widgets.translation-overview';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function getTranslationStats()
     {

@@ -75,7 +75,7 @@ class ThemeController extends Controller
         $theme->delete();
 
         return response()->json([
-            'message' => 'Theme deleted successfully'
+            'message' => 'Theme deleted successfully',
         ], 200);
     }
 
@@ -84,7 +84,7 @@ class ThemeController extends Controller
         $this->authorize('duplicate', $theme);
 
         $newTheme = $theme->replicate(['preview_image', 'used_by_cards_count']);
-        $newTheme->name = $theme->name . ' (Copy)';
+        $newTheme->name = $theme->name.' (Copy)';
         $newTheme->user_id = $request->user()->id;
         $newTheme->is_system_default = false;
         $newTheme->is_public = false;
@@ -104,7 +104,7 @@ class ThemeController extends Controller
 
         return response()->json([
             'message' => 'Theme applied successfully',
-            'card' => new \App\Http\Resources\CardResource($card->fresh(['theme']))
+            'card' => new \App\Http\Resources\CardResource($card->fresh(['theme'])),
         ]);
     }
 

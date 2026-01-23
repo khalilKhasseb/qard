@@ -18,7 +18,7 @@ class CardService
 
     public function createCard(User $user, array $data, ?Template $template = null): BusinessCard
     {
-        if (!$user->canCreateCard()) {
+        if (! $user->canCreateCard()) {
             throw new \Exception('Card limit reached for your plan');
         }
 
@@ -33,7 +33,7 @@ class CardService
             'is_primary' => $user->cards()->count() === 0,
         ]);
 
-        if ($template && !empty($template->default_sections)) {
+        if ($template && ! empty($template->default_sections)) {
             $this->createDefaultSections($card, $template->default_sections);
         }
 
@@ -43,6 +43,7 @@ class CardService
     public function updateCard(BusinessCard $card, array $data): BusinessCard
     {
         $card->update($data);
+
         return $card->fresh();
     }
 
@@ -50,13 +51,13 @@ class CardService
     {
         $targetUser = $user ?? $card->user;
 
-        if (!$targetUser->canCreateCard()) {
+        if (! $targetUser->canCreateCard()) {
             throw new \Exception('Card limit reached for your plan');
         }
 
         $newCard = $card->replicate(['share_url', 'qr_code_url', 'nfc_identifier', 'views_count', 'shares_count']);
         $newCard->user_id = $targetUser->id;
-        $newCard->title = $newTitle ?? $card->title . ' (Copy)';
+        $newCard->title = $newTitle ?? $card->title.' (Copy)';
         $newCard->share_url = Str::random(10);
         $newCard->is_published = false;
         $newCard->is_primary = false;
@@ -110,8 +111,9 @@ class CardService
         if (isset($data['image_path'])) {
             $section->image_path = $data['image_path'];
         }
-        
+
         $section->update($data);
+
         return $section->fresh();
     }
 
@@ -138,7 +140,7 @@ class CardService
             ->margin(2)
             ->generate($url);
 
-        $filename = "qrcodes/{$card->id}_" . time() . '.png';
+        $filename = "qrcodes/{$card->id}_".time().'.png';
         \Storage::disk('public')->put($filename, $qrCode);
 
         $card->update(['qr_code_url' => \Storage::disk('public')->url($filename)]);
@@ -207,7 +209,7 @@ class CardService
     {
         return BusinessCard::where('custom_slug', $slug)
             ->published()
-            ->with(['sections' => fn($q) => $q->active()->ordered(), 'theme'])
+            ->with(['sections' => fn ($q) => $q->active()->ordered(), 'theme'])
             ->first();
     }
 
@@ -215,7 +217,7 @@ class CardService
     {
         return BusinessCard::where('share_url', $shareUrl)
             ->published()
-            ->with(['sections' => fn($q) => $q->active()->ordered(), 'theme'])
+            ->with(['sections' => fn ($q) => $q->active()->ordered(), 'theme'])
             ->first();
     }
 
@@ -223,7 +225,7 @@ class CardService
     {
         return BusinessCard::where('nfc_identifier', $nfcId)
             ->published()
-            ->with(['sections' => fn($q) => $q->active()->ordered(), 'theme'])
+            ->with(['sections' => fn ($q) => $q->active()->ordered(), 'theme'])
             ->first();
     }
 

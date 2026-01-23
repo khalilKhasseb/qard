@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Sanctum middleware for SPA authentication - MUST be first
+        $middleware->statefulApi();
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
@@ -25,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Rate limiting for API routes - 60 requests per minute per user
         $middleware->throttleApi('60,1');
-        
+
         // Language middleware for web routes
         $middleware->web(append: [
             \App\Http\Middleware\LanguageMiddleware::class,

@@ -17,9 +17,9 @@ class UpdateSectionRequest extends FormRequest
         return [
             'section_type' => ['sometimes', Rule::in([
                 'contact', 'social', 'services', 'products',
-                'testimonials', 'hours', 'appointments', 'gallery', 'about', 'links', 'custom', 'video'
+                'testimonials', 'hours', 'appointments', 'gallery', 'about', 'links', 'custom', 'video',
             ])],
-            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'title' => ['sometimes', 'nullable'],
             'content' => ['sometimes', 'nullable'],
             'image' => ['sometimes', 'nullable', 'image', 'max:5120'], // 5MB max
             'is_active' => ['sometimes', 'boolean'],

@@ -1,8 +1,9 @@
 <?php
+
 /**
  * API Endpoints Test Script
  * Tests all 26 API endpoints for TapIt application
- * 
+ *
  * Usage: php test_api.php
  */
 
@@ -12,54 +13,56 @@ $testEmail = 'test@example.com';
 $testPassword = 'password';
 
 // Helper function to make API calls
-function apiCall($method, $endpoint, $data = null, $token = null) {
+function apiCall($method, $endpoint, $data = null, $token = null)
+{
     global $baseUrl;
-    
-    $url = $baseUrl . $endpoint;
+
+    $url = $baseUrl.$endpoint;
     $ch = curl_init($url);
-    
+
     $headers = [
         'Content-Type: application/json',
         'Accept: application/json',
     ];
-    
+
     if ($token) {
-        $headers[] = 'Authorization: Bearer ' . $token;
+        $headers[] = 'Authorization: Bearer '.$token;
     }
-    
+
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-    
+
     if ($data && in_array($method, ['POST', 'PUT', 'PATCH'])) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     }
-    
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    
+
     return [
         'status' => $httpCode,
         'body' => json_decode($response, true),
-        'raw' => $response
+        'raw' => $response,
     ];
 }
 
-function printResult($name, $response) {
+function printResult($name, $response)
+{
     $status = $response['status'];
     $statusColor = $status >= 200 && $status < 300 ? "\033[32m" : "\033[31m";
     $resetColor = "\033[0m";
-    
+
     echo "{$statusColor}[{$status}]{$resetColor} {$name}\n";
-    
+
     if ($status >= 400) {
-        echo "  Error: " . ($response['body']['message'] ?? 'Unknown error') . "\n";
+        echo '  Error: '.($response['body']['message'] ?? 'Unknown error')."\n";
         if (isset($response['body']['errors'])) {
             print_r($response['body']['errors']);
         }
     }
-    
+
     return $response;
 }
 
@@ -70,28 +73,28 @@ echo "Step 1: Get Authentication Token\n";
 echo "Note: You need to create a token manually using: php artisan tinker\n";
 echo "Then run: \$user = User::first(); echo \$user->createToken('test')->plainTextToken;\n\n";
 
-$token = readline("Enter your API token: ");
+$token = readline('Enter your API token: ');
 
 if (empty($token)) {
-    die("Token is required. Exiting.\n");
+    exit("Token is required. Exiting.\n");
 }
 
 echo "\n=== Testing Cards API (8 endpoints) ===\n\n";
 
 // 1. GET /api/cards - List cards
-$cards = printResult("1. GET /api/cards (list)", apiCall('GET', '/cards', null, $token));
+$cards = printResult('1. GET /api/cards (list)', apiCall('GET', '/cards', null, $token));
 echo "\n";
 
 // 2. POST /api/cards - Create card
-$createCard = printResult("2. POST /api/cards (create)", apiCall('POST', '/cards', [
+$createCard = printResult('2. POST /api/cards (create)', apiCall('POST', '/cards', [
     'title' => 'Test Business Card',
     'subtitle' => 'Software Developer',
 ], $token));
 $cardId = $createCard['body']['data']['id'] ?? null;
 echo "\n";
 
-if (!$cardId) {
-    die("Failed to create card. Cannot continue tests.\n");
+if (! $cardId) {
+    exit("Failed to create card. Cannot continue tests.\n");
 }
 
 // 3. GET /api/cards/{id} - Show card
@@ -156,7 +159,7 @@ if ($sectionId) {
         ],
     ], $token));
     echo "\n";
-    
+
     // 10. POST /api/cards/{card}/sections/reorder - Reorder sections
     if ($sectionId2) {
         printResult("10. POST /api/cards/{$cardId}/sections/reorder (reorder)", apiCall('POST', "/cards/{$cardId}/sections/reorder", [
@@ -169,11 +172,11 @@ if ($sectionId) {
 echo "\n=== Testing Themes API (8 endpoints) ===\n\n";
 
 // 11. GET /api/themes - List themes
-$themes = printResult("11. GET /api/themes (list)", apiCall('GET', '/themes', null, $token));
+$themes = printResult('11. GET /api/themes (list)', apiCall('GET', '/themes', null, $token));
 echo "\n";
 
 // 12. POST /api/themes - Create theme
-$createTheme = printResult("12. POST /api/themes (create)", apiCall('POST', '/themes', [
+$createTheme = printResult('12. POST /api/themes (create)', apiCall('POST', '/themes', [
     'name' => 'Test Theme',
     'config' => [
         'colors' => [
@@ -194,7 +197,7 @@ if ($themeId) {
     // 13. GET /api/themes/{id} - Show theme
     printResult("13. GET /api/themes/{$themeId} (show)", apiCall('GET', "/themes/{$themeId}", null, $token));
     echo "\n";
-    
+
     // 14. PUT /api/themes/{id} - Update theme
     printResult("14. PUT /api/themes/{$themeId} (update)", apiCall('PUT', "/themes/{$themeId}", [
         'name' => 'Updated Test Theme',
@@ -207,12 +210,12 @@ if ($themeId) {
         ],
     ], $token));
     echo "\n";
-    
+
     // 15. POST /api/themes/{id}/duplicate - Duplicate theme
     $duplicateTheme = printResult("15. POST /api/themes/{$themeId}/duplicate (duplicate)", apiCall('POST', "/themes/{$themeId}/duplicate", [], $token));
     $duplicateThemeId = $duplicateTheme['body']['data']['id'] ?? null;
     echo "\n";
-    
+
     // 16. POST /api/themes/{id}/apply/{card} - Apply theme to card
     printResult("16. POST /api/themes/{$themeId}/apply/{$cardId} (apply to card)", apiCall('POST', "/themes/{$themeId}/apply/{$cardId}", [], $token));
     echo "\n";
@@ -225,20 +228,20 @@ echo "    Note: This endpoint requires file upload which needs different handlin
 echo "\n=== Testing Payments API (5 endpoints) ===\n\n";
 
 // 18. GET /api/subscription-plans - List subscription plans
-$plans = printResult("18. GET /api/subscription-plans (list plans)", apiCall('GET', '/subscription-plans', null, $token));
+$plans = printResult('18. GET /api/subscription-plans (list plans)', apiCall('GET', '/subscription-plans', null, $token));
 $planId = $plans['body']['data'][0]['id'] ?? null;
 echo "\n";
 
 if ($planId) {
     // 19. POST /api/payments - Create payment
-    $createPayment = printResult("19. POST /api/payments (create)", apiCall('POST', '/payments', [
+    $createPayment = printResult('19. POST /api/payments (create)', apiCall('POST', '/payments', [
         'subscription_plan_id' => $planId,
         'payment_method' => 'cash',
         'notes' => 'Test payment',
     ], $token));
     $paymentId = $createPayment['body']['data']['id'] ?? null;
     echo "\n";
-    
+
     if ($paymentId) {
         // 20. POST /api/payments/{id}/confirm - Confirm payment (admin only)
         printResult("20. POST /api/payments/{$paymentId}/confirm (confirm - view only)", apiCall('POST', "/payments/{$paymentId}/confirm", [], $token));
@@ -247,11 +250,11 @@ if ($planId) {
 }
 
 // 21. GET /api/payments/history - Payment history
-printResult("21. GET /api/payments/history (history)", apiCall('GET', '/payments/history', null, $token));
+printResult('21. GET /api/payments/history (history)', apiCall('GET', '/payments/history', null, $token));
 echo "\n";
 
 // 22. GET /api/subscription - Current subscription
-printResult("22. GET /api/subscription (current subscription)", apiCall('GET', '/subscription', null, $token));
+printResult('22. GET /api/subscription (current subscription)', apiCall('GET', '/subscription', null, $token));
 echo "\n";
 
 echo "\n=== Cleanup (Optional) ===\n\n";

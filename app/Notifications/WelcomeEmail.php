@@ -24,9 +24,9 @@ class WelcomeEmail extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Welcome to ' . config('app.name') . '!')
-            ->greeting('Hello ' . $notifiable->name . '!')
-            ->line('Thank you for registering with ' . config('app.name') . '.')
+            ->subject('Welcome to '.config('app.name').'!')
+            ->greeting('Hello '.$notifiable->name.'!')
+            ->line('Thank you for registering with '.config('app.name').'.')
             ->line('We\'re excited to have you on board!')
             ->line('With your account, you can:')
             ->line('• Create and manage digital business cards')
@@ -42,7 +42,7 @@ class WelcomeEmail extends Notification implements ShouldQueue
     {
         return [
             'title' => 'Welcome!',
-            'message' => 'Thank you for registering with ' . config('app.name'),
+            'message' => 'Thank you for registering with '.config('app.name'),
             'action_url' => url('/dashboard'),
         ];
     }

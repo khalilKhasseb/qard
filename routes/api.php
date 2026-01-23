@@ -7,16 +7,17 @@ use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\ThemeController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 // Public analytics tracking (no auth required)
 Route::post('/analytics/track', [AnalyticsController::class, 'track'])
     ->name('api.analytics.track');
 
 // Authenticated API routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     // Business Cards
     Route::apiResource('cards', CardController::class)->names([
-        'index' => 'api.cards.index', 
+        'index' => 'api.cards.index',
         'store' => 'api.cards.store',
         'show' => 'api.cards.show',
         'update' => 'api.cards.update',
@@ -38,6 +39,10 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('api.sections.destroy');
     Route::post('cards/{card}/sections/reorder', [SectionController::class, 'reorder'])
         ->name('api.sections.reorder');
+
+    // Gallery image quick upload (immediate per-item upload)
+    Route::post('sections/{section}/gallery-upload', [SectionController::class, 'uploadGallery'])
+        ->name('api.sections.gallery.upload');
 
     // Themes
     Route::apiResource('themes', ThemeController::class)->names([
@@ -72,8 +77,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('subscription', [SubscriptionController::class, 'show'])
         ->name('api.subscription.show');
+    Route::post('subscription/sync', [SubscriptionController::class, 'sync'])
+        ->name('api.subscription.sync');
     Route::post('subscription/cancel', [SubscriptionController::class, 'cancel'])
         ->name('api.subscription.cancel');
+
+    // Usage stats endpoint
+    Route::get('usage', function (Request $request) {
+        $user = $request->user();
+
+        return response()->json([
+            'cardCount' => $user->cards()->count(),
+            'themeCount' => $user->themes()->count(),
+        ]);
+    })->name('api.usage');
 });
 
 // Language API routes (public)
@@ -98,4 +115,42 @@ Route::middleware('auth:sanctum')->prefix('translations')->group(function () {
         ->name('api.translations.update');
     Route::delete('/{translation}', [\App\Http\Controllers\Api\TranslationController::class, 'destroy'])
         ->name('api.translations.destroy');
+});
+
+// AI Translation routes (authenticated with rate limiting)
+Route::middleware(['web', 'auth', 'throttle:ai-translation'])->prefix('ai-translate')->group(function () {
+    // Translate single section
+    Route::post('/sections/{section}', [\App\Http\Controllers\TranslationController::class, 'translateSection'])
+        ->name('api.ai-translate.section');
+    
+    // Translate entire card
+    Route::post('/cards/{card}', [\App\Http\Controllers\TranslationController::class, 'translateCard'])
+        ->name('api.ai-translate.card');
+    
+    // Get available languages for card
+    Route::get('/cards/{card}/languages', [\App\Http\Controllers\TranslationController::class, 'availableLanguages'])
+        ->name('api.ai-translate.languages');
+    
+    // Verify translation
+    Route::post('/history/{translation}/verify', [\App\Http\Controllers\TranslationController::class, 'verifyTranslation'])
+        ->name('api.ai-translate.verify');
+});
+
+// Translation history and credits (with separate rate limiter)
+Route::middleware(['web', 'auth', 'throttle:translation-history'])->prefix('ai-translate')->group(function () {
+    // Get translation history
+    Route::get('/history', [\App\Http\Controllers\TranslationController::class, 'history'])
+        ->name('api.ai-translate.history');
+    
+    // Get card translation history
+    Route::get('/cards/{card}/history', [\App\Http\Controllers\TranslationController::class, 'cardHistory'])
+        ->name('api.ai-translate.card-history');
+    
+    // Get user's translation credits
+    Route::get('/credits', [\App\Http\Controllers\TranslationController::class, 'credits'])
+        ->name('api.ai-translate.credits');
+    
+    // Server-sent events for real-time translation updates
+    Route::get('/events/{card}', [\App\Http\Controllers\TranslationSseController::class, 'streamEvents'])
+        ->name('api.ai-translate.events');
 });

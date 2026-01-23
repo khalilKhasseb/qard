@@ -4,13 +4,12 @@ namespace App\Filament\Widgets;
 
 use App\Models\Payment;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 
 class RevenueChart extends ChartWidget
 {
     protected ?string $heading = 'Revenue (Last 30 Days)';
 
-    protected int | string | array $columnSpan = 1;
+    protected int|string|array $columnSpan = 1;
 
     public static function getSort(): int
     {

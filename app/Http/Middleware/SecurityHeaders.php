@@ -42,7 +42,7 @@ class SecurityHeaders
 
         // Content Security Policy
         $csp = $this->getContentSecurityPolicy();
-        
+
         // Only set CSP if we have a valid policy (development might return empty to allow Vite)
         if ($csp) {
             $response->headers->set('Content-Security-Policy', $csp);
@@ -53,7 +53,7 @@ class SecurityHeaders
 
     /**
      * Get Content Security Policy header value
-     * 
+     *
      * Returns empty string in development to bypass CSP and allow Vite HMR
      */
     private function getContentSecurityPolicy(): string

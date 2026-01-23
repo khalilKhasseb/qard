@@ -16,7 +16,7 @@ test('api: user can create section for their card', function () {
             'title' => 'Contact Info',
             'content' => ['email' => 'test@example.com'],
         ]);
-    
+
     $response->assertCreated()
         ->assertJsonStructure([
             'data' => [
@@ -24,7 +24,7 @@ test('api: user can create section for their card', function () {
                 'section_type',
                 'title',
                 'content',
-            ]
+            ],
         ]);
 });
 
@@ -39,7 +39,7 @@ test('api: user cannot create section for other users card', function () {
     $otherCard = BusinessCard::factory()->create([
         'user_id' => User::factory()->create()->id,
     ]);
-    
+
     $this->actingAs($this->user, 'sanctum')
         ->postJson(route('api.sections.store', $otherCard), [
             'section_type' => 'contact',
@@ -52,12 +52,12 @@ test('api: user can update their card section', function () {
     $section = CardSection::factory()->create([
         'business_card_id' => $this->card->id,
     ]);
-    
+
     $response = $this->actingAs($this->user, 'sanctum')
         ->putJson(route('api.sections.update', $section), [
             'title' => 'Updated Title',
         ]);
-    
+
     $response->assertOk();
 });
 
@@ -68,7 +68,7 @@ test('api: user cannot update other users card section', function () {
     $section = CardSection::factory()->create([
         'business_card_id' => $otherCard->id,
     ]);
-    
+
     $this->actingAs($this->user, 'sanctum')
         ->putJson(route('api.sections.update', $section), [
             'title' => 'Updated',
@@ -80,10 +80,10 @@ test('api: user can delete their card section', function () {
     $section = CardSection::factory()->create([
         'business_card_id' => $this->card->id,
     ]);
-    
+
     $response = $this->actingAs($this->user, 'sanctum')
         ->deleteJson(route('api.sections.destroy', $section));
-    
+
     $response->assertOk();
     $this->assertDatabaseMissing('card_sections', ['id' => $section->id]);
 });
@@ -92,12 +92,12 @@ test('api: user can reorder card sections', function () {
     $sections = CardSection::factory()->count(3)->create([
         'business_card_id' => $this->card->id,
     ]);
-    
+
     $response = $this->actingAs($this->user, 'sanctum')
         ->postJson(route('api.sections.reorder', $this->card), [
             'section_ids' => $sections->pluck('id')->reverse()->toArray(),
         ]);
-    
+
     $response->assertOk();
 });
 

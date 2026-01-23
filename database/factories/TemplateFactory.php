@@ -12,8 +12,8 @@ class TemplateFactory extends Factory
 
     public function definition(): array
     {
-        $name = fake()->words(2, true) . ' Template';
-        
+        $name = fake()->words(2, true).' Template';
+
         return [
             'name' => $name,
             'slug' => Str::slug($name),

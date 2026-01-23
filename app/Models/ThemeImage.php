@@ -62,12 +62,12 @@ class ThemeImage extends Model
     {
         $bytes = $this->file_size;
         $units = ['B', 'KB', 'MB', 'GB'];
-        
+
         for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
             $bytes /= 1024;
         }
-        
-        return round($bytes, 2) . ' ' . $units[$i];
+
+        return round($bytes, 2).' '.$units[$i];
     }
 
     public function getDimensionsAttribute(): string
@@ -75,13 +75,14 @@ class ThemeImage extends Model
         if ($this->width && $this->height) {
             return "{$this->width}x{$this->height}";
         }
-        
+
         return 'Unknown';
     }
 
     public function delete(): bool
     {
         Storage::disk('public')->delete($this->file_path);
+
         return parent::delete();
     }
 }

@@ -59,13 +59,22 @@ class PaymentController extends Controller
 
     public function confirm(Request $request, Payment $payment): JsonResponse
     {
-        // Only admins can confirm payments (this would typically be in Filament)
-        // For API, we just allow users to view their payment status
-        
-        $this->authorize('view', $payment);
+        // Only admins can confirm payments
+        if (! $request->user()->isAdmin()) {
+            $this->authorize('view', $payment);
+        }
+
+        // If payment is pending, confirm it
+        if ($payment->isPending()) {
+            $this->paymentService->confirmPaymentAndActivateSubscription($payment, [
+                'notes' => $request->input('notes'),
+                'confirmed_by' => $request->user()->name,
+            ]);
+        }
 
         return response()->json([
-            'payment' => new PaymentResource($payment->load('subscriptionPlan'))
+            'payment' => new PaymentResource($payment->load('subscriptionPlan')),
+            'message' => 'Payment confirmed successfully',
         ]);
     }
 

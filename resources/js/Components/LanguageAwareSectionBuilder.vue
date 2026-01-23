@@ -1,13 +1,19 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import SimpleContentSection from './SectionBuilder/SimpleContentSection.vue';
+import ContactSection from './SectionBuilder/ContactSection.vue';
+import SocialSection from './SectionBuilder/SocialSection.vue';
+import HoursSection from './SectionBuilder/HoursSection.vue';
+import AppointmentsSection from './SectionBuilder/AppointmentsSection.vue';
+import ArrayItemsSection from './SectionBuilder/ArrayItemsSection.vue';
 
 const props = defineProps({
-    sections: Array,
+    modelValue: Array,
     language: String
 });
 
-const emit = defineEmits(['update:sections']);
+const emit = defineEmits(['update:modelValue']);
 
 const page = usePage();
 const currentLanguage = computed(() => props.language || 'en');
@@ -15,6 +21,38 @@ const currentLanguage = computed(() => props.language || 'en');
 const availableLanguages = computed(() => {
     return page.props.languages || [{ code: 'en', name: 'English' }];
 });
+
+// Helpers for section type checks (defined early for watcher)
+const isArrayType = (section_type) => {
+    return ['services', 'products', 'testimonials', 'gallery'].includes(section_type);
+};
+
+const isTranslatableType = (section_type) => {
+    return !['gallery'].includes(section_type);
+};
+
+const isObjectType = (section_type) => {
+    return ['contact', 'social', 'hours', 'appointments'].includes(section_type);
+};
+
+// Watch for language changes and ensure all sections have content for the new language
+watch(currentLanguage, (newLang) => {
+    if (props.modelValue) {
+        props.modelValue.forEach(section => {
+            if (isTranslatableType(section.section_type)) {
+                if (!section.content[newLang]) {
+                    if (isArrayType(section.section_type)) {
+                        section.content[newLang] = [];
+                    } else if (isObjectType(section.section_type)) {
+                        section.content[newLang] = {};
+                    } else {
+                        section.content[newLang] = '';
+                    }
+                }
+            }
+        });
+    }
+}, { immediate: true });
 
 const translations = {
     en: {
@@ -40,6 +78,7 @@ const translations = {
         email: 'Email',
         phone: 'Phone',
         address: 'Address',
+        website: 'Website',
         booking_url: 'Booking URL',
         instructions: 'Instructions',
         name: 'Name',
@@ -75,6 +114,7 @@ const translations = {
         email: 'البريد الإلكتروني',
         phone: 'الهاتف',
         address: 'العنوان',
+        website: 'الموقع الإلكتروني',
         booking_url: 'رابط الحجز',
         instructions: 'تعليمات',
         name: 'الاسم',
@@ -93,24 +133,54 @@ const t = (key) => {
     return translations[currentLanguage.value]?.[key] || translations['en'][key];
 };
 
-const isArrayType = (type) => {
-    return ['services', 'products', 'testimonials', 'gallery'].includes(type);
-};
-
-const isObjectType = (type) => {
-    return ['contact', 'social', 'hours', 'appointments'].includes(type);
-};
-
 const ensureLanguageExists = (section) => {
-    if (!section.content[currentLanguage.value]) {
-        if (isArrayType(section.type)) {
-            section.content[currentLanguage.value] = [];
-        } else if (isObjectType(section.type)) {
-            section.content[currentLanguage.value] = {};
-        } else {
-            section.content[currentLanguage.value] = '';
+    if (isTranslatableType(section.section_type)) {
+        if (!section.content[currentLanguage.value]) {
+            if (isArrayType(section.section_type)) {
+                section.content[currentLanguage.value] = [];
+            } else if (isObjectType(section.section_type)) {
+                section.content[currentLanguage.value] = {};
+            } else {
+                section.content[currentLanguage.value] = '';
+            }
+        }
+    } else {
+        if (section.content == null) {
+            if (isArrayType(section.section_type)) {
+                section.content = [];
+            } else if (isObjectType(section.section_type)) {
+                section.content = {};
+            } else {
+                section.content = '';
+            }
         }
     }
+};
+
+const handleTypeChange = (section, index) => {
+    // Reinitialize content based on new section type
+    if (isTranslatableType(section.section_type)) {
+        const newContent = {};
+        availableLanguages.value.forEach(lang => {
+            if (isArrayType(section.section_type)) {
+                newContent[lang.code] = [];
+            } else if (isObjectType(section.section_type)) {
+                newContent[lang.code] = {};
+            } else {
+                newContent[lang.code] = '';
+            }
+        });
+        section.content = newContent;
+    } else {
+        if (isArrayType(section.section_type)) {
+            section.content = [];
+        } else if (isObjectType(section.section_type)) {
+            section.content = {};
+        } else {
+            section.content = '';
+        }
+    }
+    updateSectionContent(index, section.content);
 };
 
 const addSection = () => {
@@ -119,59 +189,200 @@ const addSection = () => {
         initialContent[lang.code] = '';
     });
 
-    const newSections = [...props.sections, {
+    const newSections = [...props.modelValue, {
         id: Date.now(),
-        type: 'text',
+        section_type: 'text',
         content: initialContent,
-        order: props.sections.length + 1,
+        order: props.modelValue.length + 1,
         title: ''
     }];
-    emit('update:sections', newSections);
+    emit('update:modelValue', newSections);
+};
+
+const getTitleForLanguage = (section) => {
+    if (!section.title) return '';
+    
+    // Handle JSON title structure
+    if (typeof section.title === 'object' && section.title[currentLanguage.value]) {
+        return section.title[currentLanguage.value];
+    } else if (typeof section.title === 'string') {
+        return section.title;
+    }
+    
+    return '';
+};
+
+const updateTitleForLanguage = (section, index, value) => {
+    // Ensure title is an object
+    if (typeof section.title !== 'object' || section.title === null) {
+        section.title = {};
+    }
+    
+    // Update the title for current language
+    section.title[currentLanguage.value] = value;
+    
+    // Emit update
+    emit('update:modelValue', [...props.modelValue]);
 };
 
 const removeSection = (index) => {
-    const newSections = props.sections.filter((_, i) => i !== index);
-    emit('update:sections', newSections);
+    const newSections = props.modelValue.filter((_, i) => i !== index);
+    emit('update:modelValue', newSections);
 };
 
 const updateSectionContent = (index, content) => {
-    const newSections = [...props.sections];
+    const newSections = [...props.modelValue];
     newSections[index].content = { ...content };
-    emit('update:sections', newSections);
+    emit('update:modelValue', newSections);
 };
 
 const addItem = (section, index) => {
     ensureLanguageExists(section);
     let newItem = {};
-    if (section.type === 'services') newItem = { name: '', description: '' };
-    else if (section.type === 'products') newItem = { name: '', price: '', description: '' };
-    else if (section.type === 'testimonials') newItem = { quote: '', author: '', company: '' };
-    else if (section.type === 'gallery') newItem = { url: '', caption: '' };
+    if (section.section_type === 'services') newItem = { name: '', description: '' };
+    else if (section.section_type === 'products') newItem = { name: '', price: '', description: '' };
+    else if (section.section_type === 'testimonials') newItem = { quote: '', author: '', company: '' };
+    else if (section.section_type === 'gallery') newItem = { url: '', caption: '', inputType: 'url', uploading: false, progress: 0, uploadError: '' };
 
-    section.content[currentLanguage.value].push(newItem);
+    if (isTranslatableType(section.section_type)) {
+        section.content[currentLanguage.value].push(newItem);
+    } else {
+        section.content.push(newItem);
+    }
     updateSectionContent(index, section.content);
 };
 
 const removeItem = (section, sectionIndex, itemIndex) => {
-    section.content[currentLanguage.value].splice(itemIndex, 1);
+    if (isTranslatableType(section.section_type)) {
+        section.content[currentLanguage.value].splice(itemIndex, 1);
+    } else {
+        section.content.splice(itemIndex, 1);
+    }
     updateSectionContent(sectionIndex, section.content);
+};
+
+const updateArrayItems = (section, sectionIndex, newItems) => {
+    if (isTranslatableType(section.section_type)) {
+        section.content[currentLanguage.value] = newItems;
+    } else {
+        section.content = newItems;
+    }
+    updateSectionContent(sectionIndex, section.content);
+};
+
+const updateSimpleContent = (section, sectionIndex, newContent) => {
+    // For simple content sections, save as {text: "content"} to match translation format
+    if (['text', 'image', 'video', 'link'].includes(section.section_type)) {
+        section.content[currentLanguage.value] = { text: newContent };
+    } else {
+        // For other types, save directly
+        section.content[currentLanguage.value] = newContent;
+    }
+    updateSectionContent(sectionIndex, section.content);
+};
+
+const updateObjectContent = (section, sectionIndex, newContent) => {
+    section.content[currentLanguage.value] = newContent;
+    updateSectionContent(sectionIndex, section.content);
+};
+
+const getArrayItems = (section) => {
+    if (isTranslatableType(section.section_type)) {
+        return section.content[currentLanguage.value] || [];
+    } else {
+        // For non-translatable (gallery), handle both new and legacy formats
+        if (Array.isArray(section.content)) {
+            return section.content;
+        }
+        // Legacy format: language-nested, migrate to flat array using current language
+        if (section.content && typeof section.content === 'object') {
+            const items = section.content[currentLanguage.value] || 
+                         section.content[Object.keys(section.content)[0]] || 
+                         [];
+            // Migrate to flat structure
+            section.content = items;
+            return items;
+        }
+        return [];
+    }
+};
+
+const getSimpleContent = (section) => {
+    const content = section.content[currentLanguage.value];
+    
+    // If content is an object with 'text' property (after translation), return the text
+    if (content && typeof content === 'object' && content.text !== undefined) {
+        return content.text;
+    }
+    
+    // If content is a string, return it directly
+    if (typeof content === 'string') {
+        return content;
+    }
+    
+    // Default fallback
+    return '';
+};
+
+const getObjectContent = (section) => {
+    return section.content[currentLanguage.value] || {};
+};
+
+const draggedIndex = ref(null);
+
+const handleDragStart = (index) => {
+    draggedIndex.value = index;
+};
+
+const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+};
+
+const handleDrop = (targetIndex) => {
+    if (draggedIndex.value !== null && draggedIndex.value !== targetIndex) {
+        const newSections = [...props.modelValue];
+        const draggedItem = newSections[draggedIndex.value];
+        newSections.splice(draggedIndex.value, 1);
+        newSections.splice(targetIndex, 0, draggedItem);
+        emit('update:modelValue', newSections);
+    }
+    draggedIndex.value = null;
 };
 </script>
 
 <template>
     <div class="language-aware-section-builder" :dir="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
-        <div v-for="(section, index) in sections" :key="section.id" class="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div 
+            v-for="(section, index) in modelValue" 
+            :key="section.id" 
+            draggable="true"
+            @dragstart="handleDragStart(index)"
+            @dragover="handleDragOver"
+            @drop="handleDrop(index)"
+            :class="[
+                'mb-4 p-4 border rounded-lg cursor-move transition-all bg-white',
+                draggedIndex === index 
+                    ? 'opacity-50 border-blue-400 bg-blue-50'
+                    : 'border-gray-300 shadow-sm'
+            ]"
+        >
             <div class="flex justify-between items-center mb-2">
-                <h4 class="font-medium text-gray-900 dark:text-white">{{ t('section') }} {{ index + 1 }}</h4>
-                <button @click="removeSection(index)" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-400 cursor-grab active:cursor-grabbing" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0V5H5v1a1 1 0 11-2 0V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2z" />
+                    </svg>
+                    <h4 class="font-medium text-gray-900">{{ t('section') }} {{ index + 1 }}</h4>
+                </div>
+                <button @click="removeSection(index)" class="text-red-600 hover:text-red-800 text-sm font-medium">
                     {{ t('remove') }}
                 </button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('type') }}</label>
-                    <select v-model="section.type" @change="ensureLanguageExists(section)" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('type') }}</label>
+                    <select v-model="section.section_type" @change="handleTypeChange(section, index)" class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2">
                         <option value="text">{{ t('text') }}</option>
                         <option value="image">{{ t('image') }}</option>
                         <option value="video">{{ t('video') }}</option>
@@ -188,102 +399,72 @@ const removeItem = (section, sectionIndex, itemIndex) => {
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ t('section') }} Title (Optional)</label>
-                    <input v-model="section.title" type="text" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300" placeholder="e.g. My Portfolio" />
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('section') }} Title (Optional)</label>
+                    <input 
+                        :value="getTitleForLanguage(section)" 
+                        @input="updateTitleForLanguage(section, index, $event.target.value)"
+                        type="text" 
+                        class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2" 
+                        placeholder="e.g. My Portfolio" 
+                    />
                 </div>
             </div>
 
             <!-- Content Area -->
-            <div v-if="section.type !== 'qr_code'" class="mb-2 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-md">
-                <label class="block text-sm font-bold text-gray-900 dark:text-white mb-2">{{ t('content') }} ({{ currentLanguage.toUpperCase() }})</label>
+            <div v-if="section.section_type !== 'qr_code'" class="mb-2 bg-gray-50 p-3 rounded-md">
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('content') }} ({{ currentLanguage.toUpperCase() }})</label>
 
                 <!-- Text / Image / Video / Link -->
-                <div v-if="['text', 'image', 'video', 'link'].includes(section.type)">
-                    <textarea v-model="section.content[currentLanguage]"
-                              @input="updateSectionContent(index, section.content)"
-                              @focus="ensureLanguageExists(section)"
-                              class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300"
-                              rows="3"
-                              :placeholder="t('placeholder') + ' ' + currentLanguage"></textarea>
-                </div>
+                <SimpleContentSection
+                    v-if="['text', 'image', 'video', 'link'].includes(section.section_type)"
+                    :content="getSimpleContent(section)"
+                    :placeholder="t('placeholder') + ' ' + currentLanguage"
+                    :language="currentLanguage"
+                    @update:content="updateSimpleContent(section, index, $event)"
+                    @focus="ensureLanguageExists(section)"
+                />
 
                 <!-- Contact -->
-                <div v-else-if="section.type === 'contact'" class="space-y-3">
-                    <div v-for="field in ['email', 'phone', 'address']" :key="field">
-                        <label class="text-xs font-medium text-gray-500 uppercase">{{ t(field) }}</label>
-                        <input v-model="section.content[currentLanguage][field]"
-                               @input="updateSectionContent(index, section.content)"
-                               @focus="ensureLanguageExists(section)"
-                               type="text" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300" />
-                    </div>
-                </div>
+                <ContactSection
+                    v-else-if="section.section_type === 'contact'"
+                    :content="getObjectContent(section)"
+                    :translations="translations[currentLanguage]"
+                    @update:content="updateObjectContent(section, index, $event)"
+                />
 
                 <!-- Social -->
-                <div v-else-if="section.type === 'social'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div v-for="platform in ['github', 'linkedin', 'twitter', 'instagram', 'facebook', 'whatsapp', 'youtube', 'tiktok']" :key="platform">
-                        <label class="text-xs font-medium text-gray-500 uppercase">{{ platform }}</label>
-                        <input v-model="section.content[currentLanguage][platform]"
-                               @input="updateSectionContent(index, section.content)"
-                               @focus="ensureLanguageExists(section)"
-                               type="text" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300" :placeholder="'https://' + platform + '.com/...'" />
-                    </div>
-                </div>
+                <SocialSection
+                    v-else-if="section.section_type === 'social'"
+                    :content="getObjectContent(section)"
+                    @update:content="updateObjectContent(section, index, $event)"
+                />
 
                 <!-- Hours -->
-                <div v-else-if="section.type === 'hours'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div v-for="day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']" :key="day">
-                        <label class="text-xs font-medium text-gray-500 uppercase">{{ day }}</label>
-                        <input v-model="section.content[currentLanguage][day]"
-                               @input="updateSectionContent(index, section.content)"
-                               @focus="ensureLanguageExists(section)"
-                               type="text" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300" placeholder="9:00 AM - 5:00 PM" />
-                    </div>
-                </div>
+                <HoursSection
+                    v-else-if="section.section_type === 'hours'"
+                    :content="getObjectContent(section)"
+                    @update:content="updateObjectContent(section, index, $event)"
+                />
 
                 <!-- Appointments -->
-                <div v-else-if="section.type === 'appointments'" class="space-y-3">
-                    <div>
-                        <label class="text-xs font-medium text-gray-500 uppercase">{{ t('booking_url') }}</label>
-                        <input v-model="section.content[currentLanguage].booking_url"
-                               @input="updateSectionContent(index, section.content)"
-                               @focus="ensureLanguageExists(section)"
-                               type="text" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300" />
-                    </div>
-                    <div>
-                        <label class="text-xs font-medium text-gray-500 uppercase">{{ t('instructions') }}</label>
-                        <textarea v-model="section.content[currentLanguage].instructions"
-                                  @input="updateSectionContent(index, section.content)"
-                                  @focus="ensureLanguageExists(section)"
-                                  class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-300" rows="2"></textarea>
-                    </div>
-                </div>
+                <AppointmentsSection
+                    v-else-if="section.section_type === 'appointments'"
+                    :content="getObjectContent(section)"
+                    :translations="translations[currentLanguage]"
+                    @update:content="updateObjectContent(section, index, $event)"
+                />
 
-                <!-- Array Types (Services, Products, etc.) -->
-                <div v-else-if="isArrayType(section.type)" class="space-y-4">
-                    <div v-for="(item, itemIdx) in section.content[currentLanguage]" :key="itemIdx" class="p-3 border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 relative">
-                        <button @click="removeItem(section, index, itemIdx)" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-
-                        <div v-if="section.type === 'services' || section.type === 'products'" class="space-y-2">
-                            <input v-model="item.name" type="text" :placeholder="t('name')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
-                            <input v-if="section.type === 'products'" v-model="item.price" type="text" :placeholder="t('price')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
-                            <textarea v-model="item.description" :placeholder="t('description')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" rows="2"></textarea>
-                        </div>
-
-                        <div v-else-if="section.type === 'testimonials'" class="space-y-2">
-                            <textarea v-model="item.quote" :placeholder="t('quote')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" rows="2"></textarea>
-                            <input v-model="item.author" type="text" :placeholder="t('author')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
-                            <input v-model="item.company" type="text" :placeholder="t('company')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
-                        </div>
-
-                        <div v-else-if="section.type === 'gallery'" class="space-y-2">
-                            <input v-model="item.url" type="text" :placeholder="t('url')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
-                            <input v-model="item.caption" type="text" :placeholder="t('caption')" class="block w-full text-sm border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" />
-                        </div>
-                    </div>
-                    <button @click="addItem(section, index)" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">+ {{ t('add_item') }}</button>
-                </div>
+                <!-- Array Types (Services, Products, Testimonials, Gallery) -->
+                <ArrayItemsSection
+                    v-else-if="isArrayType(section.section_type)"
+                    :items="getArrayItems(section)"
+                    :section-type="section.section_type"
+                    :translations="translations[currentLanguage]"
+                    :section-id="section.id"
+                    @update:items="updateArrayItems(section, index, $event)"
+                    @add-item="addItem(section, index)"
+                    @remove-item="removeItem(section, index, $event)"
+                />
             </div>
         </div>
 

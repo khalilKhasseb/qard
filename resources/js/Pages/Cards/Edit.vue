@@ -20,239 +20,95 @@
           </div>
         </div>
 
-        <!-- Global Input Language Switcher -->
-        <div class="mb-6 bg-white shadow-sm rounded-lg p-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-sm font-medium text-gray-700">Input Language Context:</span>
-            <div class="flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                v-for="lang in languages"
-                :key="lang.code"
-                @click="switchInputLanguage(lang.code)"
-                :class="[
-                  'px-4 py-1.5 text-sm font-medium rounded-md transition-all',
-                  inputLanguage === lang.code
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                ]"
-              >
-                {{ lang.name }} ({{ lang.code.toUpperCase() }})
-              </button>
-            </div>
-          </div>
-          <div class="text-xs text-gray-500 max-w-xs text-right">
-            Switching language here changes the context for all translatable fields below.
-          </div>
-        </div>
+        <!-- Language Switcher -->
+        <LanguageSwitcher 
+          :languages="languages"
+          :input-language="inputLanguage"
+          @switch-language="switchInputLanguage"
+        />
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Basic Info Panel -->
+          <!-- Main Content -->
           <div class="lg:col-span-2 space-y-6">
-            <!-- Basic Information -->
-            <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('basic_info') }}</h3>
-              <div class="space-y-4">
-                <div>
-                  <InputLabel for="title" :value="t('card_title')" />
-                  <TextInput
-                    id="title"
-                    v-model="form.title[inputLanguage]"
-                    type="text"
-                    class="mt-1 block w-full"
-                    @blur="saveBasicInfo"
-                  />
-                  <InputError :message="form.errors.title" class="mt-2" />
-                </div>
-
-                <div>
-                  <InputLabel for="subtitle" :value="t('subtitle')" />
-                  <TextInput
-                    id="subtitle"
-                    v-model="form.subtitle[inputLanguage]"
-                    type="text"
-                    class="mt-1 block w-full"
-                    @blur="saveBasicInfo"
-                  />
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <InputLabel for="profile_image" :value="t('profile_image')" />
-                    <div class="mt-2 flex items-center gap-4">
-                      <div v-if="card.profile_image_url" class="relative group">
-                        <img :src="card.profile_image_url" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 shadow-sm" />
-                      </div>
-                      <div v-else class="w-16 h-16 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="file"
-                        id="profile_image"
-                        class="hidden"
-                        ref="profileInput"
-                        @change="form.profile_image = $event.target.files[0]; saveBasicInfo()"
-                      />
-                      <SecondaryButton type="button" @click="profileInput.click()">
-                        Change
-                      </SecondaryButton>
-                    </div>
-                  </div>
-
-                  <div>
-                    <InputLabel for="cover_image" :value="t('cover_image')" />
-                    <div class="mt-2 flex items-center gap-4">
-                      <div v-if="card.cover_image_url" class="relative group">
-                        <img :src="card.cover_image_url" class="w-24 h-16 rounded-lg object-cover border-2 border-indigo-100 shadow-sm" />
-                      </div>
-                      <div v-else class="w-24 h-16 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="file"
-                        id="cover_image"
-                        class="hidden"
-                        ref="coverInput"
-                        @change="form.cover_image = $event.target.files[0]; saveBasicInfo()"
-                      />
-                      <SecondaryButton type="button" @click="coverInput.click()">
-                        Change
-                      </SecondaryButton>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <InputLabel for="theme_id" :value="t('theme')" />
-                  <select
-                    id="theme_id"
-                    v-model="form.theme_id"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    @change="saveBasicInfo"
-                  >
-                    <option :value="null">Default Theme</option>
-                    <option v-for="theme in themes" :key="theme.id" :value="theme.id">
-                      {{ theme.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div>
-                  <InputLabel for="language_id" :value="t('primary_lang')" />
-                  <select
-                    id="language_id"
-                    v-model="form.language_id"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    @change="handlePrimaryLanguageChange"
-                  >
-                    <option v-for="lang in languages" :key="lang.id" :value="lang.id">
-                      {{ lang.name }} ({{ lang.code.toUpperCase() }})
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
+            <!-- Basic Info -->
+            <BasicInfoSection
+              :card="card"
+              :form="form"
+              :themes="themes"
+              :languages="languages"
+              :input-language="inputLanguage"
+              :t="t"
+              @save="saveBasicInfo"
+              @update:form="updateForm"
+              @language-change="handlePrimaryLanguageChange"
+            />
 
             <!-- Card Sections -->
-            <div class="bg-white shadow-sm rounded-lg p-6">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">{{ t('card_sections') }}</h3>
-                <div class="flex items-center gap-4">
-                  <PrimaryButton @click="saveSections" :disabled="savingSections">
-                    {{ savingSections ? t('saving') : t('save_sections') }}
-                  </PrimaryButton>
-                </div>
-              </div>
-              <LanguageAwareSectionBuilder
-                v-model:sections="sections"
-                :language="inputLanguage"
-              />
-            </div>
+            <CardSectionsPanel
+              :sections="sections"
+              :input-language="inputLanguage"
+              :saving-sections="savingSections"
+              :t="t"
+              @save-sections="saveSections"
+              @update:sections="updateSections"
+            />
           </div>
 
           <!-- Sidebar -->
           <div class="space-y-6">
             <!-- Publishing -->
-            <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('publishing') }}</h3>
-              <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-gray-700">{{ t('status') }}</span>
-                  <span
-                    :class="card.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
-                    class="px-2 py-1 text-xs font-medium rounded-full"
-                  >
-                    {{ card.is_published ? t('published') : t('draft') }}
-                  </span>
-                </div>
-                <PrimaryButton @click="togglePublish" class="w-full justify-center">
-                  {{ card.is_published ? t('unpublish') : t('publish') }}
-                </PrimaryButton>
-              </div>
-            </div>
+            <PublishingPanel
+              :card="card"
+              :t="t"
+              @toggle-publish="togglePublish"
+              @publish-draft="publishDraftChanges"
+            />
 
             <!-- Stats -->
-            <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('stats') }}</h3>
-              <div class="space-y-3">
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">{{ t('views') }}</span>
-                  <span class="text-sm font-medium text-gray-900">{{ card.views_count }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-600">{{ t('shares') }}</span>
-                  <span class="text-sm font-medium text-gray-900">{{ card.shares_count }}</span>
-                </div>
-              </div>
-            </div>
+            <StatsPanel
+              :card="card"
+              :t="t"
+            />
 
-            <!-- Share URL -->
-            <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('share') }}</h3>
-              <div class="space-y-3">
-                <div>
-                  <InputLabel :value="t('public_url')" />
-                  <div class="mt-1 flex rounded-md shadow-sm">
-                    <input
-                      type="text"
-                      :value="publicUrl"
-                      readonly
-                      class="flex-1 rounded-l-md border-gray-300 bg-gray-50 text-sm"
-                    />
-                    <button
-                      @click="copyUrl"
-                      class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 hover:bg-gray-100"
-                    >
-                      {{ t('copy') }}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <!-- Share -->
+            <SharePanel
+              :public-url="publicUrl"
+              :t="t"
+              @copy-url="copyUrl"
+            />
+
+            <!-- AI Translation -->
+            <AITranslationPanel
+              :translation-credits="translationCredits"
+              :available-target-languages="availableTargetLanguages"
+              :selected-target-languages="selectedTargetLanguages"
+              :translating="translating"
+              :translation-status="translationStatus"
+              :t="t"
+              @refresh-credits="loadTranslationCredits"
+              @update:selected-languages="updateSelectedLanguages"
+              @translate="translateEntireCard"
+              @upgrade="$inertia.visit(route('subscription.index'))"
+            />
           </div>
         </div>
       </div>
     </div>
-
-
   </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import InputError from '@/Components/InputError.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
-import Modal from '@/Components/Modal.vue';
-import SectionBuilder from '@/Components/SectionBuilder.vue';
-import LanguageAwareSectionBuilder from '@/Components/LanguageAwareSectionBuilder.vue';
+import LanguageSwitcher from '@/Components/Cards/LanguageSwitcher.vue';
+import BasicInfoSection from '@/Components/Cards/BasicInfoSection.vue';
+import CardSectionsPanel from '@/Components/Cards/CardSectionsPanel.vue';
+import PublishingPanel from '@/Components/Cards/PublishingPanel.vue';
+import StatsPanel from '@/Components/Cards/StatsPanel.vue';
+import SharePanel from '@/Components/Cards/SharePanel.vue';
+import AITranslationPanel from '@/Components/Cards/AITranslationPanel.vue';
 
 const props = defineProps({
   card: Object,
@@ -265,8 +121,25 @@ const props = defineProps({
 const page = usePage();
 const sections = ref([...props.sections]);
 const savingSections = ref(false);
-const profileInput = ref(null);
-const coverInput = ref(null);
+
+// Translation state
+const translationCredits = ref({
+  remaining: 0,
+  limit: 0,
+  unlimited: false,
+  usage: null,
+  loading: false,
+  hasFeature: true, // Default to true until loaded
+});
+
+const selectedTargetLanguages = ref([]);
+const translating = ref(false);
+const translationStatus = ref({
+  message: '',
+  success: false,
+});
+
+const availableTargetLanguages = ref([]);
 
 // Initialize input language from card's primary language or app locale
 const cardLangCode = props.languages.find(l => l.id === props.card.language_id)?.code;
@@ -286,25 +159,38 @@ const initializeMultilingualObject = (existingData) => {
 const form = useForm({
   title: initializeMultilingualObject(props.card.title),
   subtitle: initializeMultilingualObject(props.card.subtitle),
-  theme_id: props.card.theme_id,
-  language_id: props.card.language_id,
+  theme_id: props.card.theme_id || null,
+  language_id: props.card.language_id || props.languages[0]?.id || null,
   cover_image: null,
   profile_image: null,
 });
 
+// Component methods
 const switchInputLanguage = (code) => {
   inputLanguage.value = code;
 };
 
-const handlePrimaryLanguageChange = () => {
-    const newLang = props.languages.find(l => l.id === form.language_id);
+const updateForm = (newForm) => {
+  Object.assign(form, newForm);
+};
+
+const updateSections = (newSections) => {
+  sections.value = newSections;
+};
+
+const updateSelectedLanguages = (languages) => {
+  selectedTargetLanguages.value = languages;
+};
+
+const handlePrimaryLanguageChange = (languageId) => {
+    const newLang = props.languages.find(l => l.id === parseInt(languageId));
     if (newLang) {
         inputLanguage.value = newLang.code;
     }
     saveBasicInfo();
 };
 
-const t = (key) => {
+const t = (key, count = 0) => {
     const translations = {
         en: {
             basic_info: 'Basic Information',
@@ -328,7 +214,15 @@ const t = (key) => {
             public_url: 'Public URL',
             copy: 'Copy',
             cover_image: 'Cover Image',
-            profile_image: 'Avatar / Logo'
+            profile_image: 'Avatar / Logo',
+            ai_translation: 'AI Translation',
+            translation_credits: 'Translation Credits',
+            translate_to: 'Translate to Languages',
+            translate_card: 'Translate Entire Card',
+            translating: 'Translating...',
+            translation_info: count => count > 0 ? `Will translate card + all sections to ${count} language${count > 1 ? 's' : ''}` : 'Select languages to translate',
+            no_credits: 'You\'ve used all your translation credits for this month.',
+            upgrade_plan: 'Upgrade Plan',
         },
         ar: {
             basic_info: 'المعلومات الأساسية',
@@ -352,10 +246,19 @@ const t = (key) => {
             public_url: 'الرابط العام',
             copy: 'نسخ',
             cover_image: 'صورة الغلاف',
-            profile_image: 'الصورة الشخصية / الشعار'
+            profile_image: 'الصورة الشخصية / الشعار',
+            ai_translation: 'الترجمة بالذكاء الاصطناعي',
+            translation_credits: 'رصيد الترجمة',
+            translate_to: 'ترجمة إلى اللغات',
+            translate_card: 'ترجمة البطاقة بالكامل',
+            translating: 'جاري الترجمة...',
+            translation_info: count => count > 0 ? `سيتم ترجمة البطاقة وجميع الأقسام إلى ${count} لغة` : 'اختر اللغات للترجمة',
+            no_credits: 'لقد استخدمت جميع أرصدة الترجمة لهذا الشهر.',
+            upgrade_plan: 'ترقية الخطة',
         }
     };
-    return translations[inputLanguage.value]?.[key] || translations['en'][key];
+    const translation = translations[inputLanguage.value]?.[key] || translations['en'][key];
+    return typeof translation === 'function' ? translation(count) : translation;
 };
 
 const ensureTitleLanguageExists = () => {
@@ -370,25 +273,31 @@ const ensureTitleLanguageExists = () => {
 const saveBasicInfo = () => {
   ensureTitleLanguageExists();
 
+  const formData = {
+    ...form.data(),
+    save_as_draft: true
+  };
+
+  const options = {
+    preserveScroll: true,
+    only: ['card'],
+    onError: (errors) => {
+      console.error('Save error:', errors);
+    }
+  };
+
   if (form.profile_image || form.cover_image) {
-    // Laravel requires _method=PUT for file uploads on update routes
-    form.transform((data) => ({
-      ...data,
-      _method: 'PUT',
-    })).post(route('cards.update', props.card.id), {
-      forceFormData: true,
-      onSuccess: () => {
-        form.profile_image = null;
-        form.cover_image = null;
-      },
-      preserveScroll: true,
-    });
-  } else {
-    form.put(route('cards.update', props.card.id), {
-      preserveScroll: true,
-      only: ['card'],
-    });
+    options.forceFormData = true;
+    options.onSuccess = () => {
+      form.profile_image = null;
+      form.cover_image = null;
+    };
   }
+
+  form.transform((data) => ({
+    ...data,
+    save_as_draft: true
+  })).put(route('cards.update', props.card.id), options);
 };
 
 const togglePublish = () => {
@@ -404,8 +313,19 @@ const togglePublish = () => {
   );
 };
 
-const handleSectionsUpdated = () => {
-  router.reload({ only: ['sections'] });
+const publishDraftChanges = () => {
+  if (confirm('Are you sure you want to publish these draft changes?')) {
+    router.post(
+      route('cards.publish-draft', props.card.id),
+      {},
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          router.reload({ only: ['card'] });
+        },
+      }
+    );
+  }
 };
 
 const saveSections = () => {
@@ -433,4 +353,251 @@ const copyUrl = () => {
   navigator.clipboard.writeText(props.publicUrl);
   alert('URL copied to clipboard!');
 };
+
+// Translation functions
+let translationEventSource = null; // SSE connection
+
+const loadTranslationCredits = async () => {
+  if (translationCredits.value.loading) return;
+  
+  translationCredits.value.loading = true;
+  
+  try {
+    const response = await window.axios.get('/api/ai-translate/credits');
+    const data = response.data;
+    
+    if (data.success) {
+      translationCredits.value = {
+        remaining: data.data.credits_remaining,
+        limit: data.data.credits_limit,
+        unlimited: data.data.unlimited,
+        usage: data.data.usage,
+        hasFeature: data.data.has_feature,
+        loading: false,
+      };
+    }
+  } catch (error) {
+    console.error('Failed to load translation credits:', error);
+    translationCredits.value.loading = false;
+  }
+};
+
+const loadAvailableLanguages = async () => {
+  try {
+    const response = await window.axios.get(`/api/ai-translate/cards/${props.card.id}/languages`);
+    const data = response.data;
+    
+    if (data.success) {
+      availableTargetLanguages.value = data.languages;
+    }
+  } catch (error) {
+    console.error('Failed to load available languages:', error);
+  }
+};
+
+const connectToTranslationEvents = () => {
+  // Close existing connection if any
+  if (translationEventSource) {
+    translationEventSource.close();
+  }
+
+  // Create new EventSource connection
+  translationEventSource = new EventSource(`/api/ai-translate/events/${props.card.id}`);
+  
+  translationEventSource.onopen = () => {
+    console.log('Translation SSE connected');
+  };
+  
+  translationEventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      
+      switch (data.type) {
+        case 'connected':
+          console.log('SSE connection confirmed');
+          // Update credits on connection
+          if (data.credits !== undefined) {
+            translationCredits.value.remaining = data.credits;
+          }
+          break;
+          
+        case 'translation_complete':
+          console.log('Translation completed:', data);
+          translating.value = false;
+          
+          // Update translation status
+          if (data.result && data.result.languages) {
+            const languages = Object.keys(data.result.languages);
+            const successCount = languages.filter(lang => data.result.languages[lang].success).length;
+            const failCount = languages.length - successCount;
+            
+            if (failCount === 0) {
+              translationStatus.value = {
+                message: `Translation completed successfully for ${successCount} language(s)!`,
+                success: true,
+              };
+            } else {
+              translationStatus.value = {
+                message: `Translation completed with ${successCount} success(es) and ${failCount} failure(s).`,
+                success: successCount > 0,
+              };
+            }
+          } else {
+            translationStatus.value = {
+              message: 'Translation completed!',
+              success: true,
+            };
+          }
+          
+          // Update credits
+          if (data.credits !== undefined) {
+            translationCredits.value.remaining = data.credits;
+          }
+          
+          // Reload card data to show new translations
+          router.reload({ only: ['card', 'sections'] });
+          
+          // Also force a page reload to ensure all data is refreshed
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+          
+          // Clear status after 5 seconds
+          setTimeout(() => {
+            translationStatus.value = { message: '', success: false };
+          }, 5000);
+          
+          // Close SSE connection after completion
+          if (translationEventSource) {
+            translationEventSource.close();
+            translationEventSource = null;
+          }
+          break;
+          
+        case 'credits_updated':
+          console.log('Credits updated:', data.credits);
+          if (data.credits !== undefined) {
+            translationCredits.value.remaining = data.credits;
+          }
+          break;
+          
+        case 'heartbeat':
+          // Keep connection alive
+          break;
+          
+        case 'timeout':
+          console.log('SSE connection timed out');
+          if (translationEventSource) {
+            translationEventSource.close();
+            translationEventSource = null;
+          }
+          break;
+          
+        default:
+          console.log('Unknown SSE event:', data);
+      }
+    } catch (error) {
+      console.error('Error parsing SSE data:', error);
+    }
+  };
+  
+  translationEventSource.onerror = (error) => {
+    console.error('Translation SSE error:', error);
+    // Only treat as error if we're still translating and connection unexpectedly closed
+    if (translating.value && translationEventSource && translationEventSource.readyState === 2) {
+      // Connection closed unexpectedly during active translation
+      console.log('SSE connection lost during translation');
+    }
+    if (translationEventSource) {
+      translationEventSource.close();
+      translationEventSource = null;
+    }
+  };
+};
+
+const translateEntireCard = async () => {
+  if (translating.value || selectedTargetLanguages.value.length === 0) {
+    return;
+  }
+
+  // Check credits requirement
+  const sectionsCount = sections.value.filter(s => !['gallery', 'qr_code'].includes(s.section_type)).length;
+  const requiredCredits = (sectionsCount + 1) * selectedTargetLanguages.value.length;
+
+  if (!translationCredits.value.unlimited && translationCredits.value.remaining < requiredCredits) {
+    translationStatus.value = {
+      message: `Insufficient credits. Need ${requiredCredits}, have ${translationCredits.value.remaining}`,
+      success: false,
+    };
+    setTimeout(() => {
+      translationStatus.value = { message: '', success: false };
+    }, 5000);
+    return;
+  }
+
+  if (!confirm(`This will translate your card to ${selectedTargetLanguages.value.length} language(s) and use ${requiredCredits} credits. Continue?`)) {
+    return;
+  }
+
+  translating.value = true;
+  translationStatus.value = { message: '', success: false };
+
+  try {
+    const response = await window.axios.post(`/api/ai-translate/cards/${props.card.id}`, {
+      target_languages: selectedTargetLanguages.value,
+      async: true,
+    });
+
+    const data = response.data;
+
+    if (data.success) {
+      translationStatus.value = {
+        message: data.message || 'Translation started! You will be notified when it completes.',
+        success: true,
+      };
+
+      // Connect to real-time events
+      connectToTranslationEvents();
+
+      // Reload credits
+      await loadTranslationCredits();
+
+      // Clear selection
+      selectedTargetLanguages.value = [];
+    } else {
+      translationStatus.value = {
+        message: data.message || 'Translation failed. Please try again.',
+        success: false,
+      };
+    }
+  } catch (error) {
+    console.error('Translation error:', error);
+    const message = error.response?.data?.message || 'An error occurred during translation. Please try again.';
+    translationStatus.value = {
+      message: message,
+      success: false,
+    };
+  } finally {
+    translating.value = false;
+    
+    // Clear status after 8 seconds
+    setTimeout(() => {
+      translationStatus.value = { message: '', success: false };
+    }, 8000);
+  }
+};
+
+// Load translation data on mount
+onMounted(() => {
+  loadTranslationCredits();
+  loadAvailableLanguages();
+});
+
+// Cleanup SSE connection on unmount
+onBeforeUnmount(() => {
+  if (translationEventSource) {
+    translationEventSource.close();
+    translationEventSource = null;
+  }
+});
 </script>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\HealthController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,6 +28,7 @@ Route::middleware('auth')->group(function () {
     // Business Cards
     Route::resource('cards', App\Http\Controllers\CardController::class);
     Route::post('/cards/{card}/publish', [App\Http\Controllers\CardController::class, 'publish'])->name('cards.publish');
+    Route::post('/cards/{card}/publish-draft', [App\Http\Controllers\CardController::class, 'publishDraft'])->name('cards.publish-draft');
     Route::put('/cards/{card}/sections', [App\Http\Controllers\CardController::class, 'updateSections'])->name('cards.sections.update');
     Route::post('/cards/{card}/sections', [App\Http\Controllers\SectionController::class, 'store'])->name('cards.sections.store');
     Route::post('/cards/{card}/sections/reorder', [App\Http\Controllers\SectionController::class, 'reorder'])->name('cards.sections.reorder');
@@ -50,11 +52,34 @@ Route::middleware('auth')->group(function () {
         ->name('payments.checkout');
     Route::get('/payments/confirmation/{payment}', [App\Http\Controllers\PaymentController::class, 'confirmation'])
         ->name('payments.confirmation');
+    Route::post('/payments/{plan}/initialize', [App\Http\Controllers\PaymentController::class, 'initialize'])
+        ->name('payments.initialize');
+    Route::get('/payments/callback', [App\Http\Controllers\PaymentController::class, 'callback'])
+        ->name('payments.callback');
+
+    // Subscription Management
+    Route::get('/subscription', function () {
+        $user = request()->user();
+        $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
+
+        // Get all active plans (available for upgrade)
+        $plans = \App\Models\SubscriptionPlan::where('is_active', true)
+            ->orderBy('price')
+            ->get();
+
+        return Inertia::render('Subscription/Index', [
+            'availablePlans' => $plans,
+        ]);
+    })->name('subscription.index');
 
     // Language switching
     Route::post('/language/switch', [App\Http\Controllers\Api\LanguageController::class, 'switchLanguage'])
         ->name('language.switch');
 });
+
+// Health Check Routes (no authentication required)
+Route::get('/health', [HealthController::class, 'check'])->name('health.check');
+Route::get('/version', [HealthController::class, 'version'])->name('health.version');
 
 // Public Card Routes
 Route::get('/u/{slug}', [App\Http\Controllers\PublicCardController::class, 'bySlug'])
@@ -65,5 +90,9 @@ Route::get('/nfc/{nfcId}', [App\Http\Controllers\PublicCardController::class, 'b
     ->name('card.public.nfc');
 Route::get('/qr/{shareUrl}', [App\Http\Controllers\PublicCardController::class, 'qrScan'])
     ->name('card.public.qr');
+
+// Webhook Routes (no authentication required)
+Route::post('/webhooks/lahza', [App\Http\Controllers\Webhooks\LahzaWebhookController::class, 'handle'])
+    ->name('webhooks.lahza');
 
 require __DIR__.'/auth.php';

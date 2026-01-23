@@ -82,7 +82,7 @@ class ThemeController extends Controller
 
         if ($theme->used_by_cards_count > 0) {
             return back()->withErrors([
-                'theme' => 'Cannot delete theme that is in use by cards.'
+                'theme' => 'Cannot delete theme that is in use by cards.',
             ]);
         }
 
@@ -97,7 +97,7 @@ class ThemeController extends Controller
         $this->authorize('view', $theme);
 
         $newTheme = $theme->replicate(['preview_image', 'used_by_cards_count']);
-        $newTheme->name = $theme->name . ' (Copy)';
+        $newTheme->name = $theme->name.' (Copy)';
         $newTheme->user_id = $request->user()->id;
         $newTheme->is_system_default = false;
         $newTheme->is_public = false;

@@ -23,7 +23,7 @@ class PaymentResource extends JsonResource
             'paid_at' => $this->paid_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            
+
             // Relationships
             'subscription_plan' => new SubscriptionPlanResource($this->whenLoaded('subscriptionPlan')),
         ];

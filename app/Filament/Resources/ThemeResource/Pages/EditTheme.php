@@ -21,7 +21,7 @@ class EditTheme extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        if (!isset($data['config']) || !is_array($data['config'])) {
+        if (! isset($data['config']) || ! is_array($data['config'])) {
             $data['config'] = Theme::getDefaultConfig();
         }
 

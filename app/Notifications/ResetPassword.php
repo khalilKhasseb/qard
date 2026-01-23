@@ -22,19 +22,19 @@ class ResetPassword extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $url = url(config('app.url') . route('password.reset', [
+        $url = url(config('app.url').route('password.reset', [
             'token' => $this->token,
             'email' => $notifiable->getEmailForPasswordReset(),
         ], false));
 
-        $count = config('auth.passwords.' . config('auth.defaults.passwords') . '.expire');
+        $count = config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
 
         return (new MailMessage)
-            ->subject('Reset Password - ' . config('app.name'))
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->subject('Reset Password - '.config('app.name'))
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('You are receiving this email because we received a password reset request for your account.')
             ->action('Reset Password', $url)
-            ->line('This password reset link will expire in ' . $count . ' minutes.')
+            ->line('This password reset link will expire in '.$count.' minutes.')
             ->line('If you did not request a password reset, no further action is required.');
     }
 

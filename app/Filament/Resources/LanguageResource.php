@@ -4,22 +4,21 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\LanguageResource\Pages;
 use App\Models\Language;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas;
 use Filament\Schemas\Schema;
-use Filament\Tables;
 use Filament\Tables\Columns;
 use Filament\Tables\Table;
-use Filament\Actions\EditAction;
 
 class LanguageResource extends Resource
 {
     protected static ?string $model = Language::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-language';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-language';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'System Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'System Management';
 
     protected static ?int $navigationSort = 3;
 
@@ -39,7 +38,7 @@ class LanguageResource extends Resource
                         Forms\Components\Select::make('direction')
                             ->options([
                                 'ltr' => 'Left to Right',
-                                'rtl' => 'Right to Left'
+                                'rtl' => 'Right to Left',
                             ])
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
@@ -79,7 +78,7 @@ class LanguageResource extends Resource
                 EditAction::make(),
             ])
             ->toolbarActions([
-                \Filament\Actions\BulkAction::make('delete')
+                \Filament\Actions\BulkAction::make('delete'),
 
             ]);
     }

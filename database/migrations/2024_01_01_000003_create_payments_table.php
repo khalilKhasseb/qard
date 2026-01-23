@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('subscription_plan_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('amount', 10, 2);
             $table->string('currency', 3)->default('USD');
-            $table->enum('payment_method', ['cash', 'bank_transfer', 'gateway'])->default('cash');
+            $table->enum('payment_method', ['cash', 'bank_transfer', 'gateway', 'lahza'])->default('cash');
             $table->enum('status', ['pending', 'completed', 'failed', 'refunded'])->default('pending');
             $table->string('transaction_id')->nullable()->unique();
             $table->string('gateway_reference')->nullable();

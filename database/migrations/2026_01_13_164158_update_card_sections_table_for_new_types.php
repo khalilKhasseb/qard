@@ -35,7 +35,7 @@ return new class extends Migration
                 'video',
                 'links',
                 'about',
-                'custom'
+                'custom',
             ])->change();
             $table->string('title')->nullable(false)->change();
         });

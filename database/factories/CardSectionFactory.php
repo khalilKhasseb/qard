@@ -43,8 +43,8 @@ class CardSectionFactory extends Factory
             'title' => 'Social Media',
             'content' => [
                 'links' => [
-                    ['platform' => 'linkedin', 'url' => 'https://linkedin.com/in/' . fake()->userName()],
-                    ['platform' => 'twitter', 'url' => 'https://twitter.com/' . fake()->userName()],
+                    ['platform' => 'linkedin', 'url' => 'https://linkedin.com/in/'.fake()->userName()],
+                    ['platform' => 'twitter', 'url' => 'https://twitter.com/'.fake()->userName()],
                 ],
             ],
         ]);

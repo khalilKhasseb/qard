@@ -41,7 +41,7 @@ class RTLTest extends TestCase
         // Switch to Arabic (RTL)
         $response = $this->actingAs($user)
             ->post('/language/switch', [
-                'language_code' => 'ar'
+                'language_code' => 'ar',
             ]);
 
         $response->assertStatus(200);
@@ -59,7 +59,7 @@ class RTLTest extends TestCase
         // Switch to English (LTR)
         $response = $this->actingAs($user)
             ->post('/language/switch', [
-                'language_code' => 'en'
+                'language_code' => 'en',
             ]);
 
         $response->assertStatus(200);

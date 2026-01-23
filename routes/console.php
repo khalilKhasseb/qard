@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Schedule daily check for expiring subscriptions
 Schedule::command('subscriptions:check-expiring')->daily();
+
+// Schedule monthly translation credits reset (first day of month at midnight)
+Schedule::job(new \App\Jobs\ResetMonthlyTranslationCredits)->monthlyOn(1, '00:00');

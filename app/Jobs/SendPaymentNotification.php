@@ -16,6 +16,7 @@ class SendPaymentNotification implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 30;
+
     public int $tries = 3;
 
     public function __construct(
@@ -27,7 +28,7 @@ class SendPaymentNotification implements ShouldQueue
     {
         $user = $this->payment->user;
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

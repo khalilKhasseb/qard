@@ -17,6 +17,7 @@ class SendSubscriptionNotification implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 30;
+
     public int $tries = 3;
 
     public function __construct(
@@ -29,7 +30,7 @@ class SendSubscriptionNotification implements ShouldQueue
     {
         $user = $this->subscription->user;
 
-        if (!$user) {
+        if (! $user) {
             return;
         }
 

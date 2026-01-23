@@ -22,6 +22,7 @@ class BusinessCard extends Model
         'template_id',
         'theme_id',
         'theme_overrides',
+        'draft_data',
         'custom_slug',
         'share_url',
         'qr_code_url',
@@ -38,6 +39,7 @@ class BusinessCard extends Model
             'title' => 'array',
             'subtitle' => 'array',
             'theme_overrides' => 'array',
+            'draft_data' => 'array',
             'is_published' => 'boolean',
             'is_primary' => 'boolean',
             'views_count' => 'integer',
@@ -49,7 +51,7 @@ class BusinessCard extends Model
 
     public function getCoverImageUrlAttribute(): ?string
     {
-        if (!$this->cover_image_path) {
+        if (! $this->cover_image_path) {
             return null;
         }
 
@@ -62,7 +64,7 @@ class BusinessCard extends Model
 
     public function getProfileImageUrlAttribute(): ?string
     {
-        if (!$this->profile_image_path) {
+        if (! $this->profile_image_path) {
             return null;
         }
 
@@ -145,7 +147,7 @@ class BusinessCard extends Model
     {
         $baseConfig = $this->theme?->config ?? Theme::getDefaultConfig();
 
-        if (!empty($this->theme_overrides)) {
+        if (! empty($this->theme_overrides)) {
             return array_replace_recursive($baseConfig, $this->theme_overrides);
         }
 

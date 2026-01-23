@@ -8,7 +8,7 @@ beforeEach(function () {
     $this->user = User::factory()->create([
         'subscription_tier' => 'pro',
     ]);
-    $this->themeService = new ThemeService();
+    $this->themeService = app(ThemeService::class);
 });
 
 test('user can create theme', function () {

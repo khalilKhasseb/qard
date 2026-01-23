@@ -25,11 +25,11 @@ class PaymentReceived extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Payment Received - TapIt')
-            ->greeting('Hello ' . $notifiable->name . '!')
+            ->greeting('Hello '.$notifiable->name.'!')
             ->line('We have received your payment.')
-            ->line('Amount: $' . number_format($this->payment->amount, 2) . ' ' . $this->payment->currency)
-            ->line('Payment Method: ' . ucfirst($this->payment->payment_method))
-            ->line('Status: ' . ucfirst($this->payment->status))
+            ->line('Amount: $'.number_format($this->payment->amount, 2).' '.$this->payment->currency)
+            ->line('Payment Method: '.ucfirst($this->payment->payment_method))
+            ->line('Status: '.ucfirst($this->payment->status))
             ->action('View Payment History', url('/payments'))
             ->line('Thank you for using TapIt!');
     }
@@ -42,7 +42,7 @@ class PaymentReceived extends Notification implements ShouldQueue
             'currency' => $this->payment->currency,
             'payment_method' => $this->payment->payment_method,
             'status' => $this->payment->status,
-            'message' => 'Payment of $' . number_format($this->payment->amount, 2) . ' received',
+            'message' => 'Payment of $'.number_format($this->payment->amount, 2).' received',
         ];
     }
 }

@@ -39,7 +39,7 @@ class Payment extends Model
     {
         static::creating(function (Payment $payment) {
             if (empty($payment->transaction_id)) {
-                $payment->transaction_id = 'TXN-' . strtoupper(Str::random(12));
+                $payment->transaction_id = 'TXN-'.strtoupper(Str::random(12));
             }
         });
     }
@@ -50,6 +50,11 @@ class Payment extends Model
     }
 
     public function plan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
+    }
+
+    public function subscriptionPlan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
     }

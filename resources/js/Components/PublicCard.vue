@@ -2,6 +2,13 @@
 import { ref, computed, h } from 'vue';
 import { NButton, NIcon, NAvatar } from 'naive-ui';
 import * as IconNamespace from '@vicons/ionicons5';
+import ServicesSection from './PublicCardSections/ServicesSection.vue';
+import ProductsSection from './PublicCardSections/ProductsSection.vue';
+import TestimonialsSection from './PublicCardSections/TestimonialsSection.vue';
+import GallerySection from './PublicCardSections/GallerySection.vue';
+import TextSection from './PublicCardSections/TextSection.vue';
+import AppointmentsSection from './PublicCardSections/AppointmentsSection.vue';
+import '../../css/public-card.css';
 
 const FIGMA_ICONS = {
     location: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.7183 8.19024C20.5352 3.2322 15.9944 1 12.0056 1H11.9944C8.01689 1 3.46477 3.22146 2.28167 8.17951C0.963353 13.7171 4.52393 18.4068 7.74647 21.358C8.94084 22.4527 10.4732 23 12.0056 23C13.538 23 15.0704 22.4527 16.2535 21.358C19.4761 18.4068 23.0366 13.7278 21.7183 8.19024ZM12.0056 13.5668C10.0451 13.5668 8.45633 12.0537 8.45633 10.1863C8.45633 8.31903 10.0451 6.80585 12.0056 6.80585C13.9662 6.80585 15.5549 8.31903 15.5549 10.1863C15.5549 12.0537 13.9662 13.5668 12.0056 13.5668Z" fill="#FF575A"/></svg>`,
@@ -82,6 +89,28 @@ const t = (field) => {
 const sc = (section) => {
     if (!section.content || typeof section.content !== 'object') return {};
 
+    // Gallery: prefer language-specific nested content if present, else top-level
+    if (section.section_type === 'gallery') {
+        if (section.content[currentLanguage.value] !== undefined) {
+            return section.content[currentLanguage.value];
+        }
+        if (section.content[props.card.primary_language] !== undefined) {
+            return section.content[props.card.primary_language];
+        }
+        // If top-level already uses items/images, return it
+        if (section.content.items || section.content.images) {
+            return section.content;
+        }
+        // If the first key looks like a language and contains items, return that
+        const firstKey = Object.keys(section.content)[0];
+        if (firstKey && props.languages.some(l => l.code === firstKey) && section.content[firstKey] && (section.content[firstKey].items || section.content[firstKey].images)) {
+            return section.content[firstKey];
+        }
+
+        // Fallback to top-level
+        return section.content;
+    }
+
     // Check if it's language-nested
     if (section.content[currentLanguage.value] !== undefined) {
         return section.content[currentLanguage.value];
@@ -154,6 +183,25 @@ const bodyFont = computed(() => props.card.theme?.config?.fonts?.body || 'Inter'
 const contactSection = computed(() => parsedSections.value.find(s => s.section_type === 'contact'));
 const email = computed(() => sc(contactSection.value || {})?.email);
 const phone = computed(() => sc(contactSection.value || {})?.phone);
+const address = computed(() => sc(contactSection.value || {})?.address);
+const website = computed(() => sc(contactSection.value || {})?.website);
+
+// Get all contact fields that have values
+const contactFields = computed(() => {
+    const fields = [];
+    const content = sc(contactSection.value || {});
+    if (!content) return fields;
+    
+    if (content.email) fields.push({ type: 'email', value: content.email, icon: 'Mail', href: `mailto:${content.email}` });
+    if (content.phone) fields.push({ type: 'phone', value: content.phone, icon: 'Call', href: `tel:${content.phone}` });
+    if (content.address) fields.push({ type: 'address', value: content.address, icon: 'Location', href: null });
+    if (content.website) {
+        const websiteUrl = content.website.startsWith('http') ? content.website : `https://${content.website}`;
+        fields.push({ type: 'website', value: 'View Website', icon: 'Globe', href: websiteUrl });
+    }
+    
+    return fields;
+});
 
 const socialSection = computed(() => parsedSections.value.find(s => s.section_type === 'social'));
 const socialLinks = computed(() => {
@@ -380,28 +428,33 @@ const themeStyles = computed(() => ({
                     </a>
                 </div>
 
-                <!-- Contact cards (email + phones + address) -->
-                <div class="contact-stack">
-                    <a v-if="email" class="info-card" :href="`mailto:${email}`">
-                        <span class="info-icon"><component :is="renderIcon('Mail')" /></span>
-                        <span class="info-text">{{ email }}</span>
-                    </a>
+                <!-- Contact cards (email + phone + address + website) -->
+                <div v-if="contactFields.length" class="contact-stack">
+                    <!-- Email (full width) -->
+                    <template v-for="field in contactFields.filter(f => f.type === 'email')" :key="field.type">
+                        <a class="info-card" :href="field.href">
+                            <span class="info-icon"><component :is="renderIcon(field.icon)" /></span>
+                            <span class="info-text">{{ field.value }}</span>
+                        </a>
+                    </template>
 
-                    <div class="two-col">
-                        <a v-if="phone" class="info-card" :href="`tel:${phone}`">
-                            <span class="info-icon"><component :is="renderIcon('Phone')" /></span>
-                            <span class="info-text">{{ phone }}</span>
-                        </a>
-                        <a v-if="sc(contactSection || {})?.telephone" class="info-card" :href="`tel:${sc(contactSection || {}).telephone}`">
-                            <span class="info-icon"><component :is="renderIcon('Call')" /></span>
-                            <span class="info-text">{{ sc(contactSection || {}).telephone }}</span>
-                        </a>
+                    <!-- Phone + Website (2 columns) -->
+                    <div v-if="contactFields.some(f => f.type === 'phone' || f.type === 'website')" class="two-col">
+                        <template v-for="field in contactFields.filter(f => f.type === 'phone' || f.type === 'website')" :key="field.type">
+                            <a v-if="field.href" class="info-card" :class="{ 'info-card--clickable': field.type === 'website' }" :href="field.href" :target="field.type === 'website' ? '_blank' : undefined" :rel="field.type === 'website' ? 'noopener noreferrer' : undefined">
+                                <span class="info-icon"><component :is="renderIcon(field.icon)" /></span>
+                                <span class="info-text">{{ field.value }}</span>
+                            </a>
+                        </template>
                     </div>
 
-                    <div v-if="sc(contactSection || {})?.address" class="info-card">
-                        <span class="info-icon"><component :is="renderIcon('Location')" /></span>
-                        <span class="info-text info-text--small">{{ sc(contactSection || {}).address }}</span>
-                    </div>
+                    <!-- Address (full width) -->
+                    <template v-for="field in contactFields.filter(f => f.type === 'address')" :key="field.type">
+                        <div class="info-card">
+                            <span class="info-icon"><component :is="renderIcon(field.icon)" /></span>
+                            <span class="info-text info-text--small">{{ field.value }}</span>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- QR + Actions row -->
@@ -447,6 +500,53 @@ const themeStyles = computed(() => ({
                     </div>
                 </div>
 
+                <!-- Dynamic sections (services, products, testimonials, etc.) -->
+                <template v-for="section in parsedSections" :key="section.id">
+                    <template v-if="hasContent(section)">
+                        <!-- Services Section -->
+                        <ServicesSection
+                            v-if="section.section_type === 'services'"
+                            :content="sc(section)"
+                            :title="t(section.title)"
+                        />
+                        
+                        <!-- Products Section -->
+                        <ProductsSection
+                            v-if="section.section_type === 'products'"
+                            :content="sc(section)"
+                            :title="t(section.title)"
+                        />
+                        
+                        <!-- Testimonials Section -->
+                        <TestimonialsSection
+                            v-if="section.section_type === 'testimonials'"
+                            :content="sc(section)"
+                            :title="t(section.title)"
+                        />
+                        
+                        <!-- Gallery Section -->
+                        <GallerySection
+                            v-if="section.section_type === 'gallery'"
+                            :content="sc(section)"
+                            :title="t(section.title)"
+                        />
+                        
+                        <!-- Text/About Section -->
+                        <TextSection
+                            v-if="section.section_type === 'text' || section.section_type === 'about'"
+                            :content="sc(section)"
+                            :title="t(section.title)"
+                        />
+                        
+                        <!-- Appointments Section -->
+                        <AppointmentsSection
+                            v-if="section.section_type === 'appointments'"
+                            :content="sc(section)"
+                            :title="t(section.title)"
+                        />
+                    </template>
+                </template>
+
                 <footer class="viewer-footer">
                     <span>{{ ut('powered_by') }} <strong>Qard</strong></span>
                 </footer>
@@ -455,388 +555,3 @@ const themeStyles = computed(() => ({
         </div>
     </div>
 </template>
-
-<style scoped>
-.card-viewer {
-    min-height: 100vh;
-    background-color: var(--background);
-    color: #111827;
-    font-family: var(--body-font), system-ui, sans-serif;
-    padding-bottom: 40px;
-}
-
-.card-container {
-    max-width: 500px;
-    margin: 0 auto;
-    background: var(--card-bg);
-    min-height: 100vh;
-    box-shadow: 0 0 40px rgba(0,0,0,0.05);
-}
-
-.ui {
-    padding: 32px 24px 56px;
-}
-
-.header {
-    display: flex;
-    flex-direction: column;
-    gap: 80px;
-    align-items: stretch;
-}
-
-.cover {
-    position: relative;
-}
-
-.cover-image,
-.cover-placeholder {
-    width: 100%;
-    height: 168px;
-    border-radius: 20px;
-}
-
-.cover-image {
-    object-fit: cover;
-}
-
-.cover-placeholder {
-    background: #d9d9d9;
-}
-
-.avatar-wrap {
-    position: absolute;
-    left: 50%;
-    top: 138px;
-    transform: translateX(-50%);
-    width: 100px;
-    height: 100px;
-    display: grid;
-    place-items: center;
-}
-
-.avatar-ring {
-    width: 100px;
-    height: 100px;
-    border-radius: 9999px;
-    background: #fdfdff;
-    padding: 6px;
-    box-sizing: border-box;
-    display: grid;
-    place-items: center;
-}
-
-.profile-avatar {
-    border: 0;
-}
-
-.initials-avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 9999px;
-    background: var(--primary-soft);
-    color: var(--primary);
-    display: grid;
-    place-items: center;
-    font-size: 40px;
-    font-weight: 800;
-}
-
-.header-text {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.name {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-    color: #2e385c;
-    font-family: var(--heading-font), sans-serif;
-}
-
-.subtitle {
-    margin: 0;
-    font-size: 16px;
-    color: #666b7f;
-    line-height: normal;
-    white-space: pre-wrap;
-    padding-bottom: 8px;
-}
-
-.language-switcher {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.available-text {
-    font-size: 12px;
-    color: #9ca3af;
-    font-weight: 500;
-}
-
-.lang-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
-.lang-inline-btn {
-    background: white;
-    border: 1px solid #e5e7eb;
-    padding: 4px 12px;
-    border-radius: 9999px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #374151;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.lang-inline-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
-.lang-inline-btn.active-lang {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-}
-
-.social-row {
-    margin-top: 24px;
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-}
-
-.social-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-    background: #f4f5fa;
-    display: grid;
-    place-items: center;
-    text-decoration: none;
-}
-
-.social-icon :deep(svg) {
-    width: 24px;
-    height: 24px;
-}
-
-.social-icon :deep(path) {
-    vector-effect: non-scaling-stroke;
-}
-
-.contact-stack {
-    margin-top: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-.info-card {
-    background: #f4f5fa;
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-    color: inherit;
-    text-decoration: none;
-}
-
-.info-icon :deep(svg) {
-    width: 24px;
-    height: 24px;
-    color: #2e385c;
-}
-
-.info-text {
-    font-size: 16px;
-    color: #666b7f;
-    text-align: center;
-    line-height: normal;
-    word-break: break-word;
-}
-
-.info-text--small {
-    font-size: 14px;
-}
-
-.qr-actions {
-    margin-top: 24px;
-    background: #f4f5fa;
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-}
-
-.is-rtl .qr-actions {
-    flex-direction: row-reverse;
-}
-
-.qr-left {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-}
-
-.qr-box {
-    width: 72px;
-    height: 72px;
-    background: #d9d9d9;
-    display: grid;
-    place-items: center;
-}
-
-.qr-img {
-    width: 72px;
-    height: 72px;
-    object-fit: cover;
-}
-
-.qr-label {
-    font-size: 16px;
-    color: #666b7f;
-    text-align: center;
-}
-
-.qr-right {
-    width: 146px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.primary-btn {
-    width: 100%;
-    border: 0;
-    border-radius: 12px;
-    padding: 12px 16px;
-    background: #6198f1;
-    color: #fff;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.btn-icon :deep(svg) {
-    width: 24px;
-    height: 24px;
-    color: #fff;
-}
-
-.btn-text {
-    font-size: 16px;
-    line-height: normal;
-}
-
-.hours {
-    margin-top: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
-}
-
-.hours-title {
-    width: 100%;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 600;
-    color: #2e385c;
-}
-
-.hours-list {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.hour-row {
-    width: 100%;
-    background: #f4f5fa;
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.is-rtl .hour-row {
-    justify-content: flex-end;
-}
-
-.hour-icon {
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-}
-
-.hour-icon :deep(svg) {
-    width: 24px;
-    height: 24px;
-    color: #2e385c;
-}
-
-.hour-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: left;
-}
-
-.is-rtl .hour-text {
-    text-align: right;
-    align-items: flex-end;
-}
-
-.hour-day {
-    font-size: 12px;
-    color: #666b7f;
-}
-
-.hour-time {
-    font-size: 16px;
-    font-weight: 500;
-    color: #2e385c;
-}
-
-.viewer-footer {
-    text-align: center;
-    padding: 40px 0;
-    font-size: 13px;
-    color: #9ca3af;
-}
-
-@media (max-width: 500px) {
-    .card-container {
-        box-shadow: none;
-    }
-}
-</style>

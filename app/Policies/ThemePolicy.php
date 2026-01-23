@@ -14,8 +14,8 @@ class ThemePolicy
 
     public function view(User $user, Theme $theme): bool
     {
-        return $theme->is_public 
-            || $theme->is_system_default 
+        return $theme->is_public
+            || $theme->is_system_default
             || $user->id === $theme->user_id;
     }
 
@@ -26,12 +26,12 @@ class ThemePolicy
 
     public function update(User $user, Theme $theme): bool
     {
-        return !$theme->is_system_default && $user->id === $theme->user_id;
+        return ! $theme->is_system_default && $user->id === $theme->user_id;
     }
 
     public function delete(User $user, Theme $theme): bool
     {
-        return !$theme->is_system_default && $user->id === $theme->user_id;
+        return ! $theme->is_system_default && $user->id === $theme->user_id;
     }
 
     public function duplicate(User $user, Theme $theme): bool
@@ -46,6 +46,6 @@ class ThemePolicy
 
     public function forceDelete(User $user, Theme $theme): bool
     {
-        return !$theme->is_system_default && $user->id === $theme->user_id;
+        return ! $theme->is_system_default && $user->id === $theme->user_id;
     }
 }

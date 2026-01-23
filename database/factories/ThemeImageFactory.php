@@ -16,11 +16,11 @@ class ThemeImageFactory extends Factory
         $fileType = fake()->randomElement(ThemeImage::FILE_TYPES);
         $width = fake()->randomElement([1920, 1280, 800, 400]);
         $height = fake()->randomElement([1080, 720, 600, 400]);
-        
+
         return [
             'user_id' => User::factory(),
             'theme_id' => Theme::factory(),
-            'file_path' => 'themes/' . fake()->uuid() . '.jpg',
+            'file_path' => 'themes/'.fake()->uuid().'.jpg',
             'file_type' => $fileType,
             'width' => $width,
             'height' => $height,
@@ -45,7 +45,7 @@ class ThemeImageFactory extends Factory
             'width' => 400,
             'height' => 400,
             'mime_type' => 'image/png',
-            'file_path' => 'themes/' . fake()->uuid() . '.png',
+            'file_path' => 'themes/'.fake()->uuid().'.png',
         ]);
     }
 
@@ -65,7 +65,7 @@ class ThemeImageFactory extends Factory
             'width' => 32,
             'height' => 32,
             'mime_type' => 'image/png',
-            'file_path' => 'themes/' . fake()->uuid() . '.png',
+            'file_path' => 'themes/'.fake()->uuid().'.png',
         ]);
     }
 }
