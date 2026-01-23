@@ -42,11 +42,13 @@ class BusinessCardResource extends Resource
                             ->valueLabel('Subtitle'),
                         Forms\Components\FileUpload::make('cover_image_path')
                             ->image()
+                            ->disk('public')
                             ->directory('covers')
                             ->label('Cover Image'),
                         Forms\Components\FileUpload::make('profile_image_path')
                             ->image()
                             ->directory('profiles')
+                            ->disk('public')
                             ->label('Profile Image (Avatar/Logo)'),
                         Forms\Components\Select::make('language_id')
                             ->relationship('language', 'name')
