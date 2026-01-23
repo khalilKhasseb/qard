@@ -6,12 +6,12 @@ use App\Models\User;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Filament\Tables\Actions\Action;
-
+//use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 class UnverifiedUsersTable extends BaseWidget
 {
     protected static ?int $sort = 2;
-    
+
     protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
@@ -34,14 +34,14 @@ class UnverifiedUsersTable extends BaseWidget
                     ->dateTime()
                     ->sortable(),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('verify')
                     ->label('Verify')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->action(function (User $record) {
                         $record->update(['email_verified_at' => now()]);
-                        
+
                         \Filament\Notifications\Notification::make()
                             ->title('User verified')
                             ->body("Email for {$record->name} has been verified.")

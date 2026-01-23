@@ -21,18 +21,21 @@ return new class extends Migration
         // First, ensure all titles are converted to JSON format if they aren't already
         $sections = CardSection::all();
         foreach ($sections as $section) {
-            if ($section->title && !empty(trim($section->title))) {
+
+//            if ($section->title && !empty(trim($section->title))) {
+
                 $title = $section->title;
-                
-                if (!str_starts_with(trim($title), '{')) {
+
+//                if (!str_starts_with(trim($title), '{')) {
                     $section->update([
                         'title' => json_encode([$defaultLang => $title]),
                     ]);
-                }
-            }
+//                }
+//            }
         }
 
         // Change column type to json
+
         Schema::table('card_sections', function (Blueprint $table) {
             $table->json('title')->change();
         });
@@ -48,7 +51,7 @@ return new class extends Migration
         foreach ($sections as $section) {
             if ($section->title) {
                 $titleData = json_decode($section->title, true);
-                
+
                 $title = is_array($titleData) ? (reset($titleData) ?: '') : $section->title;
                 $section->update([
                     'title' => $title,
