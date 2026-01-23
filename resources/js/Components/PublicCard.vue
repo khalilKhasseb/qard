@@ -547,7 +547,7 @@ const themeStyles = computed(() => ({
                 </template>
 
                 <footer class="viewer-footer">
-                    <span>{{ ut('powered_by') }} <strong>Qard</strong></span>
+                    <a href="https://birdie.ps/">{{ ut('powered_by') }} <strong>Birdi</strong></a>
                 </footer>
             </div>
 
