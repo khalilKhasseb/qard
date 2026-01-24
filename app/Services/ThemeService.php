@@ -148,7 +148,7 @@ class ThemeService
         $css .= "  background-color: var(--card-bg);\n";
         $css .= "  border-radius: {$config['layout']['border_radius']};\n";
         $css .= "  text-align: {$config['layout']['alignment']};\n";
-        $css .= "  padding: 1rem;\n";
+        $css .= "  padding: 1.5rem;\n";
 
         $cardStyle = $config['layout']['card_style'] ?? 'elevated';
         if ($cardStyle === 'elevated') {

@@ -1,7 +1,15 @@
 <script setup>
+import { computed } from 'vue';
 const props = defineProps({
     content: { type: String, required: true },
     title: { type: String, default: '' }
+});
+
+const textContent = computed(() => {
+    if (typeof props.content === 'string') {
+        return props.content;  // Fallback for plain strings
+    }
+    return props.content?.text || '';  // Access the "text" key
 });
 </script>
 
@@ -9,7 +17,7 @@ const props = defineProps({
     <div class="section-block">
         <h2 v-if="title" class="section-title">{{ title }}</h2>
         <div class="text-content">
-            <p>{{ content }}</p>
+            <p>{{ textContent }}</p>
         </div>
     </div>
 </template>

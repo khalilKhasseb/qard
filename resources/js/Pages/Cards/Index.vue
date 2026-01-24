@@ -24,8 +24,8 @@
             <div class="p-6">
               <div class="flex justify-between items-start mb-4">
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-gray-900">{{ card.title }}</h3>
-                  <p v-if="card.subtitle" class="text-sm text-gray-600 mt-1">{{ card.subtitle }}</p>
+                  <h3 class="text-lg font-semibold text-gray-900">{{ card.title[currentLang] }}</h3>
+                  <p v-if="card.subtitle" class="text-sm text-gray-600 mt-1">{{ card.subtitle[currentLang] }}</p>
                 </div>
                 <span
                   :class="card.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
@@ -123,10 +123,17 @@ import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
-
+import { usePage } from '@inertiajs/vue3';
+import { computed, onMounted } from 'vue';
 defineProps({
   cards: Object,
 });
+
+
+const page = usePage();
+
+
+const currentLang  = computed(() => page.props.currentLanguage);
 
 const togglePublish = (card) => {
   router.post(
@@ -147,4 +154,7 @@ const viewCard = (card) => {
     : route('card.public.share', card.share_url);
   window.open(url, '_blank');
 };
+
+onMounted(() => {
+   console.log('Cards page mounted' , currentLang.value);});
 </script>
