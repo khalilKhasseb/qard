@@ -109,6 +109,12 @@ class AiTranslationProvider
         $prompt .= "- Use natural, fluent language in the target language\n";
         $prompt .= "- For RTL languages (Arabic, Hebrew, Persian, Urdu), ensure proper text direction\n\n";
 
+        // Strict JSON-only instruction to reduce malformed responses
+        $prompt .= "IMPORTANT OUTPUT FORMAT:\n";
+        $prompt .= "- Return ONLY a single valid JSON object that matches the requested schema. Do NOT include any explanatory text, notes, or extra commentary.\n";
+        $prompt .= "- If there is nothing to translate or the content is non-translatable (e.g., only URLs), return an empty object: {}\n";
+        $prompt .= "Example: {\"text\": \"translated text\"}\n\n";
+
         $prompt .= "Content to translate:\n{$contentJson}";
 
         return $prompt;
@@ -205,73 +211,52 @@ class AiTranslationProvider
             'response_type' => gettype($responseData),
         ]);
 
-        // If response is a string, return as is
-        if (is_string($responseData)) {
-            return $responseData;
-        }
-
-        // If response is an array/object, check if it's the expected format
-        if (is_array($responseData) || is_object($responseData)) {
-            $data = is_object($responseData) ? (array) $responseData : $responseData;
-            
-            // Check if this looks like the full prompt structure that some models return
-            if (isset($data['header']) && isset($data['body']) && isset($data['footer'])) {
-                // This is the full prompt structure - extract the translated content
-                if (isset($data['body']['content_to_translate'])) {
-                    $extractedContent = $data['body']['content_to_translate'];
-                    
-                    // If original was a string (like for text sections), return the string
-                    if (is_string($originalContent)) {
-                        return is_string($extractedContent) ? $extractedContent : json_encode($extractedContent);
-                    }
-                    
-                    return $extractedContent;
-                }
-            }
-            
-            // Check if this is already in our expected schema format
-            if (is_array($originalContent)) {
-                // For structured content (arrays/objects), return the response as is
-                return $data;
-            } else {
-                // For simple text content, we need to return in the expected format
-                if (isset($data['text'])) {
-                    return ['text' => $data['text']];
-                }
-                
-                // Look for any string field that might contain the translation
-                foreach (['content', 'translated_text', 'translation', 'result'] as $field) {
-                    if (isset($data[$field]) && is_string($data[$field])) {
-                        return ['text' => $data[$field]];
-                    }
-                }
-                
-                // Find the first non-empty string value in the response
-                foreach ($data as $key => $value) {
-                    if (is_string($value) && !empty(trim($value)) && !in_array($key, ['type', 'status', 'model'])) {
-                        return ['text' => $value];
-                    }
-                }
-                
-                // If still no luck, try to extract any readable content
-                if (count($data) === 1) {
-                    $firstValue = reset($data);
-                    if (is_string($firstValue)) {
-                        return ['text' => $firstValue];
-                    }
-                }
-            }
-        }
-
-        // Last resort: convert to string if it's an object/array
-        if (is_array($responseData) || is_object($responseData)) {
-            Log::warning('Could not parse AI response properly, converting to JSON', [
-                'response' => $responseData
+        // Use the new parser to robustly extract structured content or text
+        try {
+            $parseResult = \App\Services\AiResponseParser::parseResponse($responseData, $originalContent);
+            Log::debug('Parsed AI response', [
+                'status' => $parseResult['status'],
+                'snippet' => is_string($parseResult['data']) ? substr($parseResult['data'], 0, 200) : null,
             ]);
-            return json_encode($responseData);
-        }
 
-        // Fallback: return the response as is
-        return $responseData;
+            switch ($parseResult['status']) {
+                case 'ok':
+                    return $parseResult['data'];
+
+                case 'only_urls':
+                    // Nothing to translate - keep original structured content
+                    Log::info('Translation contained only URLs or non-translatable values; keeping original content', [
+                        'original_preview' => is_array($originalContent) ? json_encode(array_slice($originalContent, 0, 5)) : substr((string) $originalContent, 0, 200),
+                    ]);
+                    return $originalContent;
+
+                case 'no_content':
+                    Log::info('Translation returned no content; keeping original', []);
+                    return $originalContent;
+
+                case 'text_fallback':
+                    // For simple text translations, return wrapped text
+                    if (is_array($originalContent)) {
+                        // original was structured -> nothing to translate
+                        return $originalContent;
+                    }
+
+                    return $parseResult['data'];
+
+                case 'unparseable':
+                default:
+                    // Log detailed info and keep original to avoid breaking the flow
+                    Log::warning('Structured object could not be decoded. Received: ' . print_r($parseResult['data'], true));
+                    return $originalContent;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error parsing AI response', ['error' => $e->getMessage()]);
+            // On parser error, fallback to original response data handling to avoid interruption
+            if (is_array($responseData) || is_object($responseData)) {
+                return is_object($responseData) ? (array) $responseData : $responseData;
+            }
+
+            return is_string($responseData) ? $responseData : $originalContent;
+        }
     }
 }
