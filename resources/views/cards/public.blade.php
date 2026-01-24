@@ -40,6 +40,7 @@
             'name' => $lang->name,
             'code' => $lang->code,
             'direction' => $lang->direction,
+            'labels' => $lang->labels,
         ];
     })->toArray();
 @endphp

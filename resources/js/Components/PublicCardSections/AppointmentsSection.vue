@@ -1,7 +1,8 @@
 <script setup>
 const props = defineProps({
     content: { type: Object, required: true },
-    title: { type: String, default: '' }
+    title: { type: String, default: '' },
+    buttonLabel: { type: String, default: '' }
 });
 </script>
 
@@ -11,7 +12,7 @@ const props = defineProps({
         <div class="appointment-card">
             <p v-if="content.instructions" class="appointment-instructions">{{ content.instructions }}</p>
             <a v-if="content.booking_url" :href="content.booking_url" target="_blank" rel="noopener noreferrer" class="appointment-btn">
-                Book Appointment
+                {{ buttonLabel || 'Book Appointment' }}
             </a>
         </div>
     </div>

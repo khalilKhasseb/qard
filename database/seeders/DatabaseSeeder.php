@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
 
         // Language labels
         $this->call(LanguageLabelsSeeder::class);
+        $this->call(PublicViewLabelsSeeder::class);
 
         // Demo public card with fully populated sections
         $this->call(DemoPublicCardSeeder::class);

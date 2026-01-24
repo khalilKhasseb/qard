@@ -9,7 +9,6 @@ import GallerySection from './PublicCardSections/GallerySection.vue';
 import TextSection from './PublicCardSections/TextSection.vue';
 import AppointmentsSection from './PublicCardSections/AppointmentsSection.vue';
 import '../../css/public-card.css';
-import { parse } from 'postcss';
 
 const FIGMA_ICONS = {
     location: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.7183 8.19024C20.5352 3.2322 15.9944 1 12.0056 1H11.9944C8.01689 1 3.46477 3.22146 2.28167 8.17951C0.963353 13.7171 4.52393 18.4068 7.74647 21.358C8.94084 22.4527 10.4732 23 12.0056 23C13.538 23 15.0704 22.4527 16.2535 21.358C19.4761 18.4068 23.0366 13.7278 21.7183 8.19024ZM12.0056 13.5668C10.0451 13.5668 8.45633 12.0537 8.45633 10.1863C8.45633 8.31903 10.0451 6.80585 12.0056 6.80585C13.9662 6.80585 15.5549 8.31903 15.5549 10.1863C15.5549 12.0537 13.9662 13.5668 12.0056 13.5668Z" fill="#FF575A"/></svg>`,
@@ -26,55 +25,61 @@ const props = defineProps({
 
 const currentLanguage = ref(props.card.primary_language || 'en');
 
-const uiTranslations = {
+const fallbackTranslations = {
     en: {
         available_in: 'Available in',
-        call: 'Call',
-        email: 'Email',
         share: 'Share',
-        scan_to_connect: 'Scan to connect',
         powered_by: 'Powered by',
-        phone: 'Phone',
-        address: 'Address',
-        appointments: 'Book Appointment',
-        contact: 'Contact Info',
-        social: 'Social Links',
-        services: 'Services',
-        products: 'Products',
-        testimonials: 'Testimonials',
+        qr_code: 'QR Code',
+        download: 'Download',
+        view_website: 'View Website',
+        book_appointment: 'Book Appointment',
         hours: 'Business Hours',
-        gallery: 'Gallery',
-        text: 'About',
-        image: 'Image',
-        video: 'Video',
-        link: 'Link',
+        am: 'AM',
+        pm: 'PM',
+        closed: 'Closed',
+        monday: 'Monday',
+        tuesday: 'Tuesday',
+        wednesday: 'Wednesday',
+        thursday: 'Thursday',
+        friday: 'Friday',
+        saturday: 'Saturday',
+        sunday: 'Sunday',
     },
     ar: {
         available_in: 'متوفر بـ',
-        call: 'اتصال',
-        email: 'بريد إلكتروني',
         share: 'مشاركة',
-        scan_to_connect: 'امسح الرمز للتواصل',
         powered_by: 'مشغل بواسطة',
-        phone: 'الهاتف',
-        address: 'العنوان',
-        appointments: 'حجز موعد',
-        contact: 'معلومات الاتصال',
-        social: 'روابط التواصل',
-        services: 'الخدمات',
-        products: 'المنتجات',
-        testimonials: 'التوصيات',
+        qr_code: 'رمز QR',
+        download: 'تنزيل',
+        view_website: 'عرض الموقع',
+        book_appointment: 'حجز موعد',
         hours: 'ساعات العمل',
-        gallery: 'معرض الصور',
-        text: 'حول',
-        image: 'صورة',
-        video: 'فيديو',
-        link: 'رابط',
+        am: 'ص',
+        pm: 'م',
+        closed: 'مغلق',
+        monday: 'الاثنين',
+        tuesday: 'الثلاثاء',
+        wednesday: 'الأربعاء',
+        thursday: 'الخميس',
+        friday: 'الجمعة',
+        saturday: 'السبت',
+        sunday: 'الأحد',
     }
 };
 
+const labelsByCode = computed(() => {
+    const map = {};
+    props.languages.forEach((lang) => {
+        map[lang.code] = lang.labels || {};
+    });
+    return map;
+});
+
 const ut = (key) => {
-    return uiTranslations[currentLanguage.value]?.[key] || uiTranslations['en'][key];
+    const labels = labelsByCode.value[currentLanguage.value] || {};
+    const fallback = labelsByCode.value.en || {};
+    return labels[key] ?? fallback[key] ?? fallbackTranslations[currentLanguage.value]?.[key] ?? fallbackTranslations.en[key];
 };
 
 const selectedLangData = computed(() => {
@@ -198,7 +203,7 @@ const contactFields = computed(() => {
     if (content.address) fields.push({ type: 'address', value: content.address, icon: 'Location', href: null });
     if (content.website) {
         const websiteUrl = content.website.startsWith('http') ? content.website : `https://${content.website}`;
-        fields.push({ type: 'website', value: 'View Website', icon: 'Globe', href: websiteUrl });
+        fields.push({ type: 'website', value: ut('view_website'), icon: 'Globe', href: websiteUrl });
     }
     
     return fields;
@@ -343,13 +348,29 @@ const hasContent = (section) => {
 
 const formatHoursValue = (value) => {
     if (!value) return '';
-    if (typeof value === 'string') return value;
+    if (typeof value === 'string') {
+        const closedLabel = ut('closed') || 'Closed';
+        if (value.trim().toLowerCase() === 'closed') return closedLabel;
+        return value
+            .replace(/\bAM\b/gi, ut('am') || 'AM')
+            .replace(/\bPM\b/gi, ut('pm') || 'PM');
+    }
     if (typeof value === 'object') {
         const start = value.start || value.from || '';
         const end = value.end || value.to || '';
-        return [start, end].filter(Boolean).join(' - ');
+        return [start, end]
+            .filter(Boolean)
+            .join(' - ')
+            .replace(/\bAM\b/gi, ut('am') || 'AM')
+            .replace(/\bPM\b/gi, ut('pm') || 'PM');
     }
     return String(value);
+};
+
+const formatDayLabel = (day) => {
+    if (!day) return '';
+    const key = String(day).toLowerCase();
+    return ut(key) || day;
 };
 
 const themeStyles = computed(() => ({
@@ -470,7 +491,7 @@ onMounted(() => {
                                 alt="QR"
                             />
                         </div>
-                        <div class="qr-label">QR Code</div>
+                        <div class="qr-label">{{ ut('qr_code') }}</div>
                     </div>
 
                     <div class="qr-right">
@@ -480,7 +501,7 @@ onMounted(() => {
                         </button>
                         <button class="primary-btn" type="button" @click="downloadContactCard">
                             <span class="btn-icon block w-[30px] mb-1"><component :is="renderIcon('Download')" /></span>
-                            <span class="btn-text">Download</span>
+                            <span class="btn-text">{{ ut('download') }}</span>
                         </button>
                     </div>
                 </div>
@@ -495,7 +516,7 @@ onMounted(() => {
                                 <div v-for="(time, day) in sc(section)" :key="day" class="hour-row">
                                     <div class="hour-icon"><component :is="renderIcon('CalendarCheck')" /></div>
                                     <div class="hour-text">
-                                        <div class="hour-day">{{ day }}</div>
+                                        <div class="hour-day">{{ formatDayLabel(day) }}</div>
                                         <div class="hour-time">{{ formatHoursValue(time) }}</div>
                                     </div>
                                 </div>
@@ -549,6 +570,7 @@ onMounted(() => {
                             v-if="section.section_type === 'appointments'"
                             :content="sc(section)"
                             :title="t(section.title)"
+                            :button-label="ut('book_appointment')"
                         />
                     </template>
                 </template>
