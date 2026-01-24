@@ -46,6 +46,43 @@ class LanguageResource extends Resource
                         Forms\Components\Toggle::make('is_default')
                             ->required(),
                     ])->columns(2),
+                Schemas\Components\Section::make('UI Labels')
+                    ->description('Manage label translations for this language')
+                    ->schema([
+                        Forms\Components\Repeater::make('labels')
+                            ->label('Labels')
+                            ->schema([
+                                Forms\Components\TextInput::make('key')
+                                    ->required(),
+                                Forms\Components\TextInput::make('value')
+                                    ->required(),
+                            ])
+                            ->columns(2)
+                            ->default([])
+                            ->afterStateHydrated(function (Forms\Components\Repeater $component, $state): void {
+                                if (is_array($state) && array_keys($state) !== range(0, count($state) - 1)) {
+                                    $component->state(
+                                        collect($state)
+                                            ->map(fn ($value, $key) => ['key' => $key, 'value' => $value])
+                                            ->values()
+                                            ->all()
+                                    );
+                                }
+                            })
+                            ->dehydrateStateUsing(function ($state): array {
+                                if (!is_array($state)) {
+                                    return [];
+                                }
+                                $out = [];
+                                foreach ($state as $row) {
+                                    if (!isset($row['key'])) {
+                                        continue;
+                                    }
+                                    $out[$row['key']] = $row['value'] ?? '';
+                                }
+                                return $out;
+                            }),
+                    ]),
             ]);
     }
 

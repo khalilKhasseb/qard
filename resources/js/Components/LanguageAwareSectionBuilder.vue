@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import {ref, computed, watch} from 'vue';
+import {usePage} from '@inertiajs/vue3';
 import SimpleContentSection from './SectionBuilder/SimpleContentSection.vue';
 import ContactSection from './SectionBuilder/ContactSection.vue';
 import SocialSection from './SectionBuilder/SocialSection.vue';
@@ -19,7 +19,7 @@ const page = usePage();
 const currentLanguage = computed(() => props.language || 'en');
 
 const availableLanguages = computed(() => {
-    return page.props.languages || [{ code: 'en', name: 'English' }];
+    return page.props.languages || [{code: 'en', name: 'English'}];
 });
 
 // Helpers for section type checks (defined early for watcher)
@@ -52,9 +52,9 @@ watch(currentLanguage, (newLang) => {
             }
         });
     }
-}, { immediate: true });
+}, {immediate: true});
 
-const translations = {
+const fallbackTranslations = {
     en: {
         section: 'Section',
         remove: 'Remove',
@@ -126,11 +126,63 @@ const translations = {
         url: 'الرابط',
         caption: 'الوصف',
         add_item: 'إضافة عنصر'
+    },
+    he: {
+        section: 'قسم',
+        remove: 'إزالة',
+        type: 'النوع',
+        content: 'المحتوى',
+        add_section: 'إضافة قسم',
+        placeholder: 'أدخل المحتوى بـ',
+        text: 'نص',
+        image: 'صورة',
+        video: 'فيديو',
+        link: 'رابط',
+        qr_code: 'رمز QR',
+        contact: 'معلومات الاتصال',
+        social: 'روابط التواصل',
+        services: 'الخدمات',
+        products: 'المنتجات',
+        testimonials: 'التوصيات',
+        hours: 'ساعات العمل',
+        appointments: 'المواعيد',
+        gallery: 'معرض الصور',
+        email: 'البريد الإلكتروني',
+        phone: 'الهاتف',
+        address: 'العنوان',
+        website: 'الموقع الإلكتروني',
+        booking_url: 'رابط الحجز',
+        instructions: 'تعليمات',
+        name: 'الاسم',
+        description: 'الوصف',
+        price: 'السعر',
+        quote: 'الاقتباس',
+        author: 'المؤلف',
+        company: 'الشركة',
+        url: 'الرابط',
+        caption: 'الوصف',
+        add_item: 'إضافة عنصر'
     }
 };
 
+const labelsByCode = computed(() => {
+    const map = {};
+    (availableLanguages.value || []).forEach(lang => {
+        map[lang.code] = lang.labels || {};
+    });
+    return map;
+});
+
+const currentLabels = computed(() => {
+    return labelsByCode.value[currentLanguage.value]
+        || fallbackTranslations[currentLanguage.value]
+        || fallbackTranslations['en'];
+});
+
 const t = (key) => {
-    return translations[currentLanguage.value]?.[key] || translations['en'][key];
+    const labels = labelsByCode.value[currentLanguage.value] || {};
+    const fallback = labelsByCode.value.en || {};
+    return labels[key] ?? fallback[key] ?? fallbackTranslations[currentLanguage.value]?.[key] ?? fallbackTranslations['en'][key];
 };
 
 const ensureLanguageExists = (section) => {
@@ -201,14 +253,14 @@ const addSection = () => {
 
 const getTitleForLanguage = (section) => {
     if (!section.title) return '';
-    
+
     // Handle JSON title structure
     if (typeof section.title === 'object' && section.title[currentLanguage.value]) {
         return section.title[currentLanguage.value];
     } else if (typeof section.title === 'string') {
         return section.title;
     }
-    
+
     return '';
 };
 
@@ -217,10 +269,10 @@ const updateTitleForLanguage = (section, index, value) => {
     if (typeof section.title !== 'object' || section.title === null) {
         section.title = {};
     }
-    
+
     // Update the title for current language
     section.title[currentLanguage.value] = value;
-    
+
     // Emit update
     emit('update:modelValue', [...props.modelValue]);
 };
@@ -232,17 +284,24 @@ const removeSection = (index) => {
 
 const updateSectionContent = (index, content) => {
     const newSections = [...props.modelValue];
-    newSections[index].content = { ...content };
+    newSections[index].content = {...content};
     emit('update:modelValue', newSections);
 };
 
 const addItem = (section, index) => {
     ensureLanguageExists(section);
     let newItem = {};
-    if (section.section_type === 'services') newItem = { name: '', description: '' };
-    else if (section.section_type === 'products') newItem = { name: '', price: '', description: '' };
-    else if (section.section_type === 'testimonials') newItem = { quote: '', author: '', company: '' };
-    else if (section.section_type === 'gallery') newItem = { url: '', caption: '', inputType: 'url', uploading: false, progress: 0, uploadError: '' };
+    if (section.section_type === 'services') newItem = {name: '', description: ''};
+    else if (section.section_type === 'products') newItem = {name: '', price: '', description: ''};
+    else if (section.section_type === 'testimonials') newItem = {quote: '', author: '', company: ''};
+    else if (section.section_type === 'gallery') newItem = {
+        url: '',
+        caption: '',
+        inputType: 'url',
+        uploading: false,
+        progress: 0,
+        uploadError: ''
+    };
 
     if (isTranslatableType(section.section_type)) {
         section.content[currentLanguage.value].push(newItem);
@@ -273,7 +332,7 @@ const updateArrayItems = (section, sectionIndex, newItems) => {
 const updateSimpleContent = (section, sectionIndex, newContent) => {
     // For simple content sections, save as {text: "content"} to match translation format
     if (['text', 'image', 'video', 'link'].includes(section.section_type)) {
-        section.content[currentLanguage.value] = { text: newContent };
+        section.content[currentLanguage.value] = {text: newContent};
     } else {
         // For other types, save directly
         section.content[currentLanguage.value] = newContent;
@@ -296,9 +355,9 @@ const getArrayItems = (section) => {
         }
         // Legacy format: language-nested, migrate to flat array using current language
         if (section.content && typeof section.content === 'object') {
-            const items = section.content[currentLanguage.value] || 
-                         section.content[Object.keys(section.content)[0]] || 
-                         [];
+            const items = section.content[currentLanguage.value] ||
+                section.content[Object.keys(section.content)[0]] ||
+                [];
             // Migrate to flat structure
             section.content = items;
             return items;
@@ -309,17 +368,17 @@ const getArrayItems = (section) => {
 
 const getSimpleContent = (section) => {
     const content = section.content[currentLanguage.value];
-    
+
     // If content is an object with 'text' property (after translation), return the text
     if (content && typeof content === 'object' && content.text !== undefined) {
         return content.text;
     }
-    
+
     // If content is a string, return it directly
     if (typeof content === 'string') {
         return content;
     }
-    
+
     // Default fallback
     return '';
 };
@@ -353,24 +412,26 @@ const handleDrop = (targetIndex) => {
 
 <template>
     <div class="language-aware-section-builder" :dir="currentLanguage === 'ar' ? 'rtl' : 'ltr'">
-        <div 
-            v-for="(section, index) in modelValue" 
-            :key="section.id" 
+        <div
+            v-for="(section, index) in modelValue"
+            :key="section.id"
             draggable="true"
             @dragstart="handleDragStart(index)"
             @dragover="handleDragOver"
             @drop="handleDrop(index)"
             :class="[
                 'mb-4 p-4 border rounded-lg cursor-move transition-all bg-white',
-                draggedIndex === index 
+                draggedIndex === index
                     ? 'opacity-50 border-blue-400 bg-blue-50'
                     : 'border-gray-300 shadow-sm'
             ]"
         >
             <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-gray-400 cursor-grab active:cursor-grabbing" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0V5H5v1a1 1 0 11-2 0V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2z" />
+                    <svg class="w-5 h-5 text-gray-400 cursor-grab active:cursor-grabbing" fill="currentColor"
+                         viewBox="0 0 20 20">
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0V5H5v1a1 1 0 11-2 0V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2z"/>
                     </svg>
                     <h4 class="font-medium text-gray-900">{{ t('section') }} {{ index + 1 }}</h4>
                 </div>
@@ -382,7 +443,8 @@ const handleDrop = (targetIndex) => {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('type') }}</label>
-                    <select v-model="section.section_type" @change="handleTypeChange(section, index)" class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2">
+                    <select v-model="section.section_type" @change="handleTypeChange(section, index)"
+                            class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2">
                         <option value="text">{{ t('text') }}</option>
                         <option value="image">{{ t('image') }}</option>
                         <option value="video">{{ t('video') }}</option>
@@ -399,20 +461,22 @@ const handleDrop = (targetIndex) => {
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('section') }} Title (Optional)</label>
-                    <input 
-                        :value="getTitleForLanguage(section)" 
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('section') }} Title
+                        (Optional)</label>
+                    <input
+                        :value="getTitleForLanguage(section)"
                         @input="updateTitleForLanguage(section, index, $event.target.value)"
-                        type="text" 
-                        class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2" 
-                        placeholder="e.g. My Portfolio" 
+                        type="text"
+                        class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2"
+                        placeholder="e.g. My Portfolio"
                     />
                 </div>
             </div>
 
             <!-- Content Area -->
             <div v-if="section.section_type !== 'qr_code'" class="mb-2 bg-gray-50 p-3 rounded-md">
-                <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('content') }} ({{ currentLanguage.toUpperCase() }})</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('content') }}
+                    ({{ currentLanguage.toUpperCase() }})</label>
 
                 <!-- Text / Image / Video / Link -->
                 <SimpleContentSection
@@ -428,7 +492,7 @@ const handleDrop = (targetIndex) => {
                 <ContactSection
                     v-else-if="section.section_type === 'contact'"
                     :content="getObjectContent(section)"
-                    :translations="translations[currentLanguage]"
+                    :translations="currentLabels"
                     @update:content="updateObjectContent(section, index, $event)"
                 />
 
@@ -450,7 +514,7 @@ const handleDrop = (targetIndex) => {
                 <AppointmentsSection
                     v-else-if="section.section_type === 'appointments'"
                     :content="getObjectContent(section)"
-                    :translations="translations[currentLanguage]"
+                    :translations="currentLabels"
                     @update:content="updateObjectContent(section, index, $event)"
                 />
 
@@ -459,7 +523,7 @@ const handleDrop = (targetIndex) => {
                     v-else-if="isArrayType(section.section_type)"
                     :items="getArrayItems(section)"
                     :section-type="section.section_type"
-                    :translations="translations[currentLanguage]"
+                    :translations="currentLabels"
                     :section-id="section.id"
                     @update:items="updateArrayItems(section, index, $event)"
                     @add-item="addItem(section, index)"
@@ -468,7 +532,8 @@ const handleDrop = (targetIndex) => {
             </div>
         </div>
 
-        <button @click="addSection" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <button @click="addSection"
+                class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             {{ t('add_section') }}
         </button>
     </div>

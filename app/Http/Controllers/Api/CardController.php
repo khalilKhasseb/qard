@@ -43,6 +43,7 @@ class CardController extends Controller
 
     public function show(Request $request, BusinessCard $card): CardResource
     {
+
         $this->authorize('view', $card);
 
         return new CardResource($card->load(['sections', 'theme']));

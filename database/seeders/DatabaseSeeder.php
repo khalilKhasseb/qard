@@ -29,11 +29,11 @@ class DatabaseSeeder extends Seeder
         );
 
         // Languages
-        Language::firstOrCreate(
+        Language::updateOrCreate(
             ['code' => 'en'],
             ['name' => 'English', 'direction' => 'ltr', 'is_active' => true, 'is_default' => true]
         );
-        Language::firstOrCreate(
+        Language::updateOrCreate(
             ['code' => 'ar'],
             ['name' => 'Arabic', 'direction' => 'rtl', 'is_active' => true, 'is_default' => false]
         );
@@ -46,6 +46,9 @@ class DatabaseSeeder extends Seeder
 
         // Create default templates
         $this->createDefaultTemplates();
+
+        // Language labels
+        $this->call(LanguageLabelsSeeder::class);
 
         // Demo public card with fully populated sections
         $this->call(DemoPublicCardSeeder::class);

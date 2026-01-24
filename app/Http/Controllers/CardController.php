@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\LanguageResource;
 use App\Models\BusinessCard;
 use App\Models\Language;
 use App\Models\Theme;
@@ -46,7 +47,7 @@ class CardController extends Controller
 
         return Inertia::render('Cards/Create', [
             'themes' => $themes,
-            'languages' => $languages,
+            'languages' => LanguageResource::collection($languages)->resolve(),
             'defaultLanguage' => $defaultLanguage,
             'appUrl' => url('/'),
             'cardCount' => $user->cards()->count(),
@@ -87,6 +88,7 @@ class CardController extends Controller
         $themes = Theme::forUser($request->user()->id)->get();
         $languages = Language::active()->get();
 
+
         $publicUrl = $card->custom_slug
             ? route('card.public.slug', $card->custom_slug)
             : route('card.public.share', $card->share_url);
@@ -95,7 +97,7 @@ class CardController extends Controller
             'card' => $card,
             'sections' => $card->sections,
             'themes' => $themes,
-            'languages' => $languages,
+            'languages' => LanguageResource::collection($languages)->resolve(),
             'publicUrl' => $publicUrl,
         ]);
     }

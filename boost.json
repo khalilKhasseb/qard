@@ -1,12 +1,13 @@
 {
     "agents": [
-        "claude_code"
+        "phpstorm"
     ],
     "editors": [
-        "claude_code"
+        "vscode"
     ],
     "guidelines": [
-        "filament/filament"
+        "filament/filament",
+        "echolabsdev/prism"
     ],
     "herd_mcp": true
 }

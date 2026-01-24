@@ -16,6 +16,18 @@ class TranslationSseController extends Controller
      */
     public function streamEvents(Request $request, int $cardId): StreamedResponse
     {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+
+        if (function_exists('ignore_user_abort')) {
+            @ignore_user_abort(true);
+        }
+
+        @ini_set('zlib.output_compression', '0');
+        @ini_set('output_buffering', 'off');
+        @ini_set('implicit_flush', '1');
+
         $user = $request->user();
         
         // Verify the user owns this card
@@ -38,14 +50,16 @@ class TranslationSseController extends Controller
                 'timestamp' => now()->toISOString(),
                 'credits' => $user->getRemainingTranslationCredits(),
             ]) . "\n\n";
-            
-            if (ob_get_level()) {
+
+            while (ob_get_level() > 0) {
                 ob_end_flush();
             }
             flush();
 
             $startTime = time();
             $maxDuration = 300; // 5 minutes max connection time
+            $lastHeartbeat = $startTime;
+            $heartbeatInterval = 30;
 
             while (true) {
                 // Check for timeout
@@ -72,8 +86,8 @@ class TranslationSseController extends Controller
                     
                     // Clear the completion flag
                     Cache::forget($translationKey);
-                    
-                    if (ob_get_level()) {
+
+                    while (ob_get_level() > 0) {
                         ob_end_flush();
                     }
                     flush();
@@ -93,21 +107,23 @@ class TranslationSseController extends Controller
                     ]) . "\n\n";
                     
                     Cache::forget($creditKey);
-                    
-                    if (ob_get_level()) {
+
+                    while (ob_get_level() > 0) {
                         ob_end_flush();
                     }
                     flush();
                 }
 
                 // Send heartbeat every 30 seconds
-                if (time() % 30 == 0) {
+                if (time() - $lastHeartbeat >= $heartbeatInterval) {
                     echo "data: " . json_encode([
                         'type' => 'heartbeat',
                         'timestamp' => now()->toISOString(),
                     ]) . "\n\n";
-                    
-                    if (ob_get_level()) {
+
+                    $lastHeartbeat = time();
+
+                    while (ob_get_level() > 0) {
                         ob_end_flush();
                     }
                     flush();

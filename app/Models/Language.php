@@ -15,11 +15,13 @@ class Language extends Model
         'direction',
         'is_active',
         'is_default',
+        'labels',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'is_default' => 'boolean',
+        'labels' => 'array',
     ];
 
     public function users()
