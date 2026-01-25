@@ -7,7 +7,7 @@ const props = defineProps({
 
 <template>
     <div class="section-block">
-        <h2 v-if="title" class="section-title">{{ title }}</h2>
+        <h2 v-if="title" class="section-title my-4">{{ title }}</h2>
         <div class="services-grid">
             <div v-for="(service, idx) in content" :key="idx" class="service-card">
                 <h3 class="service-name">{{ service.name }}</h3>

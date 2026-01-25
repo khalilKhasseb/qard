@@ -60,6 +60,15 @@ class PaymentController extends Controller
 
     public function initialize(Request $request, SubscriptionPlan $plan)
     {
+
+        \Log::info('CSRF Debug - Payment Initialize', [
+            'incoming_x_csrf_token' => $request->header('X-CSRF-TOKEN'),
+            'session_token' => $request->session()->token(),
+            'tokens_match' => hash_equals($request->session()->token(), $request->header('X-CSRF-TOKEN')),
+            'session_id' => $request->session()->getId(),
+            'user_id' => $request->user()?->id,
+        ]);
+
         $user = $request->user();
 
         // Check if user already has an active subscription for this plan
@@ -82,8 +91,8 @@ class PaymentController extends Controller
 
             // Fallback: Try multiple nested locations if getCheckoutUrl failed
             if (! $checkoutUrl) {
-                $checkoutUrl = $payment->metadata['authorization_url'] 
-                    ?? $payment->metadata['api_response']['data']['authorization_url'] 
+                $checkoutUrl = $payment->metadata['authorization_url']
+                    ?? $payment->metadata['api_response']['data']['authorization_url']
                     ?? null;
             }
 

@@ -161,7 +161,7 @@ const initializeMultilingualObject = (existingData) => {
 const form = useForm({
     title: initializeMultilingualObject(props.card.title),
     subtitle: initializeMultilingualObject(props.card.subtitle),
-    theme_id: props.card.theme_id || null,
+    theme_id: props.card.theme_id || '',
     language_id: props.card.language_id || props.languages[0]?.id || null,
     cover_image: null,
     profile_image: null,
@@ -247,6 +247,7 @@ const saveBasicInfo = () => {
 
     form.transform((data) => ({
         ...data,
+        theme_id: data.theme_id === '' ? null : data.theme_id,
         save_as_draft: true
     })).put(route('cards.update', props.card.id), options);
 };
@@ -546,6 +547,7 @@ const translateEntireCard = async () => {
 onMounted(() => {
     loadTranslationCredits();
     loadAvailableLanguages();
+    console.log("Themes" , props.themes)
 
 });
 
@@ -555,5 +557,6 @@ onBeforeUnmount(() => {
         translationEventSource.close();
         translationEventSource = null;
     }
+
 });
 </script>

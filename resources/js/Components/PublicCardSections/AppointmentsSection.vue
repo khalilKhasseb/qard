@@ -8,7 +8,7 @@ const props = defineProps({
 
 <template>
     <div class="section-block">
-        <h2 v-if="title" class="section-title">{{ title }}</h2>
+        <h2 v-if="title" class="section-title my-4">{{ title }}</h2>
         <div class="appointment-card">
             <p v-if="content.instructions" class="appointment-instructions">{{ content.instructions }}</p>
             <a v-if="content.booking_url" :href="content.booking_url" target="_blank" rel="noopener noreferrer" class="appointment-btn">

@@ -7,7 +7,7 @@ const props = defineProps({
 
 <template>
     <div class="section-block">
-        <h2 v-if="title" class="section-title">{{ title }}</h2>
+        <h2 v-if="title" class="section-title my-4">{{ title }}</h2>
         <div class="gallery-grid">
             <div v-for="(item, idx) in (Array.isArray(content) ? content : (content.items || content.images || []))" :key="idx" class="gallery-item">
                 <img v-if="(typeof item === 'string' ? item : (item.url || item.image_url))" :src="(typeof item === 'string' ? item : (item.url || item.image_url))" :alt="item.caption || ''" class="gallery-img" />

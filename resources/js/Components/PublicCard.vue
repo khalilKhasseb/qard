@@ -17,6 +17,8 @@ const FIGMA_ICONS = {
     whatsapp: `<svg viewBox="0 0 23.8859 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 24L1.687 17.837C0.645998 16.033 0.0989998 13.988 0.0999998 11.891C0.103 5.335 5.43799 0 11.993 0C15.174 0.001 18.16 1.24 20.406 3.488C22.6509 5.736 23.8869 8.724 23.8859 11.902C23.8829 18.459 18.548 23.794 11.993 23.794C10.003 23.793 8.04198 23.294 6.30499 22.346L0 24ZM6.59698 20.193C8.27298 21.188 9.87298 21.784 11.989 21.785C17.437 21.785 21.875 17.351 21.878 11.9C21.88 6.438 17.463 2.01 11.997 2.008C6.54498 2.008 2.11 6.442 2.108 11.892C2.107 14.117 2.75899 15.783 3.85399 17.526L2.85499 21.174L6.59698 20.193ZM17.984 14.729C17.91 14.605 17.712 14.531 17.414 14.382C17.117 14.233 15.656 13.514 15.383 13.415C15.111 13.316 14.913 13.266 14.714 13.564C14.516 13.861 13.946 14.531 13.773 14.729C13.6 14.927 13.426 14.952 13.129 14.803C12.832 14.654 11.874 14.341 10.739 13.328C9.85598 12.54 9.25898 11.567 9.08598 11.269C8.91298 10.972 9.06798 10.811 9.21598 10.663C9.34998 10.53 9.51298 10.316 9.66198 10.142C9.81298 9.97 9.86198 9.846 9.96198 9.647C10.061 9.449 10.012 9.275 9.93698 9.126C9.86198 8.978 9.26798 7.515 9.02098 6.92C8.77898 6.341 8.53398 6.419 8.35198 6.41L7.78198 6.4C7.58398 6.4 7.26198 6.474 6.98998 6.772C6.71798 7.07 5.94999 7.788 5.94999 9.251C5.94999 10.714 7.01498 12.127 7.16298 12.325C7.31198 12.523 9.25798 15.525 12.239 16.812C12.948 17.118 13.502 17.301 13.933 17.438C14.645 17.664 15.293 17.632 15.805 17.556C16.376 17.471 17.563 16.837 17.811 16.143C18.059 15.448 18.059 14.853 17.984 14.729Z" fill="#25D366"/></svg>`,
 };
 
+const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
 const props = defineProps({
     card: { type: Object, required: true },
     sections: { type: Array, default: () => [] },
@@ -32,6 +34,8 @@ const fallbackTranslations = {
         powered_by: 'Powered by',
         qr_code: 'QR Code',
         download: 'Download',
+        download_qr_png: 'Download QR',
+        download_qr_svg: 'Download SVG',
         view_website: 'View Website',
         book_appointment: 'Book Appointment',
         hours: 'Business Hours',
@@ -52,6 +56,8 @@ const fallbackTranslations = {
         powered_by: 'مشغل بواسطة',
         qr_code: 'رمز QR',
         download: 'تنزيل',
+        download_qr_png: 'تحميل QR',
+        download_qr_svg: 'تحميل SVG',
         view_website: 'عرض الموقع',
         book_appointment: 'حجز موعد',
         hours: 'ساعات العمل',
@@ -221,6 +227,36 @@ const socialLinks = computed(() => {
 
 const getShareUrl = () => props.card?.full_url || window.location.href;
 
+const getQrUrl = (format = 'png') => {
+    const data = props.card?.full_url || window.location.href;
+    const size = 150;
+    if (format === 'png' && props.card?.qr_code_url) return props.card.qr_code_url;
+    const params = new URLSearchParams({ size: `${size}x${size}`, data });
+    if (format === 'svg') params.append('format', 'svg');
+    return `https://api.qrserver.com/v1/create-qr-code/?${params.toString()}`;
+};
+
+const downloadQr = async (format = 'png') => {
+    const url = getQrUrl(format);
+    const name = (t(props.card.title) || 'card').toString().replace(/\s+/g, '_');
+    const filename = `${name}_qr.${format === 'svg' ? 'svg' : 'png'}`;
+
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 500);
+    } catch {
+        window.open(url, '_blank');
+    }
+};
+
 const shareCard = async () => {
     const url = getShareUrl();
     const title = t(props.card.title) || '';
@@ -346,11 +382,21 @@ const hasContent = (section) => {
     return false;
 };
 
+const isClosedHours = (value) => {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string') return value.trim() === '' || value.trim().toLowerCase() === 'closed';
+    if (typeof value === 'object') {
+        const start = value.start || value.from || '';
+        const end = value.end || value.to || '';
+        return !start && !end;
+    }
+    return false;
+};
+
 const formatHoursValue = (value) => {
-    if (!value) return '';
+    const closedLabel = ut('closed') || 'Closed';
+    if (isClosedHours(value)) return closedLabel;
     if (typeof value === 'string') {
-        const closedLabel = ut('closed') || 'Closed';
-        if (value.trim().toLowerCase() === 'closed') return closedLabel;
         return value
             .replace(/\bAM\b/gi, ut('am') || 'AM')
             .replace(/\bPM\b/gi, ut('pm') || 'PM');
@@ -456,25 +502,25 @@ onMounted(() => {
                 <div v-if="contactFields.length" class="contact-stack">
                     <!-- Email (full width) -->
                     <template v-for="field in contactFields.filter(f => f.type === 'email')" :key="field.type">
-                        <a class="info-card " :href="field.href">
+                        <a class="info-card info-card--hover" :href="field.href">
                             <span class="info-icon block w-[30px] mb-1"><component :is="renderIcon(field.icon)" /></span>
-                            <span class="info-text">{{ field.value }}</span>
+                            <span class="info-text" :class="{ 'phone-ltr': field.type === 'phone' }">{{ field.value }}</span>
                         </a>
                     </template>
 
                     <!-- Phone + Website (2 columns) -->
                     <div v-if="contactFields.some(f => f.type === 'phone' || f.type === 'website')" class="two-col">
                         <template v-for="field in contactFields.filter(f => f.type === 'phone' || f.type === 'website')" :key="field.type">
-                            <a v-if="field.href" class="info-card" :class="{ 'info-card--clickable': field.type === 'website' }" :href="field.href" :target="field.type === 'website' ? '_blank' : undefined" :rel="field.type === 'website' ? 'noopener noreferrer' : undefined">
+                            <a v-if="field.href" class="info-card info-card--hover" :class="{ 'info-card--clickable': field.type === 'website' }" :href="field.href" :target="field.type === 'website' ? '_blank' : undefined" :rel="field.type === 'website' ? 'noopener noreferrer' : undefined">
                                 <span class="info-icon block w-[30px] mb-1"><component :is="renderIcon(field.icon)" /></span>
-                                <span class="info-text">{{ field.value }}</span>
+                                <span class="info-text" :class="{ 'phone-ltr': field.type === 'phone' }">{{ field.value }}</span>
                             </a>
                         </template>
                     </div>
 
                     <!-- Address (full width) -->
                     <template v-for="field in contactFields.filter(f => f.type === 'address')" :key="field.type">
-                        <div class="info-card">
+                        <div class="info-card info-card--hover">
                             <span class="info-icon block w-[30px] mb-1"><component :is="renderIcon(field.icon)" /></span>
                             <span class="info-text info-text--small">{{ field.value }}</span>
                         </div>
@@ -486,9 +532,10 @@ onMounted(() => {
                     <div class="qr-left">
                         <div class="qr-box">
                             <img
-                                :src="card.qr_code_url || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(card.full_url)}`"
-                                class="qr-img"
+                                :src="getQrUrl('png')"
+                                class="qr-img cursor-pointer"
                                 alt="QR"
+                                @click="downloadQr('png')"
                             />
                         </div>
                         <div class="qr-label">{{ ut('qr_code') }}</div>
@@ -509,15 +556,15 @@ onMounted(() => {
                 <!-- Hours section (Figma style) -->
                 <template v-if="parsedSections.length > 0 && Array.from(parsedSections).find(el => el.section_type === 'hours')">
                 <div class="hours">
-                    <div class="hours-title">{{ ut('hours') }}</div>
+                    <div class="hours-title my-4">{{ ut('hours') }}</div>
                     <div class="hours-list">
                         <template v-for="section in parsedSections" :key="section.id">
-                            <template v-if="section.section_type === 'hours' && hasContent(section)">
-                                <div v-for="(time, day) in sc(section)" :key="day" class="hour-row">
+                            <template v-if="section.section_type === 'hours'">
+                                <div v-for="day in days" :key="day" class="hour-row" :class="{ 'hour-row--closed': isClosedHours(sc(section)[day]) }">
                                     <div class="hour-icon"><component :is="renderIcon('CalendarCheck')" /></div>
                                     <div class="hour-text">
                                         <div class="hour-day">{{ formatDayLabel(day) }}</div>
-                                        <div class="hour-time">{{ formatHoursValue(time) }}</div>
+                                        <div class="hour-time">{{ formatHoursValue(sc(section)[day]) }}</div>
                                     </div>
                                 </div>
                             </template>
@@ -578,7 +625,7 @@ onMounted(() => {
                 <footer class="viewer-footer">
                     <a href="https://birdie.ps/" target="_blank" class="inline-block ">{{ ut('powered_by') }} <strong>
 
-                        <svg class="inline-block transition-colors duration-300 ease-in-out hover:fill-red-400 hover:text-red-500" width="30px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 189.8 94.7" xml:space="preserve">
+                        <svg class="inline-block transition-colors duration-300 ease-in-out hover:fill-red-400 hover:text-red-500 birdie-logo" width="30px" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 189.8 94.7" xml:space="preserve">
 <path fill="currentcolor" d="M166,61.2c1.3,1.1,3.2,1,4.4-0.3c1.1-1.3,1-3.2-0.3-4.4c-1.3-1.1-3.2-1-4.4,0.3c0,0,0,0,0,0
 	c-0.1,0.1-0.2,0.2-0.3,0.4C164.5,58.4,164.8,60.2,166,61.2 M105,61.2c1.3,1.1,3.2,1,4.4-0.3c1.1-1.3,1-3.2-0.3-4.4s-3.2-1-4.4,0.3
 	c0,0,0,0,0,0c-0.1,0.1-0.2,0.2-0.3,0.4C103.5,58.4,103.8,60.2,105,61.2 M184.8,81.6c-2.3,1.2-5,1.4-7.5,0.7c3.4-1.7,6.6-3.7,9.6-6

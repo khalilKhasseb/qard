@@ -15,7 +15,7 @@ const textContent = computed(() => {
 
 <template>
     <div class="section-block">
-        <h2 v-if="title" class="section-title">{{ title }}</h2>
+        <h2 v-if="title" class="section-title my-4">{{ title }}</h2>
         <div class="text-content">
             <p>{{ textContent }}</p>
         </div>

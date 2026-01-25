@@ -29,8 +29,8 @@
         <div>
           <InputLabel for="profile_image" :value="t('profile_image')" />
           <div class="mt-2 flex items-center gap-4">
-            <div v-if="card.profile_image_url" class="relative group">
-              <img :src="card.profile_image_url" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 shadow-sm" />
+            <div v-if="card.profile_image_url || form.profile_image" class="relative group">
+              <img :src="profileImageSrc" class="w-16 h-16 rounded-full object-cover border-2 border-indigo-100 shadow-sm" />
             </div>
             <div v-else class="w-16 h-16 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,8 +53,8 @@
         <div>
           <InputLabel for="cover_image" :value="t('cover_image')" />
           <div class="mt-2 flex items-center gap-4">
-            <div v-if="card.cover_image_url" class="relative group">
-              <img :src="card.cover_image_url" class="w-24 h-16 rounded-lg object-cover border-2 border-indigo-100 shadow-sm" />
+            <div v-if="card.cover_image_url || form.cover_image" class="relative group">
+              <img :src="coverImageSrc" class="w-24 h-16 rounded-lg object-cover border-2 border-indigo-100 shadow-sm" />
             </div>
             <div v-else class="w-24 h-16 rounded-lg bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,11 +79,11 @@
         <InputLabel for="theme_id" :value="t('theme')" />
         <select
           id="theme_id"
-          :value="form.theme_id"
+          :value="form.theme_id || ''"
           @change="updateTheme"
           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
         >
-          <option :value="null">Default Theme</option>
+          <option value="">Default Theme</option>
           <option v-for="theme in themes" :key="theme.id" :value="theme.id">
             {{ theme.name }}
           </option>
@@ -114,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onBeforeUnmount, computed, watch } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
@@ -134,6 +134,54 @@ const emit = defineEmits(['save', 'update:form', 'language-change']);
 
 const profileInput = ref(null);
 const coverInput = ref(null);
+const currentProfileUrl = ref(null);
+const currentCoverUrl = ref(null);
+
+const profileImageSrc = ref(props.card.profile_image_url);
+const coverImageSrc = ref(props.card.cover_image_url);
+
+watch(() => props.form.profile_image, (newFile) => {
+  if (currentProfileUrl.value) {
+    window.URL.revokeObjectURL(currentProfileUrl.value);
+  }
+  if (newFile && typeof window !== 'undefined' && window.URL) {
+    currentProfileUrl.value = window.URL.createObjectURL(newFile);
+    profileImageSrc.value = currentProfileUrl.value;
+  } else {
+    currentProfileUrl.value = null;
+    profileImageSrc.value = props.card.profile_image_url;
+  }
+});
+
+watch(() => props.card.profile_image_url, (newUrl) => {
+  if (!props.form.profile_image) {
+    profileImageSrc.value = newUrl;
+  }
+});
+
+watch(() => props.form.cover_image, (newFile) => {
+  if (currentCoverUrl.value) {
+    window.URL.revokeObjectURL(currentCoverUrl.value);
+  }
+  if (newFile && typeof window !== 'undefined' && window.URL) {
+    currentCoverUrl.value = window.URL.createObjectURL(newFile);
+    coverImageSrc.value = currentCoverUrl.value;
+  } else {
+    currentCoverUrl.value = null;
+    coverImageSrc.value = props.card.cover_image_url;
+  }
+});
+
+watch(() => props.card.cover_image_url, (newUrl) => {
+  if (!props.form.cover_image) {
+    coverImageSrc.value = newUrl;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (currentProfileUrl.value) window.URL.revokeObjectURL(currentProfileUrl.value);
+  if (currentCoverUrl.value) window.URL.revokeObjectURL(currentCoverUrl.value);
+});
 
 const updateTitle = (value) => {
   const updatedForm = { ...props.form };
@@ -149,7 +197,7 @@ const updateSubtitle = (value) => {
 
 const updateTheme = (event) => {
   const updatedForm = { ...props.form };
-  updatedForm.theme_id = event.target.value === 'null' ? null : parseInt(event.target.value);
+  updatedForm.theme_id = event.target.value === '' ? null : parseInt(event.target.value);
   emit('update:form', updatedForm);
 };
 
