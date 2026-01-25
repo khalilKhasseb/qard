@@ -93,8 +93,8 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="card in cardAnalytics" :key="card.id">
                     <td class="px-4 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">{{ card.title }}</div>
-                      <div class="text-sm text-gray-500">{{ card.subtitle }}</div>
+                      <div class="text-sm font-medium text-gray-900">{{ card.title.en }}</div>
+                      <div class="text-sm text-gray-500">{{ card.subtitle.en }}</div>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {{ card.views_count }}

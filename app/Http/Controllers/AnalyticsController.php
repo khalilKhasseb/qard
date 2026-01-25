@@ -35,7 +35,7 @@ class AnalyticsController extends Controller
         // Get recent events
         $recentEvents = AnalyticsEvent::query()
             ->whereIn('business_card_id', $user->cards->pluck('id'))
-            ->with('businessCard:id,title')
+            ->with('card:id,title')
             ->latest()
             ->take(20)
             ->get()
