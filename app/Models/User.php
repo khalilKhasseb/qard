@@ -105,13 +105,19 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
     public function canCreateCard(): bool
     {
-        $limit = $this->getCardLimit();
+       if($this->isAdmin()) {
+           return true;
+       }
+       $limit = $this->getCardLimit();
 
         return $this->cards()->count() < $limit;
     }
 
     public function canCreateTheme(): bool
     {
+        if($this->isAdmin()) {
+            return true;
+        }
         $limit = $this->getThemeLimit();
 
         return $this->themes()->count() < $limit;
