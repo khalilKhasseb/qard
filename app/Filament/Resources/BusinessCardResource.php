@@ -274,6 +274,8 @@ class BusinessCardResource extends Resource
                 Tables\Columns\ImageColumn::make('profile_image_path')
                     ->label('Avatar')
                     ->circular()
+                    ->disk('public')
+                    ->visibility('public')
                     ->size(50)
                     ->defaultImageUrl(url('/images/default-avatar.png')),
 
