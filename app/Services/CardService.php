@@ -24,10 +24,12 @@ class CardService
 
         $card = BusinessCard::create([
             'user_id' => $user->id,
+            'language_id' => $data['language_id'] ?? null,
             'title' => $data['title'],
             'subtitle' => $data['subtitle'] ?? null,
             'template_id' => $template?->id,
             'theme_id' => $data['theme_id'] ?? null,
+            'active_languages' => $data['active_languages'] ?? ($data['language_id'] ? [$this->getLanguageCode($data['language_id'])] : ['en']),
             'custom_slug' => $data['custom_slug'] ?? null,
             'is_published' => $data['is_published'] ?? false,
             'is_primary' => $user->cards()->count() === 0,
@@ -242,5 +244,10 @@ class CardService
             'event_types' => $this->analyticsService->getEventTypeBreakdown($card, $period),
             'recent_events' => $this->analyticsService->getRecentEvents($card, 20),
         ];
+    }
+
+    protected function getLanguageCode(int $languageId): string
+    {
+        return \App\Models\Language::find($languageId)?->code ?? 'en';
     }
 }

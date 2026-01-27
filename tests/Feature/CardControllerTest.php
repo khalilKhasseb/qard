@@ -30,10 +30,18 @@ test('user can view card create page', function () {
 });
 
 test('user can create card', function () {
+    $language = \App\Models\Language::create([
+        'name' => 'English',
+        'code' => 'en',
+        'direction' => 'ltr',
+        'is_active' => true,
+    ]);
+
     $response = $this->actingAs($this->user)
         ->post(route('cards.store'), [
             'title' => 'John Doe',
             'subtitle' => 'Software Engineer',
+            'language_id' => $language->id,
             'is_published' => false,
         ]);
 
@@ -41,8 +49,8 @@ test('user can create card', function () {
 
     $this->assertDatabaseHas('business_cards', [
         'user_id' => $this->user->id,
-        'title' => 'John Doe',
-        'subtitle' => 'Software Engineer',
+        'title' => json_encode(['en' => 'John Doe']),
+        'subtitle' => json_encode(['en' => 'Software Engineer']),
     ]);
 });
 
@@ -79,12 +87,14 @@ test('user can update their card', function () {
 
     $this->actingAs($this->user)
         ->put(route('cards.update', $card), [
-            'title' => 'New Title',
+            'title' => ['en' => 'New Title'],
+            'active_languages' => ['en', 'ar'],
         ]);
 
     $this->assertDatabaseHas('business_cards', [
         'id' => $card->id,
-        'title' => 'New Title',
+        'title' => json_encode(['en' => 'New Title']),
+        'active_languages' => json_encode(['en', 'ar']),
     ]);
 });
 

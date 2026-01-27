@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessCard;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TranslationSseController extends Controller
@@ -29,7 +27,7 @@ class TranslationSseController extends Controller
         @ini_set('implicit_flush', '1');
 
         $user = $request->user();
-        
+
         // Verify the user owns this card
         $card = BusinessCard::where('id', $cardId)
             ->where('user_id', $user->id)
@@ -45,11 +43,11 @@ class TranslationSseController extends Controller
 
         return response()->stream(function () use ($user, $cardId) {
             // Send initial connection confirmation
-            echo "data: " . json_encode([
+            echo 'data: '.json_encode([
                 'type' => 'connected',
                 'timestamp' => now()->toISOString(),
                 'credits' => $user->getRemainingTranslationCredits(),
-            ]) . "\n\n";
+            ])."\n\n";
 
             while (ob_get_level() > 0) {
                 ob_end_flush();
@@ -60,30 +58,44 @@ class TranslationSseController extends Controller
             $maxDuration = 300; // 5 minutes max connection time
             $lastHeartbeat = $startTime;
             $heartbeatInterval = 30;
+            $lastProgress = null;
 
             while (true) {
                 // Check for timeout
                 if (time() - $startTime > $maxDuration) {
-                    echo "data: " . json_encode([
+                    echo 'data: '.json_encode([
                         'type' => 'timeout',
                         'message' => 'Connection timeout',
-                    ]) . "\n\n";
+                    ])."\n\n";
                     break;
+                }
+
+                // Check for progress updates
+                $progressKey = "translation_progress:{$cardId}:{$user->id}";
+                $progressData = Cache::get($progressKey);
+                if ($progressData && (! isset($lastProgress) || $progressData['percentage'] !== $lastProgress['percentage'])) {
+                    echo 'data: '.json_encode(array_merge(['type' => 'progress'], $progressData))."\n\n";
+                    $lastProgress = $progressData;
+
+                    while (ob_get_level() > 0) {
+                        ob_end_flush();
+                    }
+                    flush();
                 }
 
                 // Check for translation completion
                 $translationKey = "translation_complete:{$cardId}:{$user->id}";
                 $translationResult = Cache::get($translationKey);
-                
+
                 if ($translationResult) {
-                    echo "data: " . json_encode([
+                    echo 'data: '.json_encode([
                         'type' => 'translation_complete',
                         'cardId' => $cardId,
                         'result' => $translationResult,
                         'credits' => $user->refresh()->getRemainingTranslationCredits(),
                         'timestamp' => now()->toISOString(),
-                    ]) . "\n\n";
-                    
+                    ])."\n\n";
+
                     // Clear the completion flag
                     Cache::forget($translationKey);
 
@@ -91,7 +103,7 @@ class TranslationSseController extends Controller
                         ob_end_flush();
                     }
                     flush();
-                    
+
                     // Close connection after sending completion
                     sleep(1);
                     break;
@@ -100,12 +112,12 @@ class TranslationSseController extends Controller
                 // Check for credit updates
                 $creditKey = "credits_updated:{$user->id}";
                 if (Cache::get($creditKey)) {
-                    echo "data: " . json_encode([
+                    echo 'data: '.json_encode([
                         'type' => 'credits_updated',
                         'credits' => $user->refresh()->getRemainingTranslationCredits(),
                         'timestamp' => now()->toISOString(),
-                    ]) . "\n\n";
-                    
+                    ])."\n\n";
+
                     Cache::forget($creditKey);
 
                     while (ob_get_level() > 0) {
@@ -116,10 +128,10 @@ class TranslationSseController extends Controller
 
                 // Send heartbeat every 30 seconds
                 if (time() - $lastHeartbeat >= $heartbeatInterval) {
-                    echo "data: " . json_encode([
+                    echo 'data: '.json_encode([
                         'type' => 'heartbeat',
                         'timestamp' => now()->toISOString(),
-                    ]) . "\n\n";
+                    ])."\n\n";
 
                     $lastHeartbeat = time();
 

@@ -26,7 +26,10 @@
                 <LanguageSwitcher
                     :languages="languages"
                     :input-language="inputLanguage"
+                    :active-languages="activeLanguages"
+                    :primary-language-id="form.language_id"
                     @switch-language="switchInputLanguage"
+                    @toggle-language="toggleLanguageActivation"
                 />
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -64,6 +67,7 @@
                             :t="t"
                             @toggle-publish="togglePublish"
                             @publish-draft="publishDraftChanges"
+                            @delete-card="deleteCard"
                         />
 
                         <!-- Stats -->
@@ -158,11 +162,14 @@ const initializeMultilingualObject = (existingData) => {
     return obj;
 };
 
+const activeLanguages = ref(props.card.active_languages || [cardLangCode || 'en']);
+
 const form = useForm({
     title: initializeMultilingualObject(props.card.title),
     subtitle: initializeMultilingualObject(props.card.subtitle),
     theme_id: props.card.theme_id || '',
     language_id: props.card.language_id || props.languages[0]?.id || null,
+    active_languages: activeLanguages.value,
     cover_image: null,
     profile_image: null,
 });
@@ -170,6 +177,21 @@ const form = useForm({
 // Component methods
 const switchInputLanguage = (code) => {
     inputLanguage.value = code;
+};
+
+const toggleLanguageActivation = (code) => {
+    const index = activeLanguages.value.indexOf(code);
+    if (index > -1) {
+        // Don't remove if it's the primary language
+        const primaryLang = props.languages.find(l => l.id === form.language_id);
+        if (primaryLang?.code === code) return;
+
+        activeLanguages.value.splice(index, 1);
+    } else {
+        activeLanguages.value.push(code);
+    }
+    form.active_languages = [...activeLanguages.value];
+    saveBasicInfo();
 };
 
 const updateForm = (newForm) => {
@@ -188,8 +210,13 @@ const handlePrimaryLanguageChange = (languageId) => {
     const newLang = props.languages.find(l => l.id === parseInt(languageId));
     if (newLang) {
         inputLanguage.value = newLang.code;
+        // Ensure new primary language is in active languages
+        if (!activeLanguages.value.includes(newLang.code)) {
+            activeLanguages.value.push(newLang.code);
+            form.active_languages = [...activeLanguages.value];
+        }
     }
-    saveBasicInfo(); 
+    saveBasicInfo();
 };
 
 const labelsByCode = computed(() => {
@@ -265,6 +292,12 @@ const togglePublish = () => {
     );
 };
 
+const deleteCard = () => {
+    if (confirm('Are you sure you want to delete this card? This action cannot be undone.')) {
+        router.delete(route('cards.destroy', props.card.id));
+    }
+};
+
 const publishDraftChanges = () => {
     if (confirm('Are you sure you want to publish these draft changes?')) {
         router.post(
@@ -308,6 +341,9 @@ const copyUrl = () => {
 
 // Translation functions
 let translationEventSource = null; // SSE connection
+let reconnectionTimeout = null;
+let retryCount = 0;
+const MAX_RETRIES = 5;
 
 const loadTranslationCredits = async () => {
     console.log("Start loading Langs")
@@ -357,11 +393,16 @@ const connectToTranslationEvents = () => {
         translationEventSource.close();
     }
 
+    if (reconnectionTimeout) {
+        clearTimeout(reconnectionTimeout);
+    }
+
     // Create new EventSource connection
     translationEventSource = new EventSource(`/api/ai-translate/events/${props.card.id}`);
 
     translationEventSource.onopen = () => {
         console.log('Translation SSE connected');
+        retryCount = 0; // Reset retry count on successful connection
     };
 
     translationEventSource.onmessage = (event) => {
@@ -374,6 +415,16 @@ const connectToTranslationEvents = () => {
                     // Update credits on connection
                     if (data.credits !== undefined) {
                         translationCredits.value.remaining = data.credits;
+                    }
+                    break;
+
+                case 'progress':
+                    console.log('Translation progress:', data);
+                    if (data.percentage !== undefined) {
+                        translationStatus.value = {
+                            message: `Translating... ${data.percentage}% complete (${data.completed}/${data.total} sections)`,
+                            success: true,
+                        };
                     }
                     break;
 
@@ -459,14 +510,26 @@ const connectToTranslationEvents = () => {
 
     translationEventSource.onerror = (error) => {
         console.error('Translation SSE error:', error);
-        // Only treat as error if we're still translating and connection unexpectedly closed
-        if (translating.value && translationEventSource && translationEventSource.readyState === 2) {
-            // Connection closed unexpectedly during active translation
-            console.log('SSE connection lost during translation');
-        }
+
         if (translationEventSource) {
             translationEventSource.close();
             translationEventSource = null;
+        }
+
+        // Reconnect if we're still translating
+        if (translating.value && retryCount < MAX_RETRIES) {
+            retryCount++;
+            const delay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Exponential backoff
+            console.log(`Reconnecting to SSE in ${delay}ms (attempt ${retryCount}/${MAX_RETRIES})...`);
+            reconnectionTimeout = setTimeout(() => {
+                connectToTranslationEvents();
+            }, delay);
+        } else if (translating.value && retryCount >= MAX_RETRIES) {
+            console.error('Max SSE reconnection retries reached.');
+            translationStatus.value = {
+                message: 'Connection lost. Please refresh the page to check translation status.',
+                success: false,
+            };
         }
     };
 };

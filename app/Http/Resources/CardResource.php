@@ -16,6 +16,7 @@ class CardResource extends JsonResource
             'template_id' => $this->template_id,
             'theme_id' => $this->theme_id,
             'theme_overrides' => $this->theme_overrides,
+            'active_languages' => $this->active_languages,
             'custom_slug' => $this->custom_slug,
             'share_url' => $this->share_url,
             'qr_code_url' => $this->qr_code_url,

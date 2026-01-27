@@ -16,6 +16,7 @@ use Prism\Prism\Schema\StringSchema;
 class TranslationService
 {
     protected AiTranslationProvider $aiProvider;
+
     protected TranslationSchemaFactory $schemaFactory;
 
     public function __construct(
@@ -29,25 +30,22 @@ class TranslationService
     /**
      * Translate a card section to target language.
      *
-     * @param CardSection $section
-     * @param string $targetLanguageCode
-     * @param User $user
-     * @return array
      * @throws \Exception
      */
     public function translateCardSection(
         CardSection $section,
         string $targetLanguageCode,
-        User $user
+        User $user,
+        array $options = []
     ): array {
         // Check if user has credits
-        if (!$user->hasTranslationCredits(1)) {
+        if (! $user->hasTranslationCredits(1)) {
             throw new \Exception('Insufficient translation credits');
         }
 
         // Validate target language
         $targetLanguage = Language::where('code', $targetLanguageCode)->where('is_active', true)->first();
-        if (!$targetLanguage) {
+        if (! $targetLanguage) {
             throw new \Exception('Invalid target language');
         }
 
@@ -71,52 +69,39 @@ class TranslationService
 
         // Always translate section title if it exists and is not empty
         $currentTitle = $section->title;
-        if ($currentTitle && !empty($currentTitle)) {
+        if ($currentTitle && ! empty($currentTitle)) {
             try {
-                // Extract source language title
-                $titleData = is_array($currentTitle) ? $currentTitle : json_decode($currentTitle, true);
-                $sourceTitle = null;
-                
-                Log::info('Processing section title', [
-                    'section_id' => $section->id,
-                    'current_title' => $currentTitle,
-                    'title_data' => $titleData,
-                    'source_lang' => $sourceLanguageCode,
-                    'target_lang' => $targetLanguageCode,
-                ]);
-                
-                // First try to get the source language title
-                if (is_array($titleData) && isset($titleData[$sourceLanguageCode])) {
-                    $sourceTitle = $titleData[$sourceLanguageCode];
-                    Log::info('Found source language title', ['source_title' => $sourceTitle]);
-                } elseif (is_string($currentTitle)) {
-                    // If it's just a string, use it as the source title
-                    $sourceTitle = $currentTitle;
-                    $titleData = [$sourceLanguageCode => $sourceTitle];
-                    Log::info('Using string title as source', ['source_title' => $sourceTitle]);
-                } elseif (is_array($titleData)) {
-                    // Fallback: if source language not found, convert legacy format
-                    $firstKey = array_key_first($titleData);
-                    if ($firstKey && $firstKey !== $sourceLanguageCode) {
-                        // Assume it's in the source language and move it
-                        $sourceTitle = $titleData[$firstKey];
-                        unset($titleData[$firstKey]);
-                        $titleData[$sourceLanguageCode] = $sourceTitle;
-                        Log::info('Moved title from legacy key', [
-                            'from_key' => $firstKey,
-                            'source_title' => $sourceTitle
-                        ]);
+                // Ensure title is an array
+                $decoded = json_decode((string) $currentTitle, true);
+                if (is_array($currentTitle)) {
+                    $titleData = $currentTitle;
+                } elseif ($decoded !== null) {
+                    $titleData = $decoded;
+                } else {
+                    $titleData = [$sourceLanguageCode => $currentTitle];
+                }
+
+                // If it's a string, we already handled it above, but let's be safe
+                if (is_string($currentTitle)) {
+                    $titleData = [$sourceLanguageCode => $currentTitle];
+                }
+
+                $sourceTitle = $titleData[$sourceLanguageCode] ?? null;
+
+                // If source title not found, try to find any string in the array as fallback
+                if (! $sourceTitle && is_array($titleData)) {
+                    foreach ($titleData as $lang => $val) {
+                        if (is_string($val) && ! empty($val) && ! str_starts_with(trim($val), '{')) {
+                            $sourceTitle = $val;
+                            // Clean up legacy/incorrect structure
+                            $titleData = [$sourceLanguageCode => $sourceTitle];
+                            break;
+                        }
                     }
                 }
-                
-                // Only proceed if we have a valid source title that's not a JSON string
-                if ($sourceTitle && trim($sourceTitle) !== '' && !str_starts_with(trim($sourceTitle), '{') && !isset($titleData[$targetLanguageCode])) {
-                    // Ensure we're not passing JSON structure to AI
-                    Log::info('Starting title translation', [
-                        'source_title' => $sourceTitle,
-                        'is_json' => str_starts_with(trim($sourceTitle), '{'),
-                    ]);
-                    
+
+                // Only proceed if we have a valid source title that's not already translated to target
+                if ($sourceTitle && trim($sourceTitle) !== '' && ! str_starts_with(trim($sourceTitle), '{') && ! isset($titleData[$targetLanguageCode])) {
                     // Build context for title translation
                     $context = $this->buildContext($section->businessCard);
                     $titleSchema = $this->schemaFactory->getSchemaForSectionType('text');
@@ -130,54 +115,27 @@ class TranslationService
 
                     if ($titleResult['success'] && isset($titleResult['translated']['text'])) {
                         $translatedTitle = $titleResult['translated']['text'];
-                        
-                        // Add the translated title to target language (preserve source)
                         $titleData[$targetLanguageCode] = $translatedTitle;
-                        
-                        // Save updated title
                         $section->title = $titleData;
                         $section->save();
-                        
-                        Log::info('Section title translated', [
-                            'section_id' => $section->id,
-                            'source_title' => $sourceTitle,
-                            'translated_title' => $translatedTitle,
-                            'source_lang' => $sourceLanguageCode,
-                            'target_lang' => $targetLanguageCode,
-                            'final_title_structure' => $titleData,
-                        ]);
                     }
-                } else {
-                    Log::info('Section title translation skipped', [
-                        'section_id' => $section->id,
-                        'reason' => !$sourceTitle ? 'no_source_title' : 
-                                   (str_starts_with(trim($sourceTitle), '{') ? 'source_is_json' : 
-                                   ($titleData[$targetLanguageCode] ?? null ? 'already_translated' : 'empty_title')),
-                        'source_title' => $sourceTitle,
-                        'current_structure' => $titleData,
-                    ]);
                 }
             } catch (\Exception $e) {
-                // If title translation fails, log it but don't fail the whole translation
                 Log::warning('Section title translation failed', [
                     'section_id' => $section->id,
-                    'title' => $currentTitle,
                     'error' => $e->getMessage(),
                 ]);
             }
         }
 
         if ($cachedTranslation) {
-            Log::info('Using cached translation', [
-                'section_id' => $section->id,
-                'target_lang' => $targetLanguageCode,
-            ]);
-
             // Still deduct credits even for cached translations
             $user->deductTranslationCredits(1);
-
-            // Update section content
             $this->updateSectionContent($section, $targetLanguageCode, $cachedTranslation);
+
+            if (isset($options['on_progress'])) {
+                $options['on_progress']();
+            }
 
             return [
                 'success' => true,
@@ -202,7 +160,7 @@ class TranslationService
                 $context
             );
 
-            if (!$result['success']) {
+            if (! $result['success']) {
                 throw new \Exception('Translation failed');
             }
 
@@ -231,6 +189,10 @@ class TranslationService
                 $result['provider'] ?? 'unknown'
             );
 
+            if (isset($options['on_progress'])) {
+                $options['on_progress']();
+            }
+
             return [
                 'success' => true,
                 'translated_content' => $translatedContent,
@@ -252,25 +214,25 @@ class TranslationService
     /**
      * Translate entire business card to target language.
      *
-     * @param BusinessCard $card
-     * @param string $targetLanguageCode
-     * @param User $user
-     * @return array
      * @throws \Exception
      */
     public function translateBusinessCard(
         BusinessCard $card,
         string $targetLanguageCode,
-        User $user
+        User $user,
+        array $options = []
     ): array {
         // Get all translatable sections
         $sections = $card->sections()
             ->whereNotIn('section_type', ['gallery', 'qr_code'])
             ->get();
 
-        $requiredCredits = $sections->count() + 1; // +1 for title/subtitle
+        $totalSections = $sections->count() + 1; // +1 for title/subtitle
+        $completedSections = 0;
 
-        if (!$user->hasTranslationCredits($requiredCredits)) {
+        $requiredCredits = $totalSections;
+
+        if (! $user->hasTranslationCredits($requiredCredits)) {
             throw new \Exception("Insufficient credits. Need {$requiredCredits}, have {$user->getRemainingTranslationCredits()}");
         }
 
@@ -285,13 +247,23 @@ class TranslationService
         DB::beginTransaction();
 
         try {
+            $progressCallback = function () use (&$completedSections, $totalSections, $options) {
+                $completedSections++;
+                if (isset($options['on_progress'])) {
+                    $options['on_progress']($completedSections, $totalSections);
+                }
+            };
+
             // Translate card title and subtitle
             $this->translateCardMeta($card, $targetLanguageCode, $user);
+            $progressCallback();
 
             // Translate each section
             foreach ($sections as $section) {
                 try {
-                    $this->translateCardSection($section, $targetLanguageCode, $user);
+                    $this->translateCardSection($section, $targetLanguageCode, $user, [
+                        'on_progress' => $progressCallback,
+                    ]);
                     $results['sections_translated']++;
                 } catch (\Exception $e) {
                     $results['sections_failed']++;
@@ -333,7 +305,7 @@ class TranslationService
         $sourceTitle = $card->title[$sourceLanguageCode] ?? null;
         $sourceSubtitle = $card->subtitle[$sourceLanguageCode] ?? null;
 
-        if (!$sourceTitle && !$sourceSubtitle) {
+        if (! $sourceTitle && ! $sourceSubtitle) {
             return;
         }
 
@@ -378,7 +350,7 @@ class TranslationService
             $targetLanguageCode,
             ['title' => $sourceTitle, 'subtitle' => $sourceSubtitle],
             ['title' => $card->title[$targetLanguageCode] ?? null, 'subtitle' => $card->subtitle[$targetLanguageCode] ?? null],
-            strlen($sourceTitle . $sourceSubtitle),
+            strlen($sourceTitle.$sourceSubtitle),
             $result['model'] ?? 'unknown',
             $result['provider'] ?? 'unknown'
         );
@@ -431,6 +403,7 @@ class TranslationService
         string $sectionType
     ): string {
         $contentHash = md5(json_encode($content));
+
         return "translation:{$sourceLang}:{$targetLang}:{$sectionType}:{$contentHash}";
     }
 
@@ -490,14 +463,14 @@ class TranslationService
                 'translated_text' => new StringSchema(
                     'translated_text',
                     'The translated text'
-                )
+                ),
             ],
             ['translated_text']
         );
 
         try {
             $result = $this->aiProvider->translate($text, $fromLanguage, $toLanguage, $schema, 'section title');
-            
+
             // Handle various response formats that the AI might return
             $translatedText = null;
             if (isset($result['translated']['translated_text'])) {
@@ -509,38 +482,39 @@ class TranslationService
                 $responseData = $result['translated'];
                 $possibleKeys = [
                     'translated_text', 'text', 'translation', 'result', 'content',
-                    'translated', 'ar', $toLanguage, $text, 'title', 'header'
+                    'translated', 'ar', $toLanguage, $text, 'title', 'header',
                 ];
-                
+
                 foreach ($possibleKeys as $key) {
-                    if (isset($responseData[$key]) && is_string($responseData[$key]) && !empty(trim($responseData[$key]))) {
+                    if (isset($responseData[$key]) && is_string($responseData[$key]) && ! empty(trim($responseData[$key]))) {
                         $translatedText = $responseData[$key];
                         break;
                     }
                 }
-                
+
                 // If still not found, try the first string value
-                if (!$translatedText) {
+                if (! $translatedText) {
                     foreach ($responseData as $key => $value) {
-                        if (is_string($value) && !empty(trim($value)) && 
-                            !in_array($key, ['original', 'note', 'type', 'status', 'model'])) {
+                        if (is_string($value) && ! empty(trim($value)) &&
+                            ! in_array($key, ['original', 'note', 'type', 'status', 'model'])) {
                             $translatedText = $value;
                             break;
                         }
                     }
                 }
             }
-            
+
             // Return translated text or fallback to original
             return $translatedText ?: $text;
-            
+
         } catch (\Exception $e) {
             Log::error('Failed to translate title', [
                 'text' => $text,
                 'from' => $fromLanguage,
                 'to' => $toLanguage,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return $text; // Return original text if translation fails
         }
     }
@@ -556,7 +530,7 @@ class TranslationService
             ->where('code', '!=', $currentLang)
             ->orderBy('name')
             ->get()
-            ->map(fn($lang) => [
+            ->map(fn ($lang) => [
                 'code' => $lang->code,
                 'name' => $lang->name,
                 'direction' => $lang->direction,

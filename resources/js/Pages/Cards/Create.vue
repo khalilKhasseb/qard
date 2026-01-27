@@ -8,7 +8,7 @@
           <div class="p-6 border-b border-gray-200">
             <h2 class="text-2xl font-semibold text-gray-900">Create New Business Card</h2>
             <p class="mt-1 text-sm text-gray-600">Fill in the basic information for your card.</p>
-            
+
             <!-- Usage Indicator -->
             <div v-if="cardLimit > 0" class="mt-3">
               <div class="flex justify-between text-sm text-gray-600 mb-1">
@@ -18,7 +18,7 @@
                 </span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   class="h-2 rounded-full transition-all"
                   :class="cardCount >= cardLimit ? 'bg-red-500' : 'bg-green-500'"
                   :style="`width: ${(cardCount / cardLimit) * 100}%`"
@@ -85,7 +85,9 @@
                   {{ lang.name }} ({{ lang.code.toUpperCase() }})
                 </option>
               </select>
-              <p class="mt-1 text-xs text-gray-500">This will be the default language for your card. You can add more languages later.</p>
+              <p class="mt-1 text-xs text-gray-500">
+                This is the main language of your card. You can add content in other languages once the card is created!
+              </p>
               <InputError :message="form.errors.language_id" class="mt-2" />
             </div>
 
@@ -172,7 +174,42 @@ const form = useForm({
 
 const submit = () => {
   form.post(route('cards.store'), {
-    onSuccess: () => form.reset(),
+    onStart: () => {
+      // Clear local storage on successful submission
+    },
+    onSuccess: () => {
+        localStorage.removeItem('card_create_form');
+        form.reset();
+    },
+    onError: (errors) => {
+        console.error('Submission errors:', errors);
+    }
   });
 };
+
+// Auto-save to local storage
+import { watch, onMounted } from 'vue';
+
+onMounted(() => {
+  const savedForm = localStorage.getItem('card_create_form');
+  if (savedForm) {
+    try {
+      const data = JSON.parse(savedForm);
+      Object.assign(form, data);
+    } catch (e) {
+      console.error('Failed to restore form from local storage', e);
+    }
+  }
+});
+
+watch(form, (newData) => {
+  localStorage.setItem('card_create_form', JSON.stringify({
+    title: newData.title,
+    subtitle: newData.subtitle,
+    theme_id: newData.theme_id,
+    language_id: newData.language_id,
+    custom_slug: newData.custom_slug,
+    is_published: newData.is_published,
+  }));
+}, { deep: true });
 </script>

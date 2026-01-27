@@ -15,6 +15,7 @@ class ProcessBulkTranslation implements ShouldQueue
     use Queueable;
 
     public $tries = 3;
+
     public $timeout = 300; // 5 minutes
 
     /**
@@ -34,11 +35,12 @@ class ProcessBulkTranslation implements ShouldQueue
         $user = User::find($this->userId);
         $card = BusinessCard::find($this->cardId);
 
-        if (!$user || !$card) {
+        if (! $user || ! $card) {
             Log::error('Bulk translation failed - user or card not found', [
                 'user_id' => $this->userId,
                 'card_id' => $this->cardId,
             ]);
+
             return;
         }
 
@@ -48,9 +50,33 @@ class ProcessBulkTranslation implements ShouldQueue
             'languages' => [],
         ];
 
+        $totalLangs = count($this->targetLanguages);
+        $processedLangs = 0;
+
         foreach ($this->targetLanguages as $targetLang) {
             try {
-                $result = $translationService->translateBusinessCard($card, $targetLang, $user);
+                $onProgress = function ($completed, $total) use ($targetLang, $processedLangs, $totalLangs) {
+                    // Global progress calculation: (processedLangs / totalLangs) + (currentLangProgress / totalLangs)
+                    $currentLangProgress = $completed / $total;
+                    $globalPercentage = round((($processedLangs + $currentLangProgress) / $totalLangs) * 100);
+
+                    Cache::put("translation_progress:{$this->cardId}:{$this->userId}", [
+                        'percentage' => $globalPercentage,
+                        'completed' => $processedLangs,
+                        'current_completed' => $completed,
+                        'current_total' => $total,
+                        'total_langs' => $totalLangs,
+                        'current_lang' => $targetLang,
+                        'timestamp' => now()->toISOString(),
+                    ], now()->addMinutes(10));
+                };
+
+                $result = $translationService->translateBusinessCard($card, $targetLang, $user, [
+                    'on_progress' => $onProgress,
+                ]);
+
+                $processedLangs++;
+
                 $results['languages'][$targetLang] = [
                     'success' => true,
                     'sections_translated' => $result['results']['sections_translated'] ?? 0,
@@ -62,6 +88,7 @@ class ProcessBulkTranslation implements ShouldQueue
                     'sections' => $result['results']['sections_translated'] ?? 0,
                 ]);
             } catch (\Exception $e) {
+                $processedLangs++;
                 $results['languages'][$targetLang] = [
                     'success' => false,
                     'error' => $e->getMessage(),
@@ -76,6 +103,9 @@ class ProcessBulkTranslation implements ShouldQueue
         }
 
         Log::info('Bulk translation completed', $results);
+
+        // Clear progress cache
+        Cache::forget("translation_progress:{$this->cardId}:{$this->userId}");
 
         // Cache translation completion for SSE
         Cache::put("translation_complete:{$this->cardId}:{$this->userId}", $results, now()->addMinutes(10));

@@ -3,7 +3,7 @@
         "phpstorm"
     ],
     "editors": [
-        "vscode"
+        "phpstorm"
     ],
     "guidelines": [
         "filament/filament",

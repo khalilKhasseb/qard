@@ -89,7 +89,9 @@ const fallbackTranslations = {
         company: 'Company',
         url: 'URL',
         caption: 'Caption',
-        add_item: 'Add Item'
+        add_item: 'Add Item',
+        visible: 'Visible',
+        hidden: 'Hidden'
     },
     ar: {
         section: 'قسم',
@@ -125,7 +127,9 @@ const fallbackTranslations = {
         company: 'الشركة',
         url: 'الرابط',
         caption: 'الوصف',
-        add_item: 'إضافة عنصر'
+        add_item: 'إضافة عنصر',
+        visible: 'ظاهر',
+        hidden: 'مخفي'
     },
     he: {
         section: 'قسم',
@@ -161,7 +165,9 @@ const fallbackTranslations = {
         company: 'الشركة',
         url: 'الرابط',
         caption: 'الوصف',
-        add_item: 'إضافة عنصر'
+        add_item: 'إضافة عنصر',
+        visible: 'גלויה',
+        hidden: 'מוסתרת'
     }
 };
 
@@ -246,7 +252,8 @@ const addSection = () => {
         section_type: 'text',
         content: initialContent,
         order: props.modelValue.length + 1,
-        title: ''
+        title: '',
+        is_active: true
     }];
     emit('update:modelValue', newSections);
 };
@@ -284,7 +291,17 @@ const removeSection = (index) => {
 
 const updateSectionContent = (index, content) => {
     const newSections = [...props.modelValue];
-    newSections[index].content = {...content};
+    if (Array.isArray(content)) {
+        newSections[index].content = [...content];
+    } else {
+        newSections[index].content = {...content};
+    }
+    emit('update:modelValue', newSections);
+};
+
+const toggleSectionActive = (index) => {
+    const newSections = [...props.modelValue];
+    newSections[index].is_active = !newSections[index].is_active;
     emit('update:modelValue', newSections);
 };
 
@@ -434,6 +451,17 @@ const handleDrop = (targetIndex) => {
                             d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0V5H5v1a1 1 0 11-2 0V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 11-2 0v-1H5v1a1 1 0 11-2 0v-2z"/>
                     </svg>
                     <h4 class="font-medium text-gray-900">{{ t('section') }} {{ index + 1 }}</h4>
+                    <button
+                        @click.stop="toggleSectionActive(index)"
+                        :class="[
+                            'ml-2 px-2 py-0.5 text-xs font-semibold rounded-full border transition-colors',
+                            section.is_active
+                                ? 'bg-green-100 text-green-800 border-green-200'
+                                : 'bg-gray-100 text-gray-600 border-gray-200 opacity-60'
+                        ]"
+                    >
+                        {{ section.is_active ? t('visible') : t('hidden') }}
+                    </button>
                 </div>
                 <button @click="removeSection(index)" class="text-red-600 hover:text-red-800 text-sm font-medium">
                     {{ t('remove') }}

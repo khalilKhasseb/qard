@@ -5,18 +5,16 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BusinessCardResource\Pages;
 use App\Filament\Resources\BusinessCardResource\RelationManagers;
 use App\Models\BusinessCard;
-use App\Models\CardSection;
 use App\Models\Language;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Schemas\Components\Flex;
-use Filament\Schemas\Components\Grid;
 
 class BusinessCardResource extends Resource
 {
@@ -35,120 +33,116 @@ class BusinessCardResource extends Resource
 
                 Grid::make([
                     'default' => 2,
-                    'sm' => 1,  
+                    'sm' => 1,
                     'lg' => 2,
                     'xl' => 2,
-                    
+
                 ])
-                
-                ->schema([
-                    // Card Basic Information Section
-                    Schemas\Components\Section::make('Card Information')
-                        ->description('Basic card details and ownership')
-                        ->schema([
+                    ->schema([
+                        // Card Basic Information Section
+                        Schemas\Components\Section::make('Card Information')
+                            ->description('Basic card details and ownership')
+                            ->schema([
 
-
-                            Forms\Components\Select::make('user_id')
-                                ->relationship('user', 'name')
-                                ->searchable()
-                                ->preload()
-                                ->required(),
+                                Forms\Components\Select::make('user_id')
+                                    ->relationship('user', 'name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(),
                                 // ->columnSpan(1),
 
-                            Forms\Components\Select::make('language_id')
-                                ->relationship('language', 'name')
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->reactive(),
+                                Forms\Components\Select::make('language_id')
+                                    ->relationship('language', 'name')
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->reactive(),
                                 // ->columnSpan(1),
 
-                            // Multi-language Title with enhanced UI
-                            Schemas\Components\Group::make([
-                                Schemas\Components\Tabs::make('title_tabs')
-                                    ->tabs(
-                                        Language::active()
-                                            ->get()
-                                            ->map(
-                                                fn(Language $language) =>
-                                                Schemas\Components\Tabs\Tab::make($language->name)
-                                                    ->schema([
-                                                        Forms\Components\TextInput::make("title.{$language->code}")
-                                                            ->label("Title ({$language->name})")
-                                                            ->required($language->is_default)
-                                                            ->maxLength(255)
-                                                            ->live()
-                                                            ->afterStateUpdated(function ($state, $set, $get) use ($language) {
-                                                                if ($language->is_default && empty($get('custom_slug'))) {
-                                                                    $set('custom_slug', \Illuminate\Support\Str::slug($state));
-                                                                }
-                                                            }),
-                                                    ])
-                                            )
-                                            ->toArray()
-                                    )
-                                    ->columnSpanFull(),
-                            ]),
+                                // Multi-language Title with enhanced UI
+                                Schemas\Components\Group::make([
+                                    Schemas\Components\Tabs::make('title_tabs')
+                                        ->tabs(
+                                            Language::active()
+                                                ->get()
+                                                ->map(
+                                                    fn (Language $language) => Schemas\Components\Tabs\Tab::make($language->name)
+                                                        ->schema([
+                                                            Forms\Components\TextInput::make("title.{$language->code}")
+                                                                ->label("Title ({$language->name})")
+                                                                ->required($language->is_default)
+                                                                ->maxLength(255)
+                                                                ->live()
+                                                                ->afterStateUpdated(function ($state, $set, $get) use ($language) {
+                                                                    if ($language->is_default && empty($get('custom_slug'))) {
+                                                                        $set('custom_slug', \Illuminate\Support\Str::slug($state));
+                                                                    }
+                                                                }),
+                                                        ])
+                                                )
+                                                ->toArray()
+                                        )
+                                        ->columnSpanFull(),
+                                ]),
 
-                            // Multi-language Subtitle
-                            Schemas\Components\Group::make([
-                                Schemas\Components\Tabs::make('subtitle_tabs')
-                                    ->tabs(
-                                        Language::active()
-                                            ->get()
-                                            ->map(
-                                                fn(Language $language) =>
-                                                Schemas\Components\Tabs\Tab::make($language->name)
-                                                    ->schema([
-                                                        Forms\Components\TextInput::make("subtitle.{$language->code}")
-                                                            ->label("Subtitle ({$language->name})")
-                                                            ->maxLength(255),
-                                                    ])
-                                            )
-                                            ->toArray()
-                                    )
-                                    ->columnSpanFull(),
-                            ]),
-                        ])
-                       
-                        ->collapsible(),
+                                // Multi-language Subtitle
+                                Schemas\Components\Group::make([
+                                    Schemas\Components\Tabs::make('subtitle_tabs')
+                                        ->tabs(
+                                            Language::active()
+                                                ->get()
+                                                ->map(
+                                                    fn (Language $language) => Schemas\Components\Tabs\Tab::make($language->name)
+                                                        ->schema([
+                                                            Forms\Components\TextInput::make("subtitle.{$language->code}")
+                                                                ->label("Subtitle ({$language->name})")
+                                                                ->maxLength(255),
+                                                        ])
+                                                )
+                                                ->toArray()
+                                        )
+                                        ->columnSpanFull(),
+                                ]),
+                            ])
 
-                    // Media Section
-                    Schemas\Components\Section::make('Media & Images')
-                        ->description('Upload card images and media')
-                        ->schema([
-                            Forms\Components\FileUpload::make('cover_image_path')
-                                ->image()
-                                ->disk('public')
-                                ->directory('covers')
-                                ->imageEditor()
-                                ->imageEditorAspectRatios([
-                                    '16:9',
-                                    '4:3',
-                                    '1:1',
-                                ])
-                                ->maxSize(5120) // 5MB
-                                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                                ->label('Cover Image')
-                                ->helperText('Recommended: 1200x675px (16:9) for best display')
-                                ->columnSpan(1),
+                            ->collapsible(),
 
-                            Forms\Components\FileUpload::make('profile_image_path')
-                                ->image()
-                                ->disk('public')
-                                ->directory('profiles')
-                                ->imageEditor()
-                                ->imageEditorAspectRatios(['1:1'])
-                                ->maxSize(2048) // 2MB
-                                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                                ->label('Profile Image')
-                                ->helperText('Recommended: 400x400px (1:1) square format')
-                                ->columnSpan(1),
-                        ])
-                       
-                        ->collapsible()
+                        // Media Section
+                        Schemas\Components\Section::make('Media & Images')
+                            ->description('Upload card images and media')
+                            ->schema([
+                                Forms\Components\FileUpload::make('cover_image_path')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('covers')
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios([
+                                        '16:9',
+                                        '4:3',
+                                        '1:1',
+                                    ])
+                                    ->maxSize(5120) // 5MB
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                    ->label('Cover Image')
+                                    ->helperText('Recommended: 1200x675px (16:9) for best display')
+                                    ->columnSpan(1),
 
-                ])->columnSpanFull(),
+                                Forms\Components\FileUpload::make('profile_image_path')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('profiles')
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios(['1:1'])
+                                    ->maxSize(2048) // 2MB
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                    ->label('Profile Image')
+                                    ->helperText('Recommended: 400x400px (1:1) square format')
+                                    ->columnSpan(1),
+                            ])
+
+                            ->collapsible(),
+
+                    ])->columnSpanFull(),
 
                 // Appearance & Design Section
                 Schemas\Components\Section::make('Design & Appearance')
@@ -211,8 +205,10 @@ class BusinessCardResource extends Resource
                         Forms\Components\Placeholder::make('full_url_preview')
                             ->label('Card URL Preview')
                             ->content(function (?BusinessCard $record): string {
-                                if (!$record)
+                                if (! $record) {
                                     return 'Will be generated after saving';
+                                }
+
                                 return $record->full_url;
                             })
                             ->columnSpan(1),
@@ -239,24 +235,21 @@ class BusinessCardResource extends Resource
                         Forms\Components\Placeholder::make('views_count')
                             ->label('Total Views')
                             ->content(
-                                fn(?BusinessCard $record): string =>
-                                $record?->views_count ?? '0'
+                                fn (?BusinessCard $record): string => $record?->views_count ?? '0'
                             )
                             ->columnSpan(1),
 
                         Forms\Components\Placeholder::make('shares_count')
                             ->label('Total Shares')
                             ->content(
-                                fn(?BusinessCard $record): string =>
-                                $record?->shares_count ?? '0'
+                                fn (?BusinessCard $record): string => $record?->shares_count ?? '0'
                             )
                             ->columnSpan(1),
 
                         Forms\Components\Placeholder::make('sections_count')
                             ->label('Sections Count')
                             ->content(
-                                fn(?BusinessCard $record): string =>
-                                $record?->sections()->count() ?? '0'
+                                fn (?BusinessCard $record): string => $record?->sections()->count() ?? '0'
                             )
                             ->columnSpan(1)
                             ->dehydrated(false)
@@ -283,15 +276,17 @@ class BusinessCardResource extends Resource
                     ->label('Owner')
                     ->searchable(['users.name', 'users.email'])
                     ->sortable()
-                    ->description(fn(BusinessCard $record): ?string => $record->user->email),
+                    ->description(fn (BusinessCard $record): ?string => $record->user->email),
 
                 Tables\Columns\TextColumn::make('title')
                     ->label('Title')
                     ->formatStateUsing(function ($state) {
                         if (is_array($state)) {
                             $defaultLang = 'en'; // Simplified approach
+
                             return $state[$defaultLang] ?? reset($state) ?? '-';
                         }
+
                         return $state ?? '-';
                     })
                     ->searchable()
@@ -299,8 +294,9 @@ class BusinessCardResource extends Resource
                     ->limit(30)
                     ->tooltip(function (BusinessCard $record): ?string {
                         if (is_array($record->title)) {
-                            return implode(", ", $record->title);
+                            return implode(', ', $record->title);
                         }
+
                         return (string) $record->title;
                     }),
 
@@ -309,8 +305,10 @@ class BusinessCardResource extends Resource
                     ->formatStateUsing(function ($state) {
                         if (is_array($state)) {
                             $defaultLang = 'en'; // Simplified approach
+
                             return $state[$defaultLang] ?? reset($state) ?? '-';
                         }
+
                         return $state ?? '-';
                     })
                     ->limit(25)
@@ -393,24 +391,24 @@ class BusinessCardResource extends Resource
 
                 Tables\Filters\Filter::make('has_cover_image')
                     ->label('Has Cover Image')
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('cover_image_path')),
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('cover_image_path')),
 
                 Tables\Filters\Filter::make('popular')
                     ->label('Popular Cards (10+ views)')
-                    ->query(fn(Builder $query): Builder => $query->where('views_count', '>=', 10)),
+                    ->query(fn (Builder $query): Builder => $query->where('views_count', '>=', 10)),
             ])
             ->actions([
                 Actions\Action::make('preview')
                     ->icon('heroicon-o-eye')
-                    ->url(fn(BusinessCard $record): string => $record->full_url)
+                    ->url(fn (BusinessCard $record): string => $record->full_url)
                     ->openUrlInNewTab()
                     ->tooltip('Preview Card'),
 
                 Actions\Action::make('duplicate')
                     ->icon('heroicon-o-document-duplicate')
                     ->action(function (BusinessCard $record) {
-                        $newCard = $record->replicate(except: ['sections_count']);
-                    
+                        $newCard = $record->replicate();
+
                         $newCard->custom_slug = null;
                         $newCard->share_url = null;
                         $newCard->is_primary = false;
@@ -420,12 +418,10 @@ class BusinessCardResource extends Resource
                         $newCard->save();
 
                         // Duplicate sections
-                        if($record->has('sections')) {
                         foreach ($record->sections as $section) {
                             $newSection = $section->replicate();
                             $newSection->business_card_id = $newCard->id;
                             $newSection->save();
-                        }
                         }
                     })
                     ->requiresConfirmation()
@@ -438,13 +434,13 @@ class BusinessCardResource extends Resource
                 Actions\BulkActionGroup::make([
                     Actions\BulkAction::make('publish')
                         ->icon('heroicon-o-eye')
-                        ->action(fn($records) => $records->each(fn($record) => $record->update(['is_published' => true])))
+                        ->action(fn ($records) => $records->each(fn ($record) => $record->update(['is_published' => true])))
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion(),
 
                     Actions\BulkAction::make('unpublish')
                         ->icon('heroicon-o-eye-slash')
-                        ->action(fn($records) => $records->each(fn($record) => $record->update(['is_published' => false])))
+                        ->action(fn ($records) => $records->each(fn ($record) => $record->update(['is_published' => false])))
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion(),
 

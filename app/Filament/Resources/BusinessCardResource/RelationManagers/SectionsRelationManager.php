@@ -39,23 +39,26 @@ class SectionsRelationManager extends RelationManager
                     ->formatStateUsing(function ($state) {
                         if (is_array($state)) {
                             $defaultLang = 'en'; // Simplified approach
+
                             return $state[$defaultLang] ?? reset($state) ?? 'Untitled';
                         }
+
                         return $state ?: 'Untitled';
                     })
                     ->searchable()
                     ->limit(30),
 
-                Tables\Columns\BadgeColumn::make('section_type')
+                Tables\Columns\TextColumn::make('section_type')
                     ->label('Type')
                     ->formatStateUsing(fn ($state) => CardSection::SECTION_TYPES[$state] ?? ucfirst($state))
-                    ->colors([
-                        'primary' => 'contact',
-                        'success' => 'social',
-                        'warning' => 'services',
-                        'info' => 'gallery',
-                        'gray' => fn ($state): bool => !in_array($state, ['contact', 'social', 'services', 'gallery']),
-                    ]),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'contact' => 'primary',
+                        'social' => 'success',
+                        'services' => 'warning',
+                        'gallery' => 'info',
+                        default => 'gray',
+                    }),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
@@ -88,6 +91,7 @@ class SectionsRelationManager extends RelationManager
                             ->numeric()
                             ->default(function () {
                                 $maxOrder = CardSection::query()->where('business_card_id', $this->ownerRecord->id)->max('sort_order');
+
                                 return ($maxOrder ?? 0) + 1;
                             })
                             ->required()
@@ -136,7 +140,7 @@ class SectionsRelationManager extends RelationManager
                         Forms\Components\Toggle::make('is_active')
                             ->disabled(),
                     ]),
-                    
+
                 Actions\EditAction::make()
                     ->form([
                         Forms\Components\Select::make('section_type')
@@ -168,21 +172,21 @@ class SectionsRelationManager extends RelationManager
                             ->directory('sections')
                             ->label('Section Image'),
                     ]),
-                    
+
                 Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     Actions\BulkAction::make('activate')
-                        ->action(fn ($records) => $records->each(fn($record) => $record->update(['is_active' => true])))
+                        ->action(fn ($records) => $records->each(fn ($record) => $record->update(['is_active' => true])))
                         ->icon('heroicon-o-eye')
                         ->requiresConfirmation(),
-                    
+
                     Actions\BulkAction::make('deactivate')
-                        ->action(fn ($records) => $records->each(fn($record) => $record->update(['is_active' => false])))
+                        ->action(fn ($records) => $records->each(fn ($record) => $record->update(['is_active' => false])))
                         ->icon('heroicon-o-eye-slash')
                         ->requiresConfirmation(),
-                        
+
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])

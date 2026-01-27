@@ -3,25 +3,27 @@
     <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('basic_info') }}</h3>
     <div class="space-y-4">
       <div>
-        <InputLabel for="title" :value="t('card_title')" />
+        <InputLabel for="title" :value="`${t('card_title')} (${inputLanguage.toUpperCase()})`" />
         <TextInput
           id="title"
           :model-value="form.title[inputLanguage]"
           @update:model-value="updateTitle"
           type="text"
           class="mt-1 block w-full"
+          :placeholder="`Enter title in ${inputLanguage.toUpperCase()}...`"
         />
         <InputError :message="form.errors.title" class="mt-2" />
       </div>
 
       <div>
-        <InputLabel for="subtitle" :value="t('subtitle')" />
+        <InputLabel for="subtitle" :value="`${t('subtitle')} (${inputLanguage.toUpperCase()})`" />
         <TextInput
           id="subtitle"
           :model-value="form.subtitle[inputLanguage]"
           @update:model-value="updateSubtitle"
           type="text"
           class="mt-1 block w-full"
+          :placeholder="`Enter subtitle in ${inputLanguage.toUpperCase()}...`"
         />
       </div>
 

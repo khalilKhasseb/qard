@@ -1,5 +1,6 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 defineProps({
     canLogin: {
@@ -9,6 +10,9 @@ defineProps({
         type: Boolean,
     },
 });
+
+const page = usePage();
+const settings = computed(() => page.props.settings);
 
 const features = [
     {
@@ -82,7 +86,7 @@ const pricingPlans = [
 </script>
 
 <template>
-    <Head title="Qard - Professional Digital Business Cards" />
+    <Head :title="`${settings?.site_name || 'Qard'} - Professional Digital Business Cards`" />
 
     <div class="min-h-screen bg-white">
         <!-- Navigation -->
@@ -91,10 +95,15 @@ const pricingPlans = [
                 <div class="flex justify-between items-center h-16">
                     <div class="flex items-center">
                         <Link href="/" class="flex items-center space-x-2">
-                            <div class="h-8 w-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span class="text-white font-bold text-sm">Q</span>
-                            </div>
-                            <span class="text-xl font-semibold text-gray-900">Qard</span>
+                            <template v-if="settings?.logo">
+                                <img :src="settings.logo" :alt="settings.site_name" class="h-8 w-auto" />
+                            </template>
+                            <template v-else>
+                                <div class="h-8 w-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">{{ settings?.site_name?.charAt(0) || 'Q' }}</span>
+                                </div>
+                            </template>
+                            <span class="text-xl font-semibold text-gray-900">{{ settings?.site_name || 'Qard' }}</span>
                         </Link>
                     </div>
 
@@ -142,11 +151,11 @@ const pricingPlans = [
                         ✨ Professional networking, simplified
                     </div>
                     <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                        Digital business cards
+                        {{ settings?.site_name || 'Digital business cards' }}
                         <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">that work</span>
                     </h1>
                     <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                        Create, share, and update your professional identity with elegant digital cards. No printing, no limits.
+                        {{ settings?.site_description || 'Create, share, and update your professional identity with elegant digital cards. No printing, no limits.' }}
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
                         <Link
@@ -197,9 +206,14 @@ const pricingPlans = [
                     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 max-w-md w-full">
                         <div class="flex items-center justify-between mb-6">
                             <div class="flex items-center space-x-3">
-                                <div class="h-10 w-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <span class="text-white font-bold">Q</span>
-                                </div>
+                                <template v-if="settings?.logo">
+                                    <img :src="settings.logo" :alt="settings.site_name" class="h-10 w-auto" />
+                                </template>
+                                <template v-else>
+                                    <div class="h-10 w-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                                        <span class="text-white font-bold">{{ settings?.site_name?.charAt(0) || 'Q' }}</span>
+                                    </div>
+                                </template>
                                 <div>
                                     <p class="font-semibold text-gray-900">Your Name</p>
                                     <p class="text-sm text-gray-500">Your Position</p>
@@ -347,13 +361,18 @@ const pricingPlans = [
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div class="col-span-1 md:col-span-2">
                         <div class="flex items-center space-x-2 mb-4">
-                            <div class="h-8 w-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                <span class="text-white font-bold text-sm">Q</span>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Qard</h3>
+                            <template v-if="settings?.logo">
+                                <img :src="settings.logo" :alt="settings.site_name" class="h-8 w-auto" />
+                            </template>
+                            <template v-else>
+                                <div class="h-8 w-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">{{ settings?.site_name?.charAt(0) || 'Q' }}</span>
+                                </div>
+                            </template>
+                            <h3 class="text-xl font-semibold text-gray-900">{{ settings?.site_name || 'Qard' }}</h3>
                         </div>
                         <p class="text-gray-600 max-w-md">
-                            Professional digital business cards for the modern world. Share your story with elegance and precision.
+                            {{ settings?.site_description || 'Professional digital business cards for the modern world. Share your story with elegance and precision.' }}
                         </p>
                     </div>
                     <div>
@@ -374,7 +393,7 @@ const pricingPlans = [
                     </div>
                 </div>
                 <div class="border-t border-gray-100 mt-8 pt-6 text-center text-sm text-gray-500">
-                    <p>&copy; 2026 Qard. All rights reserved.</p>
+                    <p>&copy; {{ new Date().getFullYear() }} {{ settings?.site_name || 'Qard' }}. All rights reserved.</p>
                 </div>
             </div>
         </footer>

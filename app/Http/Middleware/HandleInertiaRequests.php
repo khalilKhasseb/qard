@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Language;
+use App\Settings\GeneralSettings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
@@ -31,6 +32,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $general = app(GeneralSettings::class);
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -42,6 +45,14 @@ class HandleInertiaRequests extends Middleware
             ],
             'languages' => Language::active()->get(['name', 'code', 'direction']),
             'currentLanguage' => app()->getLocale(),
+            'settings' => [
+                'site_name' => $general->site_name,
+                'site_description' => $general->site_description,
+                'meta_keywords' => $general->meta_keywords,
+                'meta_description' => $general->meta_description,
+                'logo' => $general->logo ? asset('storage/'.$general->logo) : null,
+                'favicon' => $general->favicon ? asset('storage/'.$general->favicon) : null,
+            ],
         ];
     }
 }

@@ -88,7 +88,6 @@ class CardController extends Controller
         $themes = Theme::forUser($request->user()->id)->get();
         $languages = Language::active()->get();
 
-
         $publicUrl = $card->custom_slug
             ? route('card.public.slug', $card->custom_slug)
             : route('card.public.share', $card->share_url);
@@ -113,6 +112,7 @@ class CardController extends Controller
             'profile_image' => 'nullable|image|max:2048',
             'theme_id' => 'nullable|exists:themes,id',
             'language_id' => 'nullable|exists:languages,id',
+            'active_languages' => 'nullable|array',
             'custom_slug' => 'nullable|string|max:255|unique:business_cards,custom_slug,'.$card->id,
             'save_as_draft' => 'sometimes|boolean',
         ]);
@@ -134,6 +134,7 @@ class CardController extends Controller
         if ($request->boolean('save_as_draft')) {
             $card->draft_data = $validated;
             $card->save();
+
             return back()->with('success', 'Draft saved successfully!');
         }
 
@@ -170,7 +171,7 @@ class CardController extends Controller
     {
         $this->authorize('update', $card);
 
-        if (!$card->draft_data) {
+        if (! $card->draft_data) {
             return back()->with('error', 'No draft changes to publish.');
         }
 
@@ -192,6 +193,7 @@ class CardController extends Controller
             'sections.*.title' => 'nullable',
             'sections.*.content' => 'required|array',
             'sections.*.order' => 'nullable|integer',
+            'sections.*.is_active' => 'nullable|boolean',
         ]);
 
         DB::transaction(function () use ($card, $validated) {
@@ -203,7 +205,7 @@ class CardController extends Controller
                     'title' => $sectionData['title'] ?? ucfirst($sectionData['section_type']),
                     'content' => $sectionData['content'],
                     'sort_order' => $sectionData['order'] ?? ($index + 1),
-                    'is_active' => true,
+                    'is_active' => $sectionData['is_active'] ?? true,
                 ]);
             }
         });

@@ -22,17 +22,20 @@ class PublicCardController extends Controller
 
         $this->cardService->trackView($card, $this->getTrackingData(request()));
 
+        $activeLanguageCodes = $card->active_languages ?? ['en'];
+        $languages = Language::active()->whereIn('code', $activeLanguageCodes)->get();
+
         return view('cards.public', [
             'card' => $card,
             'theme' => $card->theme,
             'sections' => $card->activeSections,
-            'languages' => Language::active()->get(),
+            'languages' => $languages,
         ]);
     }
 
     public function byShareUrl(string $shareUrl)
     {
-        
+
         $card = $this->cardService->getCardByShareUrl($shareUrl);
 
         if (! $card) {
@@ -41,11 +44,14 @@ class PublicCardController extends Controller
 
         $this->cardService->trackView($card, $this->getTrackingData(request()));
 
+        $activeLanguageCodes = $card->active_languages ?? ['en'];
+        $languages = Language::active()->whereIn('code', $activeLanguageCodes)->get();
+
         return view('cards.public', [
             'card' => $card,
             'theme' => $card->theme,
             'sections' => $card->activeSections,
-            'languages' => Language::active()->get(),
+            'languages' => $languages,
         ]);
     }
 
@@ -59,11 +65,14 @@ class PublicCardController extends Controller
 
         $this->cardService->trackNfcTap($card, $this->getTrackingData(request()));
 
+        $activeLanguageCodes = $card->active_languages ?? ['en'];
+        $languages = Language::active()->whereIn('code', $activeLanguageCodes)->get();
+
         return view('cards.public', [
             'card' => $card,
             'theme' => $card->theme,
             'sections' => $card->activeSections,
-            'languages' => Language::active()->get(),
+            'languages' => $languages,
         ]);
     }
 

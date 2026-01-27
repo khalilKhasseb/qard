@@ -27,7 +27,7 @@
         </span>
       </div>
       <div v-if="!translationCredits.unlimited && translationCredits.usage" class="w-full bg-gray-200 rounded-full h-2">
-        <div 
+        <div
           class="h-2 rounded-full transition-all duration-300"
           :class="translationCredits.usage.usage_percentage > 80 ? 'bg-red-500' : 'bg-indigo-500'"
           :style="{ width: `${translationCredits.usage.usage_percentage}%` }"
@@ -76,8 +76,17 @@
     </div>
 
     <!-- Translation Status -->
-    <div v-if="translationStatus.message" class="mt-4 p-3 rounded-lg" :class="translationStatus.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
-      <p class="text-sm" :class="translationStatus.success ? 'text-green-800' : 'text-red-800'">
+    <div v-if="translationStatus.message" class="mt-4 p-3 rounded-lg" :class="translationStatus.success ? 'bg-indigo-50 border border-indigo-200' : 'bg-red-50 border border-red-200'">
+      <div class="flex items-center gap-2 mb-2" v-if="translating && translationStatus.message.includes('%')">
+        <div class="flex-1 bg-indigo-200 rounded-full h-1.5">
+          <div
+            class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+            :style="{ width: extractPercentage(translationStatus.message) + '%' }"
+          ></div>
+        </div>
+        <span class="text-xs font-semibold text-indigo-700">{{ extractPercentage(translationStatus.message) }}%</span>
+      </div>
+      <p class="text-sm" :class="translationStatus.success ? 'text-indigo-800' : 'text-red-800'">
         {{ translationStatus.message }}
       </p>
     </div>
@@ -108,9 +117,14 @@ const props = defineProps({
 
 const emit = defineEmits(['refresh-credits', 'update:selected-languages', 'translate', 'upgrade']);
 
+const extractPercentage = (message) => {
+  const match = message.match(/(\d+)%/);
+  return match ? parseInt(match[1]) : 0;
+};
+
 const updateSelectedLanguages = (languageCode, isChecked) => {
   const currentSelection = [...props.selectedTargetLanguages];
-  
+
   if (isChecked) {
     if (!currentSelection.includes(languageCode)) {
       currentSelection.push(languageCode);
@@ -121,7 +135,7 @@ const updateSelectedLanguages = (languageCode, isChecked) => {
       currentSelection.splice(index, 1);
     }
   }
-  
+
   emit('update:selected-languages', currentSelection);
 };
 </script>
