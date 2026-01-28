@@ -1,11 +1,10 @@
 <?php
 
+use App\Models\CardSection;
+use App\Models\Language;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
-use App\Models\CardSection;
-use App\Models\Language;
 
 return new class extends Migration
 {
@@ -22,16 +21,16 @@ return new class extends Migration
         $sections = CardSection::all();
         foreach ($sections as $section) {
 
-//            if ($section->title && !empty(trim($section->title))) {
+            //            if ($section->title && !empty(trim($section->title))) {
 
-                $title = $section->title;
+            $title = $section->title;
 
-//                if (!str_starts_with(trim($title), '{')) {
-                    $section->update([
-                        'title' => json_encode([$defaultLang => $title]),
-                    ]);
-//                }
-//            }
+            //                if (!str_starts_with(trim($title), '{')) {
+            $section->update([
+                'title' => json_encode([$defaultLang => $title]),
+            ]);
+            //                }
+            //            }
         }
 
         // Change column type to json

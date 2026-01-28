@@ -6,8 +6,8 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\SectionController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\ThemeController;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 // Public analytics tracking (no auth required)
 Route::post('/analytics/track', [AnalyticsController::class, 'track'])
@@ -122,15 +122,15 @@ Route::middleware(['web', 'auth', 'throttle:ai-translation'])->prefix('ai-transl
     // Translate single section
     Route::post('/sections/{section}', [\App\Http\Controllers\TranslationController::class, 'translateSection'])
         ->name('api.ai-translate.section');
-    
+
     // Translate entire card
     Route::post('/cards/{card}', [\App\Http\Controllers\TranslationController::class, 'translateCard'])
         ->name('api.ai-translate.card');
-    
+
     // Get available languages for card
     Route::get('/cards/{card}/languages', [\App\Http\Controllers\TranslationController::class, 'availableLanguages'])
         ->name('api.ai-translate.languages');
-    
+
     // Verify translation
     Route::post('/history/{translation}/verify', [\App\Http\Controllers\TranslationController::class, 'verifyTranslation'])
         ->name('api.ai-translate.verify');
@@ -141,15 +141,15 @@ Route::middleware(['web', 'auth', 'throttle:translation-history'])->prefix('ai-t
     // Get translation history
     Route::get('/history', [\App\Http\Controllers\TranslationController::class, 'history'])
         ->name('api.ai-translate.history');
-    
+
     // Get card translation history
     Route::get('/cards/{card}/history', [\App\Http\Controllers\TranslationController::class, 'cardHistory'])
         ->name('api.ai-translate.card-history');
-    
+
     // Get user's translation credits
     Route::get('/credits', [\App\Http\Controllers\TranslationController::class, 'credits'])
         ->name('api.ai-translate.credits');
-    
+
     // Server-sent events for real-time translation updates
     Route::get('/events/{card}', [\App\Http\Controllers\TranslationSseController::class, 'streamEvents'])
         ->name('api.ai-translate.events');

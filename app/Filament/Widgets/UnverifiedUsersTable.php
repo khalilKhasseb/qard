@@ -3,16 +3,17 @@
 namespace App\Filament\Widgets;
 
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Tables;
 use Filament\Tables\Table;
+// use Filament\Tables\Actions\Action;
 use Filament\Widgets\TableWidget as BaseWidget;
-//use Filament\Tables\Actions\Action;
-use Filament\Actions\Action;
+
 class UnverifiedUsersTable extends BaseWidget
 {
     protected static ?int $sort = 2;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {

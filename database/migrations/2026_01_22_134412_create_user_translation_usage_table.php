@@ -21,7 +21,7 @@ return new class extends Migration
             $table->date('period_end');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             // Indexes
             $table->index(['user_id', 'period_start', 'period_end']);
             $table->index(['user_id', 'is_active']);

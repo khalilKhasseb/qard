@@ -5,16 +5,14 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TranslationHistoryResource\Pages;
 use App\Models\TranslationHistory;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
-use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class TranslationHistoryResource extends Resource
@@ -50,7 +48,7 @@ class TranslationHistoryResource extends Resource
                             ->columnSpanFull()
                             ->disabled(),
                     ])->columns(2),
-                
+
                 Schemas\Components\Section::make('Quality & Status')
                     ->schema([
                         Forms\Components\TextInput::make('quality_score')
@@ -151,10 +149,10 @@ class TranslationHistoryResource extends Resource
                                 $data['created_until'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
-                    })
+                    }),
             ])
             ->recordActions([
-               \Filament\Actions\ViewAction::make(),
+                \Filament\Actions\ViewAction::make(),
                 \Filament\Actions\Action::make('approve')
                     ->label('Approve')
                     ->icon('heroicon-o-check-circle')
@@ -173,11 +171,11 @@ class TranslationHistoryResource extends Resource
             ->toolbarActions([
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('delete')
-                    ->requiresConfirmation()
-                    ->action(fn ( $records) => $records->each->delete()),
-                \Filament\Actions\BulkAction::make('forceDelete')
-                    ->requiresConfirmation()
-                    ->action(fn ( $records) => $records->each->forceDelete()),
+                        ->requiresConfirmation()
+                        ->action(fn ($records) => $records->each->delete()),
+                    \Filament\Actions\BulkAction::make('forceDelete')
+                        ->requiresConfirmation()
+                        ->action(fn ($records) => $records->each->forceDelete()),
                 ]),
             ]);
     }

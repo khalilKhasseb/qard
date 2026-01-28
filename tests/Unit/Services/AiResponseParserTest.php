@@ -29,7 +29,7 @@ class AiResponseParserTest extends TestCase
 
     public function test_text_fallback_for_plain_translation()
     {
-        $raw = "اختبار"; // Arabic short translation
+        $raw = 'اختبار'; // Arabic short translation
         $result = AiResponseParser::parseResponse($raw, 'Test');
         $this->assertEquals('text_fallback', $result['status']);
         $this->assertEquals(['text' => 'اختبار'], $result['data']);

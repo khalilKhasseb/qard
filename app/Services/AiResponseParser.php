@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-
 class AiResponseParser
 {
     /**
@@ -18,16 +16,23 @@ class AiResponseParser
 
         // Find first balanced JSON object
         $start = strpos($text, '{');
-        if ($start === false) return null;
+        if ($start === false) {
+            return null;
+        }
 
         $depth = 0;
         $len = strlen($text);
         for ($i = $start; $i < $len; $i++) {
             $char = $text[$i];
-            if ($char === '{') $depth++;
-            if ($char === '}') $depth--;
+            if ($char === '{') {
+                $depth++;
+            }
+            if ($char === '}') {
+                $depth--;
+            }
             if ($depth === 0) {
                 $json = substr($text, $start, $i - $start + 1);
+
                 return $json;
             }
         }
@@ -47,23 +52,31 @@ class AiResponseParser
     {
         // 1. direct decode
         $data = json_decode($jsonText, true);
-        if (json_last_error() === JSON_ERROR_NONE) return $data;
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $data;
+        }
 
         // 2. try to unescape common escaped sequences
         $attempt = str_replace('\\\"', '"', $jsonText);
         $data = json_decode($attempt, true);
-        if (json_last_error() === JSON_ERROR_NONE) return $data;
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $data;
+        }
 
         // 3. remove non-printable characters
         $attempt = preg_replace('/[[:^print:]]+/', '', $jsonText);
         $data = json_decode($attempt, true);
-        if (json_last_error() === JSON_ERROR_NONE) return $data;
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $data;
+        }
 
         // 4. try to fix simple trailing commas
         $attempt = preg_replace('/,\s*\}/', '}', $jsonText);
         $attempt = preg_replace('/,\s*\]/', ']', $attempt);
         $data = json_decode($attempt, true);
-        if (json_last_error() === JSON_ERROR_NONE) return $data;
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $data;
+        }
 
         return null;
     }
@@ -74,10 +87,16 @@ class AiResponseParser
     public static function valuesAreOnlyUrls(array $obj): bool
     {
         foreach ($obj as $v) {
-            if (is_null($v) || $v === '') continue;
-            if (is_string($v) && preg_match('#^https?://#i', trim($v))) continue;
+            if (is_null($v) || $v === '') {
+                continue;
+            }
+            if (is_string($v) && preg_match('#^https?://#i', trim($v))) {
+                continue;
+            }
+
             return false;
         }
+
         return true;
     }
 
@@ -135,19 +154,28 @@ class AiResponseParser
             $lines = preg_split('/\r?\n/', $text);
             foreach ($lines as $line) {
                 $line = trim($line);
-                if ($line === '') continue;
+                if ($line === '') {
+                    continue;
+                }
                 // skip Arabic/Hebrew notes like "ملاحظة:" or the model's notes
-                if (preg_match('/^(note|ملاحظة|הערה)\b/i', $line)) continue;
+                if (preg_match('/^(note|ملاحظة|הערה)\b/i', $line)) {
+                    continue;
+                }
                 // If this line looks like a URL only, skip
-                if (preg_match('#^https?://#i', $line)) continue;
+                if (preg_match('#^https?://#i', $line)) {
+                    continue;
+                }
                 // If the line contains very few letters, skip as likely garbage
                 $letters = preg_replace('/[^\p{L}]/u', '', $line);
-                if (mb_strlen($letters) < 2) continue;
+                if (mb_strlen($letters) < 2) {
+                    continue;
+                }
                 // Accept as fallback translation
                 if (is_array($original)) {
                     // structured expected -> no change
                     return ['status' => 'no_content', 'data' => $original];
                 }
+
                 return ['status' => 'text_fallback', 'data' => ['text' => $line]];
             }
 
@@ -155,6 +183,7 @@ class AiResponseParser
             if (is_array($original)) {
                 return ['status' => 'no_content', 'data' => $original];
             }
+
             return ['status' => 'unparseable', 'data' => $text];
         }
 
@@ -162,13 +191,17 @@ class AiResponseParser
         if (is_array($original)) {
             return ['status' => 'no_content', 'data' => $original];
         }
+
         return ['status' => 'unparseable', 'data' => $responseData];
     }
 
     protected static function looksLikePlainTranslatedText(string $text): bool
     {
         // Heuristic: short single-line with letters and spaces (not JSON)
-        if (preg_match('/^[\p{L}\p{N}\s\-\'"\,]{2,200}$/u', $text)) return true;
+        if (preg_match('/^[\p{L}\p{N}\s\-\'"\,]{2,200}$/u', $text)) {
+            return true;
+        }
+
         return false;
     }
 }

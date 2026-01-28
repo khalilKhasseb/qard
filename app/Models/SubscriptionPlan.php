@@ -45,7 +45,7 @@ class SubscriptionPlan extends Model
         ];
     }
 
-     /**
+    /**
      * Get the features array based on enabled features
      */
     protected function features(): \Illuminate\Database\Eloquent\Casts\Attribute

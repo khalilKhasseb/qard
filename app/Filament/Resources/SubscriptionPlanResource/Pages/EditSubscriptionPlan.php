@@ -27,7 +27,7 @@ class EditSubscriptionPlan extends EditRecord
                 fn ($key) => $key !== '',
                 ARRAY_FILTER_USE_KEY
             );
-            
+
             // If all entries were removed, set to empty array instead of null
             $data['features'] = empty($data['features']) ? [] : $data['features'];
         } else {
@@ -46,7 +46,7 @@ class EditSubscriptionPlan extends EditRecord
                 fn ($key) => $key !== '',
                 ARRAY_FILTER_USE_KEY
             );
-            
+
             // If all entries were removed, set to null
             $data['features'] = empty($data['features']) ? null : $data['features'];
         }

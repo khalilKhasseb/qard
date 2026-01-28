@@ -158,15 +158,15 @@ class UserResource extends Resource
                     ]),
             ])
             ->recordActions([
-                  \Filament\Actions\Action::make('verify')
+                \Filament\Actions\Action::make('verify')
                     ->label('Verify Email')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (User $record): bool => is_null($record->email_verified_at))
                     ->action(function (User $record) {
-                    $record->email_verified_at = now();
-                    $record->save();    
-                    // $record->update(['email_verified_at' => now()]);
+                        $record->email_verified_at = now();
+                        $record->save();
+                        // $record->update(['email_verified_at' => now()]);
                         \Filament\Notifications\Notification::make()
                             ->title('User verified successfully')
                             ->body("Email for {$record->name} has been verified.")
@@ -178,10 +178,10 @@ class UserResource extends Resource
                     ->label('Unverify Email')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (User $record): bool => !is_null($record->email_verified_at))
+                    ->visible(fn (User $record): bool => ! is_null($record->email_verified_at))
                     ->action(function (User $record) {
-                     $record->email_verified_at = null;   
-                     $record->save();
+                        $record->email_verified_at = null;
+                        $record->save();
                         \Filament\Notifications\Notification::make()
                             ->title('User unverified')
                             ->body("Email verification for {$record->name} has been removed.")
@@ -193,20 +193,20 @@ class UserResource extends Resource
                 Actions\EditAction::make(),
             ])
             ->toolbarActions([
-                 \Filament\Actions\BulkActionGroup::make([
-                   \Filament\Actions\BulkAction::make('verify_selected')
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('verify_selected')
                         ->label('Verify Selected')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(function ($records) {
                             $count = $records->whereNull('email_verified_at')->count();
-                            
+
                             foreach ($records as $record) {
                                 if (is_null($record->email_verified_at)) {
                                     $record->update(['email_verified_at' => now()]);
                                 }
                             }
-                            
+
                             \Filament\Notifications\Notification::make()
                                 ->title('Users verified')
                                 ->body("{$count} users have been verified.")
@@ -235,16 +235,16 @@ class UserResource extends Resource
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
-    
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::whereNull('email_verified_at')->count();
     }
-    
+
     public static function getNavigationBadgeColor(): ?string
     {
         $unverifiedCount = static::getModel()::whereNull('email_verified_at')->count();
-        
+
         return $unverifiedCount > 0 ? 'warning' : 'success';
     }
 }

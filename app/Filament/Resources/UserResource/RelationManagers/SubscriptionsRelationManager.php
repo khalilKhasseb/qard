@@ -69,9 +69,9 @@ class SubscriptionsRelationManager extends RelationManager
                     ->boolean(),
             ])
             ->headerActions([
-                 \Filament\Actions\CreateAction::make()
+                \Filament\Actions\CreateAction::make()
                     ->label('Add Subscription'),
-               \Filament\Actions\BulkActionGroup::make([
+                \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ])

@@ -6,7 +6,7 @@ use App\Services\ThemeService;
 
 beforeEach(function () {
     $this->user = User::factory()->create([
-        'subscription_tier' => 'pro',
+        'is_admin' => true,
     ]);
     $this->themeService = app(ThemeService::class);
 });
@@ -49,7 +49,70 @@ test('theme css generation works', function () {
 
     expect($css)->toContain('--primary: #ff0000')
         ->and($css)->toContain('font-family: Helvetica')
-        ->and($css)->toContain('border-radius: 8px');
+        ->and($css)->toContain('border-radius: 8px')
+        ->and($css)->toContain('.card-viewer {');
+});
+
+test('theme css generation includes background image', function () {
+    $theme = Theme::factory()->create([
+        'config' => [
+            'images' => [
+                'background' => [
+                    'url' => 'https://example.com/bg.jpg',
+                ],
+            ],
+        ],
+    ]);
+
+    $css = $this->themeService->generateCSS($theme);
+
+    expect($css)->toContain('background-image: url(https://example.com/bg.jpg)')
+        ->and($css)->toContain('.card-viewer {');
+});
+
+test('theme css generation applies overrides', function () {
+    $theme = Theme::factory()->create([
+        'config' => [
+            'colors' => ['primary' => '#ff0000', 'background' => '#ffffff'],
+            'fonts' => ['body' => 'Helvetica'],
+            'layout' => ['border_radius' => '8px'],
+        ],
+    ]);
+
+    $overrides = [
+        'colors' => ['primary' => '#0000ff'],
+        'layout' => ['border_radius' => '20px'],
+    ];
+
+    $css = $this->themeService->generateCSS($theme, $overrides);
+
+    expect($css)->toContain('--primary: #0000ff') // Overridden
+        ->and($css)->toContain('--primary-soft: #0000ff10') // Derived from override
+        ->and($css)->toContain('--background: #ffffff') // From theme
+        ->and($css)->toContain('font-family: Helvetica') // From theme
+        ->and($css)->toContain('border-radius: 20px'); // Overridden
+});
+
+test('theme css generation handles null values in config', function () {
+    $theme = Theme::factory()->create([
+        'config' => [
+            'colors' => [
+                'primary' => '#ff0000',
+                'secondary' => null, // null color
+            ],
+            'fonts' => [
+                'body' => 'Arial',
+                'body_url' => null, // null URL
+            ],
+            'custom_css' => null, // null CSS
+        ],
+    ]);
+
+    $css = $this->themeService->generateCSS($theme);
+
+    expect($css)->toContain('--primary: #ff0000')
+        ->and($css)->toContain('--secondary: ')
+        ->and($css)->not->toContain('/* Custom CSS */');
 });
 
 test('free user cannot exceed theme limit', function () {

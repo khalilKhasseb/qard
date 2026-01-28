@@ -120,7 +120,7 @@ class AiLabelTranslationService
     {
         $out = [];
         foreach ($items as $item) {
-            if (!is_array($item)) {
+            if (! is_array($item)) {
                 continue;
             }
             $key = $item['key'] ?? null;
@@ -129,6 +129,7 @@ class AiLabelTranslationService
                 $out[$key] = is_string($value) ? $value : '';
             }
         }
+
         return $out;
     }
 

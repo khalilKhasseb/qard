@@ -5,7 +5,6 @@ namespace App\Services;
 use Prism\Prism\Schema\ArraySchema;
 use Prism\Prism\Schema\ObjectSchema;
 use Prism\Prism\Schema\StringSchema;
-use Prism\Prism\Schema\IntegerSchema;
 
 class TranslationSchemaFactory
 {

@@ -132,7 +132,8 @@ class CardController extends Controller
 
         // If saving as draft, store in draft_data instead of updating live data
         if ($request->boolean('save_as_draft')) {
-            $card->draft_data = $validated;
+            $draftData = array_merge($card->draft_data ?? [], $validated);
+            $card->draft_data = $draftData;
             $card->save();
 
             return back()->with('success', 'Draft saved successfully!');

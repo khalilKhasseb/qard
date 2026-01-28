@@ -29,7 +29,7 @@ class DashboardController extends Controller
             ->with('subscriptionPlan')
             ->first();
 
-            // dd($subscription);
+        // dd($subscription);
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'recentCards' => $recentCards,

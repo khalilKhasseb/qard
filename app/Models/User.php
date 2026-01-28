@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Notifications\ResetPassword;
 use App\Notifications\VerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,10 +13,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\HasApiTokens;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
-class User extends Authenticatable implements MustVerifyEmail, FilamentUser
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -46,8 +45,6 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             'last_login' => 'datetime',
         ];
     }
-
-    
 
     public function cards(): HasMany
     {
@@ -105,17 +102,17 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
     public function canCreateCard(): bool
     {
-       if($this->isAdmin()) {
-           return true;
-       }
-       $limit = $this->getCardLimit();
+        if ($this->isAdmin()) {
+            return true;
+        }
+        $limit = $this->getCardLimit();
 
         return $this->cards()->count() < $limit;
     }
 
     public function canCreateTheme(): bool
     {
-        if($this->isAdmin()) {
+        if ($this->isAdmin()) {
             return true;
         }
         $limit = $this->getThemeLimit();
@@ -222,7 +219,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
                 $usage = $this->currentTranslationUsage()->first();
 
-                if (!$usage) {
+                if (! $usage) {
                     // Initialize usage for current period
                     $this->initializeTranslationUsage();
                     $usage = $this->currentTranslationUsage()->first();
@@ -237,7 +234,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
                 // Sync credits if plan was upgraded during period
                 $limit = $this->getTranslationCreditLimit();
-                if ($usage && !$this->hasUnlimitedTranslations() && $usage->credits_available < $limit) {
+                if ($usage && ! $this->hasUnlimitedTranslations() && $usage->credits_available < $limit) {
                     $usage->update(['credits_available' => $limit]);
                 }
 
@@ -269,7 +266,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
         $usage = $this->currentTranslationUsage()->first();
 
-        if (!$usage || !$usage->hasCredits($amount)) {
+        if (! $usage || ! $usage->hasCredits($amount)) {
             return false;
         }
 
@@ -277,7 +274,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 
         // Clear cache
         Cache::forget("translation_credits:user:{$this->id}");
-        
+
         // Trigger real-time credit update for all user sessions
         Cache::put("credits_updated:{$this->id}", true, now()->addMinutes(5));
 
@@ -296,9 +293,9 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             if (isset($subscription->subscriptionPlan->features['ai_translation']) && $subscription->subscriptionPlan->features['ai_translation']) {
                 return true;
             }
-            
+
             // Or if they have credits/unlimited set
-            return $subscription->subscriptionPlan->translation_credits_monthly > 0 || 
+            return $subscription->subscriptionPlan->translation_credits_monthly > 0 ||
                    $subscription->subscriptionPlan->unlimited_translations;
         }
 

@@ -18,7 +18,7 @@ class CreateSubscriptionPlan extends CreateRecord
                 fn ($key) => $key !== '',
                 ARRAY_FILTER_USE_KEY
             );
-            
+
             // If all entries were removed, set to null
             $data['features'] = empty($data['features']) ? null : $data['features'];
         }

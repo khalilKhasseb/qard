@@ -64,9 +64,10 @@ class UserTranslationUsage extends Model
     public function scopeCurrentPeriod($query)
     {
         $now = now();
+
         return $query->where('period_start', '<=', $now)
-                    ->where('period_end', '>=', $now)
-                    ->where('is_active', true);
+            ->where('period_end', '>=', $now)
+            ->where('is_active', true);
     }
 
     /**
@@ -90,7 +91,7 @@ class UserTranslationUsage extends Model
      */
     public function deductCredits(int $amount = 1): bool
     {
-        if (!$this->hasCredits($amount)) {
+        if (! $this->hasCredits($amount)) {
             return false;
         }
 

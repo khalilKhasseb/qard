@@ -13,6 +13,7 @@ class VerifyTranslationQuality implements ShouldQueue
     use Queueable;
 
     public $tries = 2;
+
     public $timeout = 120;
 
     /**
@@ -29,10 +30,11 @@ class VerifyTranslationQuality implements ShouldQueue
     {
         $translation = TranslationHistory::find($this->translationHistoryId);
 
-        if (!$translation) {
+        if (! $translation) {
             Log::error('Translation history not found for quality verification', [
                 'translation_id' => $this->translationHistoryId,
             ]);
+
             return;
         }
 

@@ -134,7 +134,7 @@ class TranslationHistory extends Model
     public function scopeForLanguagePair($query, string $sourceLang, string $targetLang)
     {
         return $query->where('source_language', $sourceLang)
-                    ->where('target_language', $targetLang);
+            ->where('target_language', $targetLang);
     }
 
     /**
@@ -156,7 +156,7 @@ class TranslationHistory extends Model
     {
         if ($score !== null) {
             $this->update(['quality_score' => $score]);
-            
+
             // Auto-set verification status based on score
             if ($score >= 80) {
                 $this->update(['verification_status' => 'auto_verified']);

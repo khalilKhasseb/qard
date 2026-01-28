@@ -6,6 +6,7 @@ use App\Models\AnalyticsEvent;
 use App\Models\BusinessCard;
 use App\Models\CardSection;
 use App\Models\Template;
+use App\Models\Theme;
 use App\Models\User;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -13,7 +14,8 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 class CardService
 {
     public function __construct(
-        protected AnalyticsService $analyticsService
+        protected AnalyticsService $analyticsService,
+        protected ThemeService $themeService
     ) {}
 
     public function createCard(User $user, array $data, ?Template $template = null): BusinessCard
@@ -44,6 +46,14 @@ class CardService
 
     public function updateCard(BusinessCard $card, array $data): BusinessCard
     {
+        if (isset($data['theme_id']) && (string) $data['theme_id'] !== (string) $card->theme_id) {
+            $theme = Theme::find($data['theme_id']);
+            if ($theme) {
+                $this->themeService->applyToCard($theme, $card);
+                unset($data['theme_id']);
+            }
+        }
+
         $card->update($data);
 
         return $card->fresh();

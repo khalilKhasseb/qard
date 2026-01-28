@@ -118,18 +118,27 @@ class ThemeService
         $theme->update(['config' => $config]);
     }
 
-    public function generateCSS(Theme $theme): string
+    public function generateCSS(Theme $theme, ?array $overrides = null): string
     {
-        $config = $theme->config;
+        $config = array_replace_recursive(
+            Theme::getDefaultConfig(),
+            $theme->config,
+            $overrides ?? []
+        );
 
         $css = ":root {\n";
         foreach ($config['colors'] ?? [] as $key => $value) {
             $cssKey = str_replace('_', '-', $key);
             $css .= "  --{$cssKey}: {$value};\n";
+
+            // Add soft version for primary color
+            if ($key === 'primary' && ! empty($value) && strlen($value) === 7 && str_starts_with($value, '#')) {
+                $css .= "  --primary-soft: {$value}10;\n";
+            }
         }
         $css .= "}\n\n";
 
-        $css .= ".theme-wrapper {\n";
+        $css .= ".card-viewer {\n";
         $css .= "  background-color: var(--background);\n";
         $css .= "  font-family: {$config['fonts']['body']}, system-ui, sans-serif;\n";
         $css .= "  color: var(--text);\n";
@@ -142,6 +151,10 @@ class ThemeService
             $css .= "  background-position: center;\n";
             $css .= "  background-attachment: fixed;\n";
         }
+        $css .= "}\n\n";
+
+        $css .= ".theme-wrapper {\n";
+        $css .= "  min-height: 100vh;\n";
         $css .= "}\n\n";
 
         $css .= ".card-container {\n";

@@ -60,7 +60,7 @@ class SectionController extends Controller
         $url = \Illuminate\Support\Facades\Storage::url($path);
 
         $content = $section->content ?? [];
-        if (!isset($content['items']) || !is_array($content['items'])) {
+        if (! isset($content['items']) || ! is_array($content['items'])) {
             $content['items'] = [];
         }
 

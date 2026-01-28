@@ -70,16 +70,17 @@ class LanguageResource extends Resource
                                 }
                             })
                             ->dehydrateStateUsing(function ($state): array {
-                                if (!is_array($state)) {
+                                if (! is_array($state)) {
                                     return [];
                                 }
                                 $out = [];
                                 foreach ($state as $row) {
-                                    if (!isset($row['key'])) {
+                                    if (! isset($row['key'])) {
                                         continue;
                                     }
                                     $out[$row['key']] = $row['value'] ?? '';
                                 }
+
                                 return $out;
                             }),
                     ]),

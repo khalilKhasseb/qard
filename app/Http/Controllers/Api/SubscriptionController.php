@@ -22,9 +22,10 @@ class SubscriptionController extends Controller
             ->with('subscriptionPlan')
             ->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             // Fetch free plan data
             $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')->first();
+
             return new UserSubscriptionResource($freePlan);
         }
 
@@ -37,7 +38,7 @@ class SubscriptionController extends Controller
     {
         $subscription = $request->user()->activeSubscription;
 
-        if (!$subscription) {
+        if (! $subscription) {
             return response()->json([
                 'message' => 'No active subscription to cancel',
             ], 404);
@@ -62,7 +63,7 @@ class SubscriptionController extends Controller
         $user = $request->user();
         $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return response()->json([
                 'message' => 'No active subscription found',
             ], 404);

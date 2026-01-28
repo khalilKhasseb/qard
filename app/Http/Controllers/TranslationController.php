@@ -30,7 +30,7 @@ class TranslationController extends Controller
         $user = $request->user();
 
         // Check if feature is enabled for plan
-        if (!$user->hasTranslationFeature()) {
+        if (! $user->hasTranslationFeature()) {
             return response()->json([
                 'success' => false,
                 'message' => 'AI Translation is not included in your current plan.',
@@ -46,7 +46,7 @@ class TranslationController extends Controller
         }
 
         // Check credits
-        if (!$user->hasTranslationCredits(1)) {
+        if (! $user->hasTranslationCredits(1)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient translation credits',
@@ -62,7 +62,7 @@ class TranslationController extends Controller
             );
 
             // Queue quality verification if not cached
-            if (!($result['cached'] ?? false) && isset($result['history_id'])) {
+            if (! ($result['cached'] ?? false) && isset($result['history_id'])) {
                 VerifyTranslationQuality::dispatch($result['history_id'])
                     ->delay(now()->addSeconds(5));
             }
@@ -103,7 +103,7 @@ class TranslationController extends Controller
         $user = $request->user();
 
         // Check if feature is enabled for plan
-        if (!$user->hasTranslationFeature()) {
+        if (! $user->hasTranslationFeature()) {
             return response()->json([
                 'success' => false,
                 'message' => 'AI Translation is not included in your current plan.',
@@ -127,7 +127,7 @@ class TranslationController extends Controller
             ->count();
         $requiredCredits = ($sectionsCount + 1) * count($targetLanguages); // +1 for title/subtitle
 
-        if (!$user->hasTranslationCredits($requiredCredits)) {
+        if (! $user->hasTranslationCredits($requiredCredits)) {
             return response()->json([
                 'success' => false,
                 'message' => "Insufficient credits. Need {$requiredCredits}, have {$user->getRemainingTranslationCredits()}",
@@ -222,7 +222,7 @@ class TranslationController extends Controller
     {
         $user = $request->user();
         // Check if feature is enabled for plan
-        if (!$user->hasTranslationFeature()) {
+        if (! $user->hasTranslationFeature()) {
             return response()->json([
                 'success' => false,
                 'message' => 'AI Translation is not included in your current plan.',

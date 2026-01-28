@@ -311,19 +311,19 @@ class LahzaPaymentGateway implements PaymentGatewayInterface
     public function getCheckoutUrl(Payment $payment): ?string
     {
         // Try multiple locations where the checkout URL might be stored
-        
+
         // First try direct checkout_url
-        if (!empty($payment->metadata['checkout_url'])) {
+        if (! empty($payment->metadata['checkout_url'])) {
             return $payment->metadata['checkout_url'];
         }
 
         // Second try direct authorization_url
-        if (!empty($payment->metadata['authorization_url'])) {
+        if (! empty($payment->metadata['authorization_url'])) {
             return $payment->metadata['authorization_url'];
         }
 
         // Third try nested inside api_response (where Lahza puts it)
-        if (!empty($payment->metadata['api_response']['data']['authorization_url'])) {
+        if (! empty($payment->metadata['api_response']['data']['authorization_url'])) {
             return $payment->metadata['api_response']['data']['authorization_url'];
         }
 

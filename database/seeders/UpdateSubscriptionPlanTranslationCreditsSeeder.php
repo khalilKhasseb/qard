@@ -16,11 +16,11 @@ class UpdateSubscriptionPlanTranslationCreditsSeeder extends Seeder
         $free = SubscriptionPlan::where('name', 'Free')
             ->orWhere('slug', 'free')
             ->first();
-            
+
         if ($free) {
             $features = $free->features ?? [];
             $features['ai_translation'] = true;
-            
+
             $free->update([
                 'translation_credits_monthly' => 10,
                 'unlimited_translations' => false,
@@ -33,11 +33,11 @@ class UpdateSubscriptionPlanTranslationCreditsSeeder extends Seeder
         $pro = SubscriptionPlan::where('name', 'Pro')
             ->orWhere('slug', 'pro')
             ->first();
-            
+
         if ($pro) {
             $features = $pro->features ?? [];
             $features['ai_translation'] = true;
-            
+
             $pro->update([
                 'translation_credits_monthly' => 100,
                 'unlimited_translations' => false,
@@ -50,11 +50,11 @@ class UpdateSubscriptionPlanTranslationCreditsSeeder extends Seeder
         $business = SubscriptionPlan::where('name', 'Business')
             ->orWhere('slug', 'business')
             ->first();
-            
+
         if ($business) {
             $features = $business->features ?? [];
             $features['ai_translation'] = true;
-            
+
             $business->update([
                 'translation_credits_monthly' => 0,
                 'unlimited_translations' => true,

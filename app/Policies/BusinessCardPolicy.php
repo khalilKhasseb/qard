@@ -22,6 +22,7 @@ class BusinessCardPolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         return $user->canCreateCard();
     }
 
@@ -30,6 +31,7 @@ class BusinessCardPolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         return $user->id === $businessCard->user_id;
     }
 
@@ -38,6 +40,7 @@ class BusinessCardPolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         return $user->id === $businessCard->user_id;
     }
 
@@ -46,6 +49,7 @@ class BusinessCardPolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         return $user->id === $businessCard->user_id;
     }
 
@@ -54,6 +58,7 @@ class BusinessCardPolicy
         if ($user->isAdmin()) {
             return true;
         }
+
         return $user->id === $businessCard->user_id;
     }
 }

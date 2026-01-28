@@ -3,10 +3,9 @@
 namespace App\Filament\Widgets;
 
 use App\Models\TranslationHistory;
-use App\Models\UserTranslationUsage;
+use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Carbon\Carbon;
 
 class TranslationUsageWidget extends BaseWidget
 {
@@ -18,7 +17,7 @@ class TranslationUsageWidget extends BaseWidget
         $totalTranslationsToday = TranslationHistory::whereDate('created_at', $today)->count();
         $totalTranslationsThisMonth = TranslationHistory::whereDate('created_at', '>=', $thisMonth)->count();
         $totalCostThisMonth = TranslationHistory::whereDate('created_at', '>=', $thisMonth)->sum('cost');
-        
+
         $pendingVerifications = TranslationHistory::whereIn('verification_status', ['pending', 'needs_review'])->count();
 
         return [
@@ -30,7 +29,7 @@ class TranslationUsageWidget extends BaseWidget
                 ->description('Translations this month')
                 ->descriptionIcon('heroicon-m-chart-bar')
                 ->color('success'),
-            Stat::make('Estimated Cost', '$' . number_format($totalCostThisMonth, 2))
+            Stat::make('Estimated Cost', '$'.number_format($totalCostThisMonth, 2))
                 ->description('API cost this month')
                 ->descriptionIcon('heroicon-m-credit-card')
                 ->color('primary'),

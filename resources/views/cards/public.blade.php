@@ -72,7 +72,7 @@
     <style>
         @php
             $themeService = app(\App\Services\ThemeService::class);
-            $css = $theme ? $themeService->generateCSS($theme) : '';
+            $css = $theme ? $themeService->generateCSS($theme, $card->theme_overrides) : '';
         @endphp
         {!! $css !!}
     </style>

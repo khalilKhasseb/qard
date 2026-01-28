@@ -188,7 +188,8 @@ const switchLanguage = (code) => {
 const primaryColor = computed(() => props.card.theme?.config?.colors?.primary || '#1a1a1a');
 const secondaryColor = computed(() => props.card.theme?.config?.colors?.secondary || '#6b7280');
 const backgroundColor = computed(() => props.card.theme?.config?.colors?.background || '#ffffff');
-const cardBackgroundColor = computed(() => props.card.theme?.config?.colors?.card_background || '#ffffff');
+const textColor = computed(() => props.card.theme?.config?.colors?.text || '#1f2937');
+const cardBackgroundColor = computed(() => props.card.theme?.config?.colors?.card_bg || '#ffffff');
 const headingFont = computed(() => props.card.theme?.config?.fonts?.heading || 'Inter');
 const bodyFont = computed(() => props.card.theme?.config?.fonts?.body || 'Inter');
 
@@ -203,7 +204,7 @@ const contactFields = computed(() => {
     const fields = [];
     const content = sc(contactSection.value || {});
     if (!content) return fields;
-    
+
     if (content.email) fields.push({ type: 'email', value: content.email, icon: 'Mail', href: `mailto:${content.email}` });
     if (content.phone) fields.push({ type: 'phone', value: content.phone, icon: 'Call', href: `tel:${content.phone}` });
     if (content.address) fields.push({ type: 'address', value: content.address, icon: 'Location', href: null });
@@ -211,7 +212,7 @@ const contactFields = computed(() => {
         const websiteUrl = content.website.startsWith('http') ? content.website : `https://${content.website}`;
         fields.push({ type: 'website', value: ut('view_website'), icon: 'Globe', href: websiteUrl });
     }
-    
+
     return fields;
 });
 
@@ -419,14 +420,23 @@ const formatDayLabel = (day) => {
     return ut(key) || day;
 };
 
+const cardCoverUrl = computed(() => {
+    return props.card.theme?.config?.images?.header?.url || props.card.cover_image_url;
+});
+
+const cardProfileUrl = computed(() => {
+    return props.card.theme?.config?.images?.logo?.url || props.card.profile_image_url;
+});
+
 const themeStyles = computed(() => ({
     '--primary': primaryColor.value,
     '--secondary': secondaryColor.value,
     '--background': backgroundColor.value,
+    '--text': textColor.value,
     '--card-bg': cardBackgroundColor.value,
     '--heading-font': headingFont.value,
     '--body-font': bodyFont.value,
-    '--primary-soft': primaryColor.value + '10',
+    '--primary-soft': primaryColor.value.length === 7 ? primaryColor.value + '10' : primaryColor.value,
     '--border': '#f3f4f6'
 }));
 
@@ -441,16 +451,16 @@ onMounted(() => {
                 <!-- Header (cover + avatar) -->
                 <div class="header">
                     <div class="cover">
-                        <img v-if="card.cover_image_url" :src="card.cover_image_url" class="cover-image" />
+                        <img v-if="cardCoverUrl" :src="cardCoverUrl" class="cover-image" />
                         <div v-else class="cover-placeholder" />
 
                         <div class="avatar-wrap">
                             <div class="avatar-ring">
                                 <NAvatar
-                                    v-if="card.profile_image_url"
+                                    v-if="cardProfileUrl"
                                     :round="true"
                                     :size="100"
-                                    :src="card.profile_image_url"
+                                    :src="cardProfileUrl"
                                     class="profile-avatar"
                                 />
                                 <div v-else class="initials-avatar">
@@ -493,7 +503,7 @@ onMounted(() => {
                         rel="noopener noreferrer"
                         :aria-label="item.key"
                     >
-                    
+
     		    <span class="social-icon" v-html="FIGMA_ICONS[item.key] || ''" />
                     </a>
                 </div>
@@ -575,7 +585,7 @@ onMounted(() => {
 
                 <!-- Dynamic sections (services, products, testimonials, etc.) -->
                 <template v-for="section in parsedSections" :key="section.id">
-                    
+
                     <template v-if="hasContent(section)">
                         <!-- Services Section -->
                         <ServicesSection
@@ -583,35 +593,35 @@ onMounted(() => {
                             :content="sc(section)"
                             :title="t(section.title)"
                         />
-                        
+
                         <!-- Products Section -->
                         <ProductsSection
                             v-if="section.section_type === 'products'"
                             :content="sc(section)"
                             :title="t(section.title)"
                         />
-                        
+
                         <!-- Testimonials Section -->
                         <TestimonialsSection
                             v-if="section.section_type === 'testimonials'"
                             :content="sc(section)"
                             :title="t(section.title)"
                         />
-                        
+
                         <!-- Gallery Section -->
                         <GallerySection
                             v-if="section.section_type === 'gallery'"
                             :content="sc(section)"
                             :title="t(section.title)"
                         />
-                        
+
                         <!-- Text/About Section -->
                         <TextSection
                             v-if="section.section_type === 'text' || section.section_type === 'about'"
                             :content="sc(section)"
                             :title="t(section.title)"
                         />
-                        
+
                         <!-- Appointments Section -->
                         <AppointmentsSection
                             v-if="section.section_type === 'appointments'"

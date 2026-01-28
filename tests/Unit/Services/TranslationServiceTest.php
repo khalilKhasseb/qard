@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Services;
 
-use App\Services\TranslationService;
 use App\Services\AiTranslationProvider;
 use App\Services\TranslationSchemaFactory;
-use PHPUnit\Framework\TestCase;
+use App\Services\TranslationService;
 use Mockery;
+use PHPUnit\Framework\TestCase;
 
 class TranslationServiceTest extends TestCase
 {

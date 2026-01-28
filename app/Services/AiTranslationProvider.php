@@ -2,19 +2,22 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Prism;
-use Prism\Prism\Schema\ObjectSchema;
 use Prism\Prism\Schema\IntegerSchema;
+use Prism\Prism\Schema\ObjectSchema;
 use Prism\Prism\Schema\StringSchema;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
-use Illuminate\Support\Facades\Log;
 
 class AiTranslationProvider
 {
     protected string $provider;
+
     protected string $model;
+
     protected int $maxRetries;
+
     protected int $retryDelay;
 
     public function __construct()
@@ -28,12 +31,8 @@ class AiTranslationProvider
     /**
      * Translate content using AI with structured output.
      *
-     * @param array|string $content
-     * @param string $sourceLang
-     * @param string $targetLang
-     * @param ObjectSchema $schema
-     * @param string|null $context Additional context for better translation
-     * @return array
+     * @param  string|null  $context  Additional context for better translation
+     *
      * @throws \Exception
      */
     public function translate(
@@ -123,10 +122,6 @@ class AiTranslationProvider
     /**
      * Verify translation quality using AI.
      *
-     * @param string $sourceText
-     * @param string $translatedText
-     * @param string $sourceLang
-     * @param string $targetLang
      * @return array ['score' => int, 'feedback' => string]
      */
     public function verifyQuality(
@@ -144,7 +139,7 @@ class AiTranslationProvider
         $prompt .= "- Fluency (30%): Natural in target language\n";
         $prompt .= "- Cultural appropriateness (20%): Culturally sensitive\n";
         $prompt .= "- Completeness (10%): Nothing omitted or added\n\n";
-        $prompt .= "Provide a score (integer 0-100) and brief feedback.";
+        $prompt .= 'Provide a score (integer 0-100) and brief feedback.';
 
         try {
             $schema = new ObjectSchema(
@@ -187,6 +182,7 @@ class AiTranslationProvider
     public function setModel(string $model): self
     {
         $this->model = $model;
+
         return $this;
     }
 
@@ -228,10 +224,12 @@ class AiTranslationProvider
                     Log::info('Translation contained only URLs or non-translatable values; keeping original content', [
                         'original_preview' => is_array($originalContent) ? json_encode(array_slice($originalContent, 0, 5)) : substr((string) $originalContent, 0, 200),
                     ]);
+
                     return $originalContent;
 
                 case 'no_content':
                     Log::info('Translation returned no content; keeping original', []);
+
                     return $originalContent;
 
                 case 'text_fallback':
@@ -246,7 +244,8 @@ class AiTranslationProvider
                 case 'unparseable':
                 default:
                     // Log detailed info and keep original to avoid breaking the flow
-                    Log::warning('Structured object could not be decoded. Received: ' . print_r($parseResult['data'], true));
+                    Log::warning('Structured object could not be decoded. Received: '.print_r($parseResult['data'], true));
+
                     return $originalContent;
             }
         } catch (\Throwable $e) {

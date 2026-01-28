@@ -29,7 +29,7 @@ class SectionController extends Controller
         // Handle item_images for new sections (e.g., gallery uploads on creation)
         if ($request->hasFile('item_images')) {
             $content = $data['content'] ?? [];
-            if (!isset($content['items']) || !is_array($content['items'])) {
+            if (! isset($content['items']) || ! is_array($content['items'])) {
                 $content['items'] = [];
             }
 

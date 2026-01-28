@@ -46,6 +46,7 @@ class EditLanguage extends EditRecord
                             ->body('Set a default language or create an English language record with labels.')
                             ->danger()
                             ->send();
+
                         return;
                     }
 

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\TranslationHistoryResource\Pages;
 
 use App\Filament\Resources\TranslationHistoryResource;
-use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListTranslationHistories extends ListRecords

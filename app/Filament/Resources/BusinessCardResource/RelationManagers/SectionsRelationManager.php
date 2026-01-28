@@ -14,8 +14,6 @@ class SectionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'sections';
 
-    protected static ?string $recordTitleAttribute = 'title';
-
     protected static ?string $title = 'Card Sections';
 
     protected static ?string $modelLabel = 'Section';
@@ -23,7 +21,7 @@ class SectionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('title')
+            ->recordTitle(fn (CardSection $record): string => is_array($record->title) ? ($record->title['en'] ?? reset($record->title) ?? 'Untitled') : ($record->title ?: 'Untitled'))
             ->columns([
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('#')

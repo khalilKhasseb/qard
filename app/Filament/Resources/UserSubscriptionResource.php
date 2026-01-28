@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserSubscriptionResource\Pages;
 use App\Models\UserSubscription;
-use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas;
