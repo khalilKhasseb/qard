@@ -80,9 +80,11 @@ class AppServiceProvider extends ServiceProvider
                 'prism.request_timeout' => $ai->request_timeout,
                 'payments.default' => $payment->default_gateway,
             ]);
+
         } catch (\Exception $e) {
             // Settings table might not exist during migration
         }
+
     }
 
     /**

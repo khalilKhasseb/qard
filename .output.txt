@@ -1,0 +1,264 @@
+On branch main
+Your branch is ahead of 'origin/main' by 27 commits.
+  (use "git push" to publish your local commits)
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        deleted:    .junie/guidelines.md
+        deleted:    .junie/mcp/mcp.json
+        new file:   lang/ar/theme.php
+        new file:   lang/en/theme.php
+        new file:   lang/he/theme.php
+        new file:   resources/js/Components/Shared/PowerBy.vue
+        new file:   resources/js/Pages/WelcomeTw.vue
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .claude/settings.local.json
+        deleted:    .env.production.example
+        deleted:    .factory/AGENTS.md
+        deleted:    .factory/droids/admin-layer-agent.md
+        deleted:    .factory/droids/api-layer-agent.md
+        deleted:    .factory/droids/auth-agent.md
+        deleted:    .factory/droids/data-layer-agent.md
+        deleted:    .factory/droids/deployment-agent.md
+        deleted:    .factory/droids/integration-agent.md
+        deleted:    .factory/droids/job-agent.md
+        deleted:    .factory/droids/monitoring-agent.md
+        deleted:    .factory/droids/notification-agent.md
+        deleted:    .factory/droids/optimization-agent.md
+        deleted:    .factory/droids/security-agent.md
+        deleted:    .factory/droids/testing-agent.md
+        deleted:    .factory/phase2-api-layer-tasks.md
+        deleted:    .factory/phase2-integration-agent-tasks.md
+        deleted:    .factory/phase2-notification-agent-tasks.md
+        deleted:    .factory/phase2-orchestration-summary.md
+        deleted:    .factory/phase2-security-agent-tasks.md
+        deleted:    .factory/phase2-testing-agent-tasks.md
+        deleted:    .factory/phase2_tasks/01_integration_agent_inertia_setup.md
+        deleted:    .factory/phase2_tasks/02_auth_agent_authentication.md
+        deleted:    .factory/phase2_tasks/03_integration_agent_dashboard.md
+        deleted:    .gitignore.production
+        deleted:    DEPLOYMENT.md
+        deleted:    DOCS/API_ENDPOINTS.md
+        deleted:    DOCS/API_IMPLEMENTATION_SUMMARY.md
+        deleted:    DOCS/CRITICAL_FIXES_SUMMARY.md
+        deleted:    DOCS/ENDPOINT_CHECKLIST.md
+        deleted:    DOCS/FILAMENT_FIX_COMPLETE.md
+        deleted:    DOCS/FIX_SECTION_CREATION.md
+        deleted:    DOCS/FRONTEND_BUILD_SUMMARY.md
+        deleted:    DOCS/IMPLEMENTATION_COMPLETE.txt
+        deleted:    DOCS/LAHZA_INTEGRATION.md
+        deleted:    DOCS/LANGUAGE_API.md
+        deleted:    DOCS/NOTIFICATION_IMPLEMENTATION_REPORT.md
+        deleted:    DOCS/NOTIFICATION_SETUP.md
+        deleted:    DOCS/PUBLICCARD_REFACTOR_COMPLETE.md
+        deleted:    DOCS/QUICK_START_GUIDE.md
+        deleted:    DOCS/RTL_IMPLEMENTATION.md
+        deleted:    DOCS/SECURITY.md
+        deleted:    DOCS/SECURITY_AUDIT_REPORT.md
+        deleted:    DOCS/SECURITY_IMPLEMENTATION_SUMMARY.md
+        deleted:    DOCS/START_HERE.md
+        deleted:    DOCS/TESTING_GUIDE.md
+        deleted:    DOCS/TEST_DOCUMENTATION.md
+        deleted:    DOCS/TEST_NOTIFICATIONS_GUIDE.md
+        deleted:    DOCS/TEST_RESULTS.md
+        deleted:    DOCS/TEST_SUMMARY.md
+        deleted:    DOCS/project_plan
+        deleted:    PRODUCTION_CHECKLIST.md
+        deleted:    TRANSLATION_IMPLEMENTATION.md
+        modified:   app/Filament/Pages/ManageSettings.php
+        modified:   app/Filament/Resources/LanguageResource.php
+        modified:   app/Http/Controllers/AnalyticsController.php
+        modified:   app/Http/Controllers/Auth/AuthenticatedSessionController.php
+        modified:   app/Http/Controllers/Auth/RegisteredUserController.php
+        modified:   app/Http/Controllers/Auth/VerifyEmailController.php
+        modified:   app/Http/Controllers/ProfileController.php
+        modified:   app/Http/Controllers/PublicCardController.php
+        modified:   app/Http/Requests/Auth/LoginRequest.php
+        modified:   app/Http/Requests/CreateCardRequest.php
+        modified:   app/Http/Requests/CreateSectionRequest.php
+        modified:   app/Http/Requests/ProfileUpdateRequest.php
+        modified:   app/Http/Requests/UpdateCardRequest.php
+        modified:   app/Http/Requests/UpdateSectionRequest.php
+        modified:   app/Http/Resources/CardResource.php
+        modified:   app/Http/Resources/LanguageResource.php
+        modified:   app/Http/Resources/SectionResource.php
+        modified:   app/Http/Resources/SubscriptionPlanResource.php
+        modified:   app/Http/Resources/ThemeResource.php
+        modified:   app/Models/AnalyticsEvent.php
+        modified:   app/Models/CardSection.php
+        modified:   app/Models/Payment.php
+        modified:   app/Models/User.php
+        modified:   app/Models/UserSubscription.php
+        modified:   app/Policies/BusinessCardPolicy.php
+        modified:   app/Providers/AppServiceProvider.php
+        modified:   app/Services/CardService.php
+        modified:   bootstrap/providers.php
+        deleted:    check-hosting-capabilities.sh
+        modified:   composer.lock
+        modified:   config/settings.php
+        deleted:    crontab-setup.txt
+        deleted:    deploy-shared-hosting.sh
+        deleted:    deploy.bat
+        deleted:    deploy.sh
+        deleted:    email-config-alternatives.env
+        modified:   lang/ar/theme.php
+        modified:   lang/he/theme.php
+        deleted:    manual-test/test_api.php
+        deleted:    manual-test/test_csp.php
+        deleted:    manual-test/test_laravel_validation.php
+        deleted:    manual-test/test_routes.php
+        deleted:    manual-test/test_routes_access.php
+        deleted:    manual-test/test_section_validation.php
+        deleted:    manual-test/test_system.php
+        modified:   package-lock.json
+        modified:   package.json
+        deleted:    queue-worker-shared.sh
+        deleted:    quick-setup.sh
+        deleted:    resources/js/Components/ApplicationLogo.vue
+        deleted:    resources/js/Components/CardList.vue
+        deleted:    resources/js/Components/Cards/AITranslationPanel.vue
+        deleted:    resources/js/Components/Cards/BasicInfoSection.vue
+        deleted:    resources/js/Components/Cards/CardSectionsPanel.vue
+        deleted:    resources/js/Components/Cards/LanguageSwitcher.vue
+        deleted:    resources/js/Components/Cards/PublishingPanel.vue
+        deleted:    resources/js/Components/Cards/SharePanel.vue
+        deleted:    resources/js/Components/Cards/StatsPanel.vue
+        deleted:    resources/js/Components/Checkbox.vue
+        deleted:    resources/js/Components/ColorPicker.vue
+        deleted:    resources/js/Components/DangerButton.vue
+        deleted:    resources/js/Components/DeviceToggle.vue
+        deleted:    resources/js/Components/Dropdown.vue
+        deleted:    resources/js/Components/DropdownLink.vue
+        deleted:    resources/js/Components/FontSelector.vue
+        deleted:    resources/js/Components/ImageUpload.vue
+        deleted:    resources/js/Components/InputError.vue
+        deleted:    resources/js/Components/InputLabel.vue
+        deleted:    resources/js/Components/LanguageAwareSectionBuilder.vue
+        deleted:    resources/js/Components/LanguageSelector.vue
+        deleted:    resources/js/Components/Modal.vue
+        deleted:    resources/js/Components/NavLink.vue
+        deleted:    resources/js/Components/PrimaryButton.vue
+        deleted:    resources/js/Components/PublicCard.vue
+        deleted:    resources/js/Components/PublicCardSections/AppointmentsSection.vue
+        deleted:    resources/js/Components/PublicCardSections/GallerySection.vue
+        deleted:    resources/js/Components/PublicCardSections/ProductsSection.vue
+        deleted:    resources/js/Components/PublicCardSections/ServicesSection.vue
+        deleted:    resources/js/Components/PublicCardSections/TestimonialsSection.vue
+        deleted:    resources/js/Components/PublicCardSections/TextSection.vue
+        deleted:    resources/js/Components/ResponsiveNavLink.vue
+        deleted:    resources/js/Components/SecondaryButton.vue
+        deleted:    resources/js/Components/SectionBuilder.vue
+        deleted:    resources/js/Components/SectionBuilder/AppointmentsSection.vue
+        deleted:    resources/js/Components/SectionBuilder/ArrayItemsSection.vue
+        deleted:    resources/js/Components/SectionBuilder/ContactSection.vue
+        deleted:    resources/js/Components/SectionBuilder/GalleryItem.vue
+        deleted:    resources/js/Components/SectionBuilder/HoursSection.vue
+        deleted:    resources/js/Components/SectionBuilder/ServiceProductItem.vue
+        deleted:    resources/js/Components/SectionBuilder/SimpleContentSection.vue
+        deleted:    resources/js/Components/SectionBuilder/SocialSection.vue
+        deleted:    resources/js/Components/SectionBuilder/TestimonialItem.vue
+        modified:   resources/js/Components/Shared/PowerBy.vue
+        deleted:    resources/js/Components/StatsCard.vue
+        deleted:    resources/js/Components/TextInput.vue
+        deleted:    resources/js/Components/Textarea.vue
+        deleted:    resources/js/Components/ThemeCard.vue
+        deleted:    resources/js/Components/ThemePreview.vue
+        deleted:    resources/js/Components/TranslationTabs.vue
+        modified:   resources/js/Layouts/AuthenticatedLayout.vue
+        modified:   resources/js/Layouts/GuestLayout.vue
+        modified:   resources/js/Pages/Auth/ConfirmPassword.vue
+        modified:   resources/js/Pages/Auth/ForgotPassword.vue
+        modified:   resources/js/Pages/Auth/Login.vue
+        modified:   resources/js/Pages/Auth/Register.vue
+        modified:   resources/js/Pages/Auth/ResetPassword.vue
+        modified:   resources/js/Pages/Auth/VerifyEmail.vue
+        modified:   resources/js/Pages/Cards/Edit.vue
+        modified:   resources/js/Pages/Cards/Index.vue
+        modified:   resources/js/Pages/Payments/Checkout.vue
+        modified:   resources/js/Pages/Payments/Confirmation.vue
+        modified:   resources/js/Pages/Payments/Index.vue
+        modified:   resources/js/Pages/Profile/Edit.vue
+        modified:   resources/js/Pages/Profile/Partials/DeleteUserForm.vue
+        modified:   resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue
+        modified:   resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue
+        modified:   resources/js/Pages/Themes/Create.vue
+        modified:   resources/js/Pages/Themes/Edit.vue
+        modified:   resources/js/Pages/Themes/Index.vue
+        modified:   resources/js/app.js
+        modified:   routes/auth.php
+        modified:   routes/web.php
+        deleted:    setup-queues-windows.bat
+        deleted:    setup-queues.sh
+        deleted:    shared-hosting-crontab.txt
+        deleted:    supervisor-qcard.conf
+        deleted:    test_email_send.php
+        modified:   tests/Feature/Api/CardApiTest.php
+        modified:   tests/Feature/Api/SectionApiTest.php
+        modified:   tests/Feature/Api/ThemeApiTest.php
+        modified:   tests/Feature/Auth/AuthenticationTest.php
+        modified:   tests/Feature/Auth/PasswordResetTest.php
+        modified:   tests/Feature/Auth/RegistrationTest.php
+        modified:   tests/Feature/CardServiceTest.php
+        modified:   tests/Feature/Features/CompleteUserJourneyTest.php
+        modified:   tests/Feature/LanguageManagementTest.php
+        modified:   tests/Feature/LanguageSelectorTest.php
+        modified:   tests/Feature/PaymentFlow/SubscriptionFlowTest.php
+        modified:   tests/Feature/PaymentServiceTest.php
+        modified:   tests/Feature/ProfileTest.php
+        modified:   tests/Feature/RTLTest.php
+        modified:   tests/Feature/Security/AuthorizationSecurityTest.php
+        modified:   tests/Feature/Services/CardServiceAdvancedTest.php
+        modified:   tests/Unit/Services/TranslationServiceTest.php
+        deleted:    toArray())
+        deleted:    troubleshoot-email.sh
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        .junie/
+        .output.txt
+        app/Contracts/Sms/
+        app/Enums/
+        app/Facades/
+        app/Http/Controllers/Auth/PhoneVerificationController.php
+        app/Http/Controllers/HomeController.php
+        app/Http/Middleware/EnsurePhoneIsVerified.php
+        app/Http/Middleware/EnsureUserIsVerified.php
+        app/Providers/SmsServiceProvider.php
+        app/Rules/
+        app/Services/Sms/
+        app/Settings/AuthSettings.php
+        config/sms.php
+        database/migrations/2026_01_30_150050_add_phone_verification_to_users_table.php
+        database/settings/2026_01_31_000000_create_auth_settings.php
+        drop/
+        lang/en/auth.php
+        resources/js/Components/Card/
+        resources/js/Components/Public/
+        resources/js/Components/Section/
+        resources/js/Components/Shared/ApplicationLogo.vue
+        resources/js/Components/Shared/Checkbox.vue
+        resources/js/Components/Shared/DangerButton.vue
+        resources/js/Components/Shared/Dropdown.vue
+        resources/js/Components/Shared/DropdownLink.vue
+        resources/js/Components/Shared/ImageUpload.vue
+        resources/js/Components/Shared/InputError.vue
+        resources/js/Components/Shared/InputLabel.vue
+        resources/js/Components/Shared/LanguageSelector.vue
+        resources/js/Components/Shared/Modal.vue
+        resources/js/Components/Shared/NavLink.vue
+        resources/js/Components/Shared/PrimaryButton.vue
+        resources/js/Components/Shared/ResponsiveNavLink.vue
+        resources/js/Components/Shared/SecondaryButton.vue
+        resources/js/Components/Shared/StatsCard.vue
+        resources/js/Components/Shared/TextInput.vue
+        resources/js/Components/Shared/Textarea.vue
+        resources/js/Components/Shared/TranslationTabs.vue
+        resources/js/Components/Theme/
+        resources/js/Components/index.ts
+        resources/js/Pages/Auth/UpdatePhone.vue
+        resources/js/Pages/Auth/VerifyPhone.vue
+        resources/js/types/
+        tests/Feature/Auth/PhoneVerificationTest.php
+        tests/Feature/Auth/VerificationModeTest.php
+        tests/Feature/Contract/
+        tests/Feature/Services/OtpServiceTest.php

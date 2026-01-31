@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EventType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,6 +33,9 @@ class AnalyticsEvent extends Model
         ];
     }
 
+    /**
+     * @deprecated Use App\Enums\EventType::options() instead
+     */
     public const EVENT_TYPES = [
         'view' => 'Page View',
         'nfc_tap' => 'NFC Tap',
@@ -41,6 +45,16 @@ class AnalyticsEvent extends Model
         'contact_save' => 'Contact Save',
         'link_click' => 'Link Click',
     ];
+
+    /**
+     * Get event types from the canonical enum.
+     *
+     * @return array<string, string>
+     */
+    public static function getEventTypes(): array
+    {
+        return EventType::options();
+    }
 
     public function card(): BelongsTo
     {

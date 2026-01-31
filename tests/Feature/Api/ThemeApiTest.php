@@ -1,11 +1,22 @@
 <?php
 
 use App\Models\BusinessCard;
+use App\Models\SubscriptionPlan;
 use App\Models\Theme;
 use App\Models\User;
+use App\Models\UserSubscription;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['subscription_tier' => 'pro']);
+    $this->user = User::factory()->create();
+
+    // Create a pro subscription plan and assign to user
+    $proPlan = SubscriptionPlan::factory()->pro()->create();
+    UserSubscription::factory()->active()->create([
+        'user_id' => $this->user->id,
+        'subscription_plan_id' => $proPlan->id,
+    ]);
 });
 
 // Themes CRUD - Index
@@ -204,9 +215,12 @@ test('api: user can apply theme to card', function () {
 });
 
 test('api: user can upload theme image', function () {
+    Storage::fake('public');
+
     $response = $this->actingAs($this->user, 'sanctum')
         ->postJson(route('api.themes.upload'), [
-            'image' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+            'image' => UploadedFile::fake()->image('theme.png', 100, 100),
+            'type' => 'background',
         ]);
 
     $response->assertOk();

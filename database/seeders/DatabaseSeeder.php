@@ -35,7 +35,11 @@ class DatabaseSeeder extends Seeder
         );
         Language::updateOrCreate(
             ['code' => 'ar'],
-            ['name' => 'Arabic', 'direction' => 'rtl', 'is_active' => true, 'is_default' => false]
+            ['name' => 'العربية', 'direction' => 'rtl', 'is_active' => true, 'is_default' => false]
+        );
+        Language::updateOrCreate(
+            ['code' => 'he'],
+            ['name' => 'עברית', 'direction' => 'rtl', 'is_active' => true, 'is_default' => false]
         );
 
         // Create subscription plans

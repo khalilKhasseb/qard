@@ -1,27 +1,77 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import Checkbox from '@/Components/Shared/Checkbox.vue';
+import InputError from '@/Components/Shared/InputError.vue';
+import InputLabel from '@/Components/Shared/InputLabel.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import TextInput from '@/Components/Shared/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+import { computed } from 'vue';
+import { useTranslations } from '@/composables/useTranslations';
 
-defineProps({
+const { t } = useTranslations();
+
+const props = defineProps({
     canResetPassword: {
         type: Boolean,
     },
     status: {
         type: String,
     },
+    allowEmailLogin: {
+        type: Boolean,
+        default: true,
+    },
+    allowPhoneLogin: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 const form = useForm({
-    email: '',
+    identifier: '',
     password: '',
     remember: false,
 });
 
-const submit = () => {
+const identifierLabel = computed(() => {
+    if (props.allowEmailLogin && props.allowPhoneLogin) {
+        return t('auth.login.email_or_phone');
+    }
+    if (props.allowEmailLogin) {
+        return t('auth.login.email');
+    }
+    if (props.allowPhoneLogin) {
+        return t('auth.login.phone');
+    }
+    return t('auth.login.email_or_phone');
+});
+
+const identifierPlaceholder = computed(() => {
+    if (props.allowEmailLogin && props.allowPhoneLogin) {
+        return t('auth.login.enter_email_or_phone');
+    }
+    if (props.allowEmailLogin) {
+        return t('auth.login.enter_email');
+    }
+    if (props.allowPhoneLogin) {
+        return t('auth.login.enter_phone');
+    }
+    return t('auth.login.enter_email_or_phone');
+});
+
+const inputType = computed(() => {
+    // Use text to allow both email and phone inputs
+    return 'text';
+});
+
+const submit = async () => {
+    try {
+        await axios.get('/sanctum/csrf-cookie');
+    } catch (error) {
+        console.error('Failed to initialize CSRF protection:', error);
+    }
+
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
     });
@@ -30,7 +80,7 @@ const submit = () => {
 
 <template>
     <div class="min-h-screen bg-white">
-        <Head title="Sign In - Qard" />
+        <Head :title="t('auth.login.title')" />
 
         <div class="flex min-h-screen">
             <!-- Left Side - Branding -->
@@ -45,10 +95,10 @@ const submit = () => {
                             <span class="text-3xl font-bold">Qard</span>
                         </Link>
                         <h1 class="text-4xl font-bold mb-4 leading-tight">
-                            Welcome back
+                            {{ t('auth.login.welcome_back') }}
                         </h1>
                         <p class="text-xl text-gray-300 leading-relaxed">
-                            Access your digital business cards and continue making professional connections.
+                            {{ t('auth.login.subtitle') }}
                         </p>
                     </div>
 
@@ -60,8 +110,8 @@ const submit = () => {
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium">Secure & private</p>
-                                <p class="text-gray-400 text-sm">Your data is always protected</p>
+                                <p class="font-medium">{{ t('auth.features.secure') }}</p>
+                                <p class="text-gray-400 text-sm">{{ t('auth.features.secure_desc') }}</p>
                             </div>
                         </div>
 
@@ -72,8 +122,8 @@ const submit = () => {
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium">Real-time updates</p>
-                                <p class="text-gray-400 text-sm">Changes sync instantly</p>
+                                <p class="font-medium">{{ t('auth.features.realtime') }}</p>
+                                <p class="text-gray-400 text-sm">{{ t('auth.features.realtime_desc') }}</p>
                             </div>
                         </div>
 
@@ -84,8 +134,8 @@ const submit = () => {
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium">Multi-device access</p>
-                                <p class="text-gray-400 text-sm">Manage from anywhere</p>
+                                <p class="font-medium">{{ t('auth.features.multidevice') }}</p>
+                                <p class="text-gray-400 text-sm">{{ t('auth.features.multidevice_desc') }}</p>
                             </div>
                         </div>
                     </div>
@@ -98,24 +148,24 @@ const submit = () => {
                                     <span class="text-white font-bold">Q</span>
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-white">Your Analytics</p>
-                                    <p class="text-xs text-gray-300">Live performance</p>
+                                    <p class="font-semibold text-white">{{ t('auth.analytics.title') }}</p>
+                                    <p class="text-xs text-gray-300">{{ t('auth.analytics.subtitle') }}</p>
                                 </div>
                             </div>
-                            <span class="text-xs font-medium text-green-400 bg-green-400/20 px-2 py-1 rounded-full">Active</span>
+                            <span class="text-xs font-medium text-green-400 bg-green-400/20 px-2 py-1 rounded-full">{{ t('auth.analytics.active') }}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-4 text-center">
                             <div>
                                 <p class="text-lg font-semibold text-white">2.1K</p>
-                                <p class="text-xs text-gray-300">Views</p>
+                                <p class="text-xs text-gray-300">{{ t('auth.analytics.views') }}</p>
                             </div>
                             <div>
                                 <p class="text-lg font-semibold text-white">4.8%</p>
-                                <p class="text-xs text-gray-300">Engagement</p>
+                                <p class="text-xs text-gray-300">{{ t('auth.analytics.engagement') }}</p>
                             </div>
                             <div>
                                 <p class="text-lg font-semibold text-white">156</p>
-                                <p class="text-xs text-gray-300">Saves</p>
+                                <p class="text-xs text-gray-300">{{ t('auth.analytics.saves') }}</p>
                             </div>
                         </div>
                     </div>
@@ -143,8 +193,8 @@ const submit = () => {
                     </div>
 
                     <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Sign in to your account</h2>
-                        <p class="text-gray-600">Access your digital business cards</p>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.login.heading') }}</h2>
+                        <p class="text-gray-600">{{ t('auth.login.description') }}</p>
                     </div>
 
                     <div v-if="status" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -158,24 +208,24 @@ const submit = () => {
 
                     <form @submit.prevent="submit" class="space-y-6">
                         <div>
-                            <InputLabel for="email" value="Email Address" class="text-gray-700 font-medium" />
+                            <InputLabel for="identifier" :value="identifierLabel" class="text-gray-700 font-medium" />
 
                             <TextInput
-                                id="email"
-                                type="email"
+                                id="identifier"
+                                :type="inputType"
                                 class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
-                                v-model="form.email"
+                                v-model="form.identifier"
                                 required
                                 autofocus
                                 autocomplete="username"
-                                placeholder="Enter your email"
+                                :placeholder="identifierPlaceholder"
                             />
 
-                            <InputError class="mt-2" :message="form.errors.email" />
+                            <InputError class="mt-2" :message="form.errors.identifier" />
                         </div>
 
                         <div>
-                            <InputLabel for="password" value="Password" class="text-gray-700 font-medium" />
+                            <InputLabel for="password" :value="t('auth.login.password')" class="text-gray-700 font-medium" />
 
                             <TextInput
                                 id="password"
@@ -184,7 +234,7 @@ const submit = () => {
                                 v-model="form.password"
                                 required
                                 autocomplete="current-password"
-                                placeholder="Enter your password"
+                                :placeholder="t('auth.login.enter_password')"
                             />
 
                             <InputError class="mt-2" :message="form.errors.password" />
@@ -193,7 +243,7 @@ const submit = () => {
                         <div class="flex items-center justify-between">
                             <label class="flex items-center">
                                 <Checkbox name="remember" v-model:checked="form.remember" class="rounded border-gray-300 text-gray-900 focus:ring-gray-900" />
-                                <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                                <span class="ms-2 text-sm text-gray-600">{{ t('auth.login.remember') }}</span>
                             </label>
 
                             <Link
@@ -201,7 +251,7 @@ const submit = () => {
                                 :href="route('password.request')"
                                 class="text-sm text-gray-600 hover:text-gray-900 transition"
                             >
-                                Forgot password?
+                                {{ t('auth.login.forgot_password') }}
                             </Link>
                         </div>
 
@@ -211,17 +261,17 @@ const submit = () => {
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
                             >
-                                <span v-if="form.processing">Signing in...</span>
-                                <span v-else>Sign In</span>
+                                <span v-if="form.processing">{{ t('auth.login.submitting') }}</span>
+                                <span v-else>{{ t('auth.login.submit') }}</span>
                             </PrimaryButton>
                         </div>
                     </form>
 
                     <div class="mt-8 text-center">
                         <p class="text-sm text-gray-600">
-                            Don't have an account?
+                            {{ t('auth.login.no_account') }}
                             <Link :href="route('register')" class="text-gray-900 hover:text-gray-700 font-medium transition">
-                                Create one now
+                                {{ t('auth.login.create_account') }}
                             </Link>
                         </p>
                     </div>

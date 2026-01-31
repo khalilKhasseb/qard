@@ -1,18 +1,29 @@
 <script setup>
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import InputError from '@/Components/Shared/InputError.vue';
+import InputLabel from '@/Components/Shared/InputLabel.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import TextInput from '@/Components/Shared/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 const form = useForm({
     name: '',
     email: '',
+    phone: '',
     password: '',
     password_confirmation: '',
 });
 
-const submit = () => {
+const submit = async () => {
+    try {
+        await axios.get('/sanctum/csrf-cookie');
+    } catch (error) {
+        console.error('Failed to initialize CSRF protection:', error);
+    }
+
     form.post(route('register'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
@@ -20,14 +31,14 @@ const submit = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-white">
-        <Head title="Create Your Account - Qard" />
+    <div class="flex min-h-screen  flex justify-center items-center bg-white ">
+        <Head :title="t('auth.register.title')" />
 
-        <div class="flex min-h-screen">
+        <div class="container mx-auto w-3/4 sm:w-full mt-3 flex items-center py-3">
             <!-- Left Side - Branding -->
-            <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+            <div class="rounded-lg hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20"></div>
-                <div class="relative z-10 flex flex-col justify-center px-12 text-white">
+                <div class="relative z-10 flex flex-col justify-center px-12 py-12 text-white">
                     <div class="mb-8">
                         <Link href="/" class="flex items-center space-x-3 mb-8">
                             <div class="h-12 w-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
@@ -36,10 +47,10 @@ const submit = () => {
                             <span class="text-3xl font-bold">Qard</span>
                         </Link>
                         <h1 class="text-4xl font-bold mb-4 leading-tight">
-                            Join thousands of professionals
+                            {{ t('auth.register.hero_title') }}
                         </h1>
                         <p class="text-xl text-gray-300 leading-relaxed">
-                            Create your digital business card and start making lasting impressions in minutes.
+                            {{ t('auth.register.hero_subtitle') }}
                         </p>
                     </div>
 
@@ -51,8 +62,8 @@ const submit = () => {
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium">Free forever plan</p>
-                                <p class="text-gray-400 text-sm">No credit card required</p>
+                                <p class="font-medium">{{ t('auth.register.feature_free') }}</p>
+                                <p class="text-gray-400 text-sm">{{ t('auth.register.feature_free_desc') }}</p>
                             </div>
                         </div>
 
@@ -63,8 +74,8 @@ const submit = () => {
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium">Setup in 2 minutes</p>
-                                <p class="text-gray-400 text-sm">Professional results instantly</p>
+                                <p class="font-medium">{{ t('auth.register.feature_setup') }}</p>
+                                <p class="text-gray-400 text-sm">{{ t('auth.register.feature_setup_desc') }}</p>
                             </div>
                         </div>
 
@@ -75,8 +86,8 @@ const submit = () => {
                                 </svg>
                             </div>
                             <div>
-                                <p class="font-medium">Share everywhere</p>
-                                <p class="text-gray-400 text-sm">QR codes, NFC, and links</p>
+                                <p class="font-medium">{{ t('auth.register.feature_share') }}</p>
+                                <p class="text-gray-400 text-sm">{{ t('auth.register.feature_share_desc') }}</p>
                             </div>
                         </div>
                     </div>
@@ -89,11 +100,11 @@ const submit = () => {
                                     <span class="text-white font-bold">Q</span>
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-white">Your Card</p>
-                                    <p class="text-xs text-gray-300">Ready to share</p>
+                                    <p class="font-semibold text-white">{{ t('auth.register.card_preview') }}</p>
+                                    <p class="text-xs text-gray-300">{{ t('auth.register.card_ready') }}</p>
                                 </div>
                             </div>
-                            <span class="text-xs font-medium text-green-400 bg-green-400/20 px-2 py-1 rounded-full">Live</span>
+                            <span class="text-xs font-medium text-green-400 bg-green-400/20 px-2 py-1 rounded-full">{{ t('auth.register.card_live') }}</span>
                         </div>
                         <div class="space-y-3">
                             <div class="flex items-center space-x-3">
@@ -113,7 +124,7 @@ const submit = () => {
                 </div>
 
                 <!-- Background pattern -->
-                <div class="absolute inset-0 opacity-10">
+                <div class="absolute inset-0 opacity-10 ">
                     <div class="absolute top-20 left-20 w-32 h-32 bg-white rounded-full"></div>
                     <div class="absolute bottom-20 right-20 w-24 h-24 bg-indigo-400 rounded-full"></div>
                     <div class="absolute top-1/2 left-1/3 w-16 h-16 bg-purple-400 rounded-full"></div>
@@ -134,13 +145,13 @@ const submit = () => {
                     </div>
 
                     <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Create your account</h2>
-                        <p class="text-gray-600">Start building your digital presence</p>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.register.heading') }}</h2>
+                        <p class="text-gray-600">{{ t('auth.register.description') }}</p>
                     </div>
 
                     <form @submit.prevent="submit" class="space-y-6">
                         <div>
-                            <InputLabel for="name" value="Full Name" class="text-gray-700 font-medium" />
+                            <InputLabel for="name" :value="t('auth.register.name')" class="text-gray-700 font-medium" />
 
                             <TextInput
                                 id="name"
@@ -150,14 +161,13 @@ const submit = () => {
                                 required
                                 autofocus
                                 autocomplete="name"
-                                placeholder="Enter your full name"
                             />
 
                             <InputError class="mt-2" :message="form.errors.name" />
                         </div>
 
                         <div>
-                            <InputLabel for="email" value="Email Address" class="text-gray-700 font-medium" />
+                            <InputLabel for="email" :value="t('auth.register.email')" class="text-gray-700 font-medium" />
 
                             <TextInput
                                 id="email"
@@ -166,14 +176,29 @@ const submit = () => {
                                 v-model="form.email"
                                 required
                                 autocomplete="username"
-                                placeholder="Enter your email"
                             />
 
                             <InputError class="mt-2" :message="form.errors.email" />
                         </div>
 
                         <div>
-                            <InputLabel for="password" value="Password" class="text-gray-700 font-medium" />
+                            <InputLabel for="phone" :value="t('auth.register.phone')" class="text-gray-700 font-medium" />
+
+                            <TextInput
+                                id="phone"
+                                type="tel"
+                                class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
+                                v-model="form.phone"
+                                required
+                                autocomplete="tel"
+                                placeholder="+1 (555) 123-4567"
+                            />
+
+                            <InputError class="mt-2" :message="form.errors.phone" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="password" :value="t('auth.register.password')" class="text-gray-700 font-medium" />
 
                             <TextInput
                                 id="password"
@@ -182,7 +207,6 @@ const submit = () => {
                                 v-model="form.password"
                                 required
                                 autocomplete="new-password"
-                                placeholder="Create a password"
                             />
 
                             <InputError class="mt-2" :message="form.errors.password" />
@@ -191,7 +215,7 @@ const submit = () => {
                         <div>
                             <InputLabel
                                 for="password_confirmation"
-                                value="Confirm Password"
+                                :value="t('auth.register.confirm_password')"
                                 class="text-gray-700 font-medium"
                             />
 
@@ -202,7 +226,6 @@ const submit = () => {
                                 v-model="form.password_confirmation"
                                 required
                                 autocomplete="new-password"
-                                placeholder="Confirm your password"
                             />
 
                             <InputError
@@ -216,7 +239,7 @@ const submit = () => {
                                 :href="route('login')"
                                 class="text-sm text-gray-600 hover:text-gray-900 transition"
                             >
-                                Already have an account?
+                                {{ t('auth.register.have_account') }}
                             </Link>
 
                             <PrimaryButton
@@ -224,18 +247,18 @@ const submit = () => {
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
                             >
-                                <span v-if="form.processing">Creating...</span>
-                                <span v-else>Create Account</span>
+                                <span v-if="form.processing">{{ t('auth.register.submitting') }}</span>
+                                <span v-else>{{ t('auth.register.submit') }}</span>
                             </PrimaryButton>
                         </div>
                     </form>
 
                     <div class="mt-8 text-center">
                         <p class="text-xs text-gray-500">
-                            By creating an account, you agree to our
-                            <a href="#" class="text-gray-700 hover:text-gray-900 underline">Terms of Service</a>
-                            and
-                            <a href="#" class="text-gray-700 hover:text-gray-900 underline">Privacy Policy</a>
+                            {{ t('auth.register.terms_agree') }}
+                            <a href="#" class="text-gray-700 hover:text-gray-900 underline">{{ t('auth.register.terms_of_service') }}</a>
+                            {{ t('auth.register.and') }}
+                            <a href="#" class="text-gray-700 hover:text-gray-900 underline">{{ t('auth.register.privacy_policy') }}</a>
                         </p>
                     </div>
                 </div>

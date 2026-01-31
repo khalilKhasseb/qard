@@ -1,7 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(ls:*)",
+      "Bash(php -l:*)",
+      "Bash(php:*)",
+      "Bash(grep:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "laravel-boost",
     "herd"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

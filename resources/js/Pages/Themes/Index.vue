@@ -1,13 +1,13 @@
 <template>
   <AuthenticatedLayout>
-    <Head title="Themes" />
+    <Head :title="t('themes.title')" />
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-semibold text-gray-900">Themes</h2>
+          <h2 class="text-2xl font-semibold text-gray-900">{{ t('themes.title') }}</h2>
           <PrimaryButton @click="$inertia.visit(route('themes.create'))">
-            Create New Theme
+            {{ t('themes.create') }}
           </PrimaryButton>
         </div>
 
@@ -25,7 +25,7 @@
             >
               <div class="p-4 text-center">
                 <div class="text-sm font-medium" :style="{ color: theme.config.colors?.primary || '#3b82f6' }">
-                  Preview
+                  {{ t('themes.actions.preview') }}
                 </div>
               </div>
             </div>
@@ -39,13 +39,13 @@
                     System
                   </span>
                   <span v-if="theme.is_public" class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Public
+                    {{ t('themes.fields.is_public') }}
                   </span>
                 </div>
               </div>
 
               <p class="text-sm text-gray-600 mb-3">
-                Used by {{ theme.used_by_cards_count }} card{{ theme.used_by_cards_count !== 1 ? 's' : '' }}
+                {{ theme.used_by_cards_count }} {{ theme.used_by_cards_count !== 1 ? t('cards.title').toLowerCase() : t('cards.title').toLowerCase() }}
               </p>
 
               <div class="flex gap-2">
@@ -54,13 +54,13 @@
                   @click="$inertia.visit(route('themes.edit', theme.id))"
                   class="flex-1 justify-center"
                 >
-                  Edit
+                  {{ t('common.buttons.edit') }}
                 </SecondaryButton>
                 <SecondaryButton
                   @click="duplicateTheme(theme)"
                   class="flex-1 justify-center"
                 >
-                  Duplicate
+                  {{ t('themes.actions.duplicate') }}
                 </SecondaryButton>
               </div>
             </div>
@@ -72,11 +72,11 @@
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
           </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No themes yet</h3>
-          <p class="mt-1 text-sm text-gray-500">Get started by creating your first custom theme.</p>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('themes.empty.title') }}</h3>
+          <p class="mt-1 text-sm text-gray-500">{{ t('themes.empty.description') }}</p>
           <div class="mt-6">
             <PrimaryButton @click="$inertia.visit(route('themes.create'))">
-              Create Your First Theme
+              {{ t('themes.empty.action') }}
             </PrimaryButton>
           </div>
         </div>
@@ -88,8 +88,11 @@
 <script setup>
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 defineProps({
   themes: Object,
@@ -98,7 +101,7 @@ defineProps({
 const getThemePreviewStyle = (theme) => {
   const config = theme.config || {};
   const colors = config.colors || {};
-  
+
   return {
     background: colors.background || '#ffffff',
     color: colors.text || '#000000',

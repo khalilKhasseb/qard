@@ -21,6 +21,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'phone_verified_at',
         'password',
         'is_admin',
         'language',
@@ -39,6 +41,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
             'subscription_expires_at' => 'datetime',
@@ -122,6 +125,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function canUseCustomCss(): bool
     {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
         if ($subscription && $subscription->subscriptionPlan) {
@@ -201,6 +208,32 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPassword($token));
+    }
+
+    /**
+     * Check if the user has verified their phone number.
+     */
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone_verified_at !== null;
+    }
+
+    /**
+     * Mark the user's phone as verified.
+     */
+    public function markPhoneAsVerified(): bool
+    {
+        return $this->forceFill([
+            'phone_verified_at' => $this->freshTimestamp(),
+        ])->save();
+    }
+
+    /**
+     * Get the phone number that should be used for verification.
+     */
+    public function getPhoneForVerification(): ?string
+    {
+        return $this->phone;
     }
 
     /**
@@ -330,6 +363,51 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
         return $subscription && $subscription->subscriptionPlan && $subscription->subscriptionPlan->unlimited_translations;
+    }
+
+    public function canUseNfc(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        return $subscription?->subscriptionPlan?->nfc_enabled ?? false;
+    }
+
+    public function canUseAnalytics(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        return $subscription?->subscriptionPlan?->analytics_enabled ?? false;
+    }
+
+    public function canUseCustomDomain(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        return $subscription?->subscriptionPlan?->custom_domain_allowed ?? false;
+    }
+
+    public function canAccessPremiumTemplates(): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        // Premium templates require paid subscription
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        return $subscription?->subscriptionPlan?->price > 0;
     }
 
     /**

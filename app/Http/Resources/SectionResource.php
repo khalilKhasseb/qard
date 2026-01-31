@@ -11,11 +11,13 @@ class SectionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'card_id' => $this->card_id,
+            'business_card_id' => $this->business_card_id,
             'section_type' => $this->section_type,
             'title' => $this->title,
             'content' => $this->content,
-            'section_order' => $this->section_order,
+            'image_path' => $this->image_path,
+            'image_url' => $this->image_url,
+            'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
             'metadata' => $this->metadata,
             'created_at' => $this->created_at?->toISOString(),

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\SubscriptionLimitException;
 use App\Models\AnalyticsEvent;
 use App\Models\BusinessCard;
 use App\Models\CardSection;
@@ -21,7 +22,12 @@ class CardService
     public function createCard(User $user, array $data, ?Template $template = null): BusinessCard
     {
         if (! $user->canCreateCard()) {
-            throw new \Exception('Card limit reached for your plan');
+            throw new SubscriptionLimitException('Card limit reached for your plan', 'cards');
+        }
+
+        // Enforce custom domain feature
+        if (! empty($data['custom_domain']) && ! $user->canUseCustomDomain()) {
+            throw new SubscriptionLimitException('Custom domains require a paid subscription', 'custom_domain');
         }
 
         $card = BusinessCard::create([
@@ -31,7 +37,7 @@ class CardService
             'subtitle' => $data['subtitle'] ?? null,
             'template_id' => $template?->id,
             'theme_id' => $data['theme_id'] ?? null,
-            'active_languages' => $data['active_languages'] ?? ($data['language_id'] ? [$this->getLanguageCode($data['language_id'])] : ['en']),
+            'active_languages' => $data['active_languages'] ?? (isset($data['language_id']) && $data['language_id'] ? [$this->getLanguageCode($data['language_id'])] : ['en']),
             'custom_slug' => $data['custom_slug'] ?? null,
             'is_published' => $data['is_published'] ?? false,
             'is_primary' => $user->cards()->count() === 0,
@@ -46,6 +52,13 @@ class CardService
 
     public function updateCard(BusinessCard $card, array $data): BusinessCard
     {
+        $user = $card->user;
+
+        // Enforce custom domain feature
+        if (! empty($data['custom_domain']) && $data['custom_domain'] !== $card->custom_domain && ! $user->canUseCustomDomain()) {
+            throw new SubscriptionLimitException('Custom domains require a paid subscription', 'custom_domain');
+        }
+
         if (isset($data['theme_id']) && (string) $data['theme_id'] !== (string) $card->theme_id) {
             $theme = Theme::find($data['theme_id']);
             if ($theme) {
@@ -64,12 +77,23 @@ class CardService
         $targetUser = $user ?? $card->user;
 
         if (! $targetUser->canCreateCard()) {
-            throw new \Exception('Card limit reached for your plan');
+            throw new SubscriptionLimitException('Card limit reached for your plan', 'cards');
         }
 
         $newCard = $card->replicate(['share_url', 'qr_code_url', 'nfc_identifier', 'views_count', 'shares_count']);
         $newCard->user_id = $targetUser->id;
-        $newCard->title = $newTitle ?? $card->title.' (Copy)';
+
+        // Handle multilingual title with " (Copy)" suffix
+        if ($newTitle !== null) {
+            $newCard->title = is_array($newTitle) ? $newTitle : ['en' => $newTitle];
+        } else {
+            $originalTitle = $card->title;
+            if (is_array($originalTitle)) {
+                $newCard->title = array_map(fn ($t) => $t.' (Copy)', $originalTitle);
+            } else {
+                $newCard->title = $originalTitle.' (Copy)';
+            }
+        }
         $newCard->share_url = Str::random(10);
         $newCard->is_published = false;
         $newCard->is_primary = false;
@@ -162,6 +186,11 @@ class CardService
 
     public function assignNfcIdentifier(BusinessCard $card, string $nfcId): void
     {
+        // Enforce NFC feature
+        if (! $card->user->canUseNfc()) {
+            throw new SubscriptionLimitException('NFC feature requires a paid subscription', 'nfc');
+        }
+
         $existing = BusinessCard::where('nfc_identifier', $nfcId)->first();
         if ($existing && $existing->id !== $card->id) {
             throw new \Exception('NFC identifier already in use');

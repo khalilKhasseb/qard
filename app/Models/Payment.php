@@ -49,11 +49,20 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Get the subscription plan.
+     *
+     * @deprecated Use subscriptionPlan() instead for consistency with model naming.
+     */
     public function plan(): BelongsTo
     {
-        return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
+        return $this->subscriptionPlan();
     }
 
+    /**
+     * Get the subscription plan.
+     * This is the canonical relationship - use this one.
+     */
     public function subscriptionPlan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');

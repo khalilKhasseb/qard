@@ -10,6 +10,7 @@ return [
         App\Settings\GeneralSettings::class,
         App\Settings\MailSettings::class,
         App\Settings\PaymentSettings::class,
+        App\Settings\AuthSettings::class,
     ],
 
     /*

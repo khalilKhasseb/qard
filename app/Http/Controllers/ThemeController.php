@@ -32,8 +32,12 @@ class ThemeController extends Controller
 
     public function create(Request $request): Response
     {
+        $user = $request->user();
+
         return Inertia::render('Themes/Create', [
-            'canUseCustomCSS' => $request->user()->canUseCustomCSS(),
+            'canUseCustomCSS' => $user->canUseCustomCss(),
+            'themeCount' => $user->themes()->count(),
+            'themeLimit' => $user->getThemeLimit(),
         ]);
     }
 
@@ -96,12 +100,7 @@ class ThemeController extends Controller
     {
         $this->authorize('view', $theme);
 
-        $newTheme = $theme->replicate(['preview_image', 'used_by_cards_count']);
-        $newTheme->name = $theme->name.' (Copy)';
-        $newTheme->user_id = $request->user()->id;
-        $newTheme->is_system_default = false;
-        $newTheme->is_public = false;
-        $newTheme->save();
+        $this->themeService->duplicateTheme($theme, $request->user());
 
         return back()->with('success', 'Theme duplicated successfully!');
     }

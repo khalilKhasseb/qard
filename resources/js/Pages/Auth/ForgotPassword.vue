@@ -1,10 +1,14 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import InputError from '@/Components/Shared/InputError.vue';
+import InputLabel from '@/Components/Shared/InputLabel.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import TextInput from '@/Components/Shared/TextInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 defineProps({
     status: {
@@ -16,19 +20,23 @@ const form = useForm({
     email: '',
 });
 
-const submit = () => {
+const submit = async () => {
+    try {
+        await axios.get('/sanctum/csrf-cookie');
+    } catch (error) {
+        console.error('Failed to initialize CSRF protection:', error);
+    }
+
     form.post(route('password.email'));
 };
 </script>
 
 <template>
     <GuestLayout>
-        <Head title="Forgot Password" />
+        <Head :title="t('auth.forgot.title')" />
 
         <div class="mb-4 text-sm text-gray-600">
-            Forgot your password? No problem. Just let us know your email
-            address and we will email you a password reset link that will allow
-            you to choose a new one.
+            {{ t('auth.forgot.description') }}
         </div>
 
         <div
@@ -40,7 +48,7 @@ const submit = () => {
 
         <form @submit.prevent="submit">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" :value="t('auth.forgot.email')" />
 
                 <TextInput
                     id="email"
@@ -60,7 +68,7 @@ const submit = () => {
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Email Password Reset Link
+                    {{ t('auth.forgot.submit') }}
                 </PrimaryButton>
             </div>
         </form>

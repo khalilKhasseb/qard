@@ -1,15 +1,15 @@
 <template>
   <AuthenticatedLayout>
-    <Head title="Payments & Subscription" />
+    <Head :title="t('payments.title')" />
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-6">Payments & Subscription</h2>
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6">{{ t('payments.title') }}</h2>
 
         <!-- Current Subscription -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
           <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Current Subscription</h3>
+            <h3 class="text-lg font-semibold text-gray-900">{{ t('payments.subscription.title') }}</h3>
           </div>
           <div class="p-6">
             <div v-if="subscription" class="space-y-4">
@@ -28,13 +28,13 @@
 
               <div class="grid grid-cols-2 gap-4 py-4 border-t border-gray-200">
                 <div>
-                  <p class="text-sm text-gray-500">Price</p>
+                  <p class="text-sm text-gray-500">{{ t('payments.subscription.price') }}</p>
                   <p class="text-lg font-semibold text-gray-900">
                     ${{ subscription.subscription_plan.price }} / {{ subscription.subscription_plan.billing_cycle }}
                   </p>
                 </div>
                 <div>
-                  <p class="text-sm text-gray-500">Next Billing Date</p>
+                  <p class="text-sm text-gray-500">{{ t('payments.subscription.next_billing') }}</p>
                   <p class="text-lg font-semibold text-gray-900">
                     {{ formatDate(subscription.ends_at) }}
                   </p>
@@ -42,13 +42,13 @@
               </div>
 
               <div class="pt-4 border-t border-gray-200">
-                <h5 class="text-sm font-medium text-gray-700 mb-2">Plan Features:</h5>
+                <h5 class="text-sm font-medium text-gray-700 mb-2">{{ t('payments.subscription.features') }}</h5>
                 <ul class="space-y-1">
-                  <li class="text-sm text-gray-600">✓ {{ subscription.subscription_plan.card_limit }} Business Cards</li>
-                  <li class="text-sm text-gray-600">✓ {{ subscription.subscription_plan.theme_limit }} Custom Themes</li>
-                  <li v-if="subscription.subscription_plan.custom_domain_enabled" class="text-sm text-gray-600">✓ Custom Domain</li>
-                  <li v-if="subscription.subscription_plan.analytics_enabled" class="text-sm text-gray-600">✓ Advanced Analytics</li>
-                  <li v-if="subscription.subscription_plan.priority_support" class="text-sm text-gray-600">✓ Priority Support</li>
+                  <li class="text-sm text-gray-600">✓ {{ t('payments.subscription.business_cards', { count: subscription.subscription_plan.card_limit }) }}</li>
+                  <li class="text-sm text-gray-600">✓ {{ t('payments.subscription.custom_themes', { count: subscription.subscription_plan.theme_limit }) }}</li>
+                  <li v-if="subscription.subscription_plan.custom_domain_enabled" class="text-sm text-gray-600">✓ {{ t('payments.subscription.custom_domain') }}</li>
+                  <li v-if="subscription.subscription_plan.analytics_enabled" class="text-sm text-gray-600">✓ {{ t('payments.subscription.advanced_analytics') }}</li>
+                  <li v-if="subscription.subscription_plan.priority_support" class="text-sm text-gray-600">✓ {{ t('payments.subscription.priority_support') }}</li>
                 </ul>
               </div>
 
@@ -57,15 +57,15 @@
                   @click="cancelSubscription"
                   class="text-red-600 hover:text-red-800 text-sm font-medium"
                 >
-                  Cancel Subscription
+                  {{ t('payments.subscription.cancel') }}
                 </button>
               </div>
             </div>
 
             <div v-else class="text-center py-8">
-              <p class="text-gray-500 mb-4">No active subscription</p>
+              <p class="text-gray-500 mb-4">{{ t('payments.subscription.no_active') }}</p>
               <PrimaryButton @click="showPlans = true">
-                Choose a Plan
+                {{ t('payments.subscription.choose_plan') }}
               </PrimaryButton>
             </div>
           </div>
@@ -73,7 +73,7 @@
 
         <!-- Available Plans (if no subscription) -->
         <div v-if="!subscription || showPlans" class="mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Available Plans</h3>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('payments.plans.title') }}</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div
               v-for="plan in plans"
@@ -83,7 +83,7 @@
             >
               <div class="p-6">
                 <div v-if="plan.is_popular" class="inline-block px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full mb-4">
-                  Most Popular
+                  {{ t('payments.plans.most_popular') }}
                 </div>
                 <h4 class="text-xl font-bold text-gray-900">{{ plan.name }}</h4>
                 <p class="text-gray-600 mt-2 text-sm">{{ plan.description }}</p>
@@ -94,28 +94,28 @@
 
                 <ul class="mt-6 space-y-3">
                   <li class="text-sm text-gray-600 flex items-start">
-                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-green-500 me-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
-                    {{ plan.card_limit }} Business Cards
+                    {{ t('payments.subscription.business_cards', { count: plan.card_limit }) }}
                   </li>
                   <li class="text-sm text-gray-600 flex items-start">
-                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-green-500 me-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
-                    {{ plan.theme_limit }} Custom Themes
+                    {{ t('payments.subscription.custom_themes', { count: plan.theme_limit }) }}
                   </li>
                   <li v-if="plan.custom_domain_enabled" class="text-sm text-gray-600 flex items-start">
-                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-green-500 me-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
-                    Custom Domain
+                    {{ t('payments.subscription.custom_domain') }}
                   </li>
                   <li v-if="plan.analytics_enabled" class="text-sm text-gray-600 flex items-start">
-                    <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-green-500 me-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
-                    Advanced Analytics
+                    {{ t('payments.subscription.advanced_analytics') }}
                   </li>
                 </ul>
 
@@ -124,7 +124,7 @@
                   class="w-full justify-center mt-6"
                   :class="plan.is_popular ? '' : 'bg-gray-900 hover:bg-gray-800'"
                 >
-                  Choose {{ plan.name }}
+                  {{ t('payments.plans.choose', { name: plan.name }) }}
                 </PrimaryButton>
               </div>
             </div>
@@ -134,24 +134,24 @@
         <!-- Payment History -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
           <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Payment History</h3>
+            <h3 class="text-lg font-semibold text-gray-900">{{ t('payments.history.title') }}</h3>
           </div>
           <div class="p-6">
             <div v-if="payments.length > 0" class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('payments.history.date') }}
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('payments.history.amount') }}
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Method
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('payments.history.method') }}
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('payments.history.status') }}
                     </th>
                   </tr>
                 </thead>
@@ -179,7 +179,7 @@
               </table>
             </div>
             <div v-else class="text-center py-8 text-gray-500">
-              No payment history yet
+              {{ t('payments.history.no_history') }}
             </div>
           </div>
         </div>
@@ -189,19 +189,19 @@
     <!-- Payment Modal -->
     <Modal :show="showPaymentModal" @close="showPaymentModal = false">
       <div class="p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Complete Payment</h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('payments.modal.title') }}</h3>
         <p class="text-gray-600 mb-4">
-          You've selected the <strong>{{ selectedPlan?.name }}</strong> plan for ${{ selectedPlan?.price }}/{{ selectedPlan?.billing_cycle }}.
+          {{ t('payments.modal.selected_plan', { name: selectedPlan?.name, price: selectedPlan?.price, cycle: selectedPlan?.billing_cycle }) }}
         </p>
         <p class="text-sm text-gray-500 mb-6">
-          For cash payment, please contact our support team with your payment details.
+          {{ t('payments.modal.cash_info') }}
         </p>
         <div class="flex gap-3">
           <SecondaryButton @click="showPaymentModal = false" class="flex-1 justify-center">
-            Cancel
+            {{ t('common.buttons.cancel') }}
           </SecondaryButton>
           <PrimaryButton @click="confirmPayment" class="flex-1 justify-center">
-            Confirm Payment
+            {{ t('payments.modal.confirm') }}
           </PrimaryButton>
         </div>
       </div>
@@ -213,9 +213,12 @@
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import Modal from '@/Components/Modal.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
+import Modal from '@/Components/Shared/Modal.vue';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t, locale } = useTranslations();
 
 defineProps({
   subscription: Object,
@@ -239,7 +242,7 @@ const getStatusColor = (status) => {
 };
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString();
+  return new Date(date).toLocaleDateString(locale.value);
 };
 
 const selectPlan = (plan) => {
@@ -247,7 +250,7 @@ const selectPlan = (plan) => {
 };
 
 const cancelSubscription = () => {
-  if (confirm('Are you sure you want to cancel your subscription?')) {
+  if (confirm(t('payments.subscription.cancel_confirm'))) {
     router.post(route('api.subscription.cancel'), {}, {
       onSuccess: () => {
         router.reload();

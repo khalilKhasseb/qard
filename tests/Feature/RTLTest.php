@@ -38,9 +38,9 @@ class RTLTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Switch to Arabic (RTL)
+        // Switch to Arabic (RTL) using JSON request
         $response = $this->actingAs($user)
-            ->post('/language/switch', [
+            ->postJson('/language/switch', [
                 'language_code' => 'ar',
             ]);
 
@@ -56,9 +56,9 @@ class RTLTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Switch to English (LTR)
+        // Switch to English (LTR) using JSON request
         $response = $this->actingAs($user)
-            ->post('/language/switch', [
+            ->postJson('/language/switch', [
                 'language_code' => 'en',
             ]);
 

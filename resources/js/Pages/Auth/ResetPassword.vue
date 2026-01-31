@@ -1,10 +1,14 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import InputError from '@/Components/Shared/InputError.vue';
+import InputLabel from '@/Components/Shared/InputLabel.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import TextInput from '@/Components/Shared/TextInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 const props = defineProps({
     email: {
@@ -24,7 +28,13 @@ const form = useForm({
     password_confirmation: '',
 });
 
-const submit = () => {
+const submit = async () => {
+    try {
+        await axios.get('/sanctum/csrf-cookie');
+    } catch (error) {
+        console.error('Failed to initialize CSRF protection:', error);
+    }
+
     form.post(route('password.store'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
@@ -33,11 +43,11 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Reset Password" />
+        <Head :title="t('auth.reset.title')" />
 
         <form @submit.prevent="submit">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" :value="t('auth.reset.email')" />
 
                 <TextInput
                     id="email"
@@ -53,7 +63,7 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+                <InputLabel for="password" :value="t('auth.reset.password')" />
 
                 <TextInput
                     id="password"
@@ -70,7 +80,7 @@ const submit = () => {
             <div class="mt-4">
                 <InputLabel
                     for="password_confirmation"
-                    value="Confirm Password"
+                    :value="t('auth.reset.confirm_password')"
                 />
 
                 <TextInput
@@ -93,7 +103,7 @@ const submit = () => {
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Reset Password
+                    {{ t('auth.reset.submit') }}
                 </PrimaryButton>
             </div>
         </form>

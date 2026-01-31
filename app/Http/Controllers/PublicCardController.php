@@ -28,7 +28,7 @@ class PublicCardController extends Controller
         return view('cards.public', [
             'card' => $card,
             'theme' => $card->theme,
-            'sections' => $card->activeSections,
+            'sections' => $card->sections, // Already eager loaded with active() constraint
             'languages' => $languages,
         ]);
     }
@@ -50,7 +50,7 @@ class PublicCardController extends Controller
         return view('cards.public', [
             'card' => $card,
             'theme' => $card->theme,
-            'sections' => $card->activeSections,
+            'sections' => $card->sections, // Already eager loaded with active() constraint
             'languages' => $languages,
         ]);
     }
@@ -71,7 +71,7 @@ class PublicCardController extends Controller
         return view('cards.public', [
             'card' => $card,
             'theme' => $card->theme,
-            'sections' => $card->activeSections,
+            'sections' => $card->sections, // Already eager loaded with active() constraint
             'languages' => $languages,
         ]);
     }

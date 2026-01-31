@@ -1,10 +1,10 @@
 <template>
   <AuthenticatedLayout>
-    <Head title="Analytics" />
+    <Head :title="t('analytics.title')" />
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-6">Analytics Dashboard</h2>
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6">{{ t('analytics.dashboard') }}</h2>
 
         <!-- Stats Overview -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -16,8 +16,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Total Views</p>
+              <div class="ms-4">
+                <p class="text-sm font-medium text-gray-500">{{ t('analytics.stats.total_views') }}</p>
                 <p class="text-2xl font-semibold text-gray-900">{{ stats.total_views }}</p>
               </div>
             </div>
@@ -30,8 +30,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">NFC Taps</p>
+              <div class="ms-4">
+                <p class="text-sm font-medium text-gray-500">{{ t('analytics.stats.nfc_taps') }}</p>
                 <p class="text-2xl font-semibold text-gray-900">{{ stats.nfc_taps }}</p>
               </div>
             </div>
@@ -44,8 +44,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                 </svg>
               </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">QR Scans</p>
+              <div class="ms-4">
+                <p class="text-sm font-medium text-gray-500">{{ t('analytics.stats.qr_scans') }}</p>
                 <p class="text-2xl font-semibold text-gray-900">{{ stats.qr_scans }}</p>
               </div>
             </div>
@@ -58,8 +58,8 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
               </div>
-              <div class="ml-4">
-                <p class="text-sm font-medium text-gray-500">Shares</p>
+              <div class="ms-4">
+                <p class="text-sm font-medium text-gray-500">{{ t('analytics.stats.shares') }}</p>
                 <p class="text-2xl font-semibold text-gray-900">{{ stats.shares }}</p>
               </div>
             </div>
@@ -69,32 +69,32 @@
         <!-- Card Performance -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
           <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Card Performance</h3>
+            <h3 class="text-lg font-semibold text-gray-900">{{ t('analytics.performance.title') }}</h3>
           </div>
           <div class="p-6">
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Card
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('analytics.performance.card') }}
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Views
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('analytics.performance.views') }}
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Shares
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('analytics.performance.shares') }}
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('analytics.performance.status') }}
                     </th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <tr v-for="card in cardAnalytics" :key="card.id">
                     <td class="px-4 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">{{ card.title.en }}</div>
-                      <div class="text-sm text-gray-500">{{ card.subtitle.en }}</div>
+                      <div class="text-sm font-medium text-gray-900">{{ card.title[locale] || card.title.en }}</div>
+                      <div class="text-sm text-gray-500">{{ card.subtitle?.[locale] || card.subtitle?.en }}</div>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {{ card.views_count }}
@@ -107,7 +107,7 @@
                         :class="card.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
                         class="px-2 py-1 text-xs font-medium rounded-full"
                       >
-                        {{ card.is_published ? 'Published' : 'Draft' }}
+                        {{ card.is_published ? t('common.status.published') : t('common.status.draft') }}
                       </span>
                     </td>
                   </tr>
@@ -120,14 +120,14 @@
         <!-- Event Timeline -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
           <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+            <h3 class="text-lg font-semibold text-gray-900">{{ t('analytics.events.title') }}</h3>
           </div>
           <div class="p-6">
             <div class="space-y-4">
               <div
                 v-for="event in recentEvents"
                 :key="event.id"
-                class="flex items-start space-x-3 text-sm"
+                class="flex items-start gap-3 text-sm"
               >
                 <div
                   :class="getEventColor(event.event_type)"
@@ -136,7 +136,7 @@
                 <div class="flex-1">
                   <p class="text-gray-900">
                     <span class="font-medium">{{ getEventLabel(event.event_type) }}</span>
-                    on {{ event.card_title }}
+                    {{ t('analytics.events.on') }} {{ event.card_title }}
                   </p>
                   <p class="text-gray-500 text-xs">{{ formatDate(event.created_at) }}</p>
                 </div>
@@ -152,6 +152,9 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t, locale } = useTranslations();
 
 defineProps({
   stats: Object,
@@ -172,16 +175,16 @@ const getEventColor = (type) => {
 
 const getEventLabel = (type) => {
   const labels = {
-    view: 'View',
-    nfc_tap: 'NFC Tap',
-    qr_scan: 'QR Scan',
-    social_share: 'Share',
-    section_click: 'Section Click',
+    view: t('analytics.events.view'),
+    nfc_tap: t('analytics.events.nfc_tap'),
+    qr_scan: t('analytics.events.qr_scan'),
+    social_share: t('analytics.events.social_share'),
+    section_click: t('analytics.events.section_click'),
   };
   return labels[type] || type;
 };
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleString();
+  return new Date(date).toLocaleString(locale.value);
 };
 </script>

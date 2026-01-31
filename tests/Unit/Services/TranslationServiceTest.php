@@ -23,18 +23,26 @@ class TranslationServiceTest extends TestCase
 
         $service = new TranslationService($aiMock, $schemaFactory);
 
+        // Set up expectations in order with once() to ensure sequential consumption
+        $aiMock->shouldReceive('translate')
+            ->once()
+            ->andReturn(['success' => true, 'translated' => ['translated_text' => 'مرحبا']]);
+        $aiMock->shouldReceive('translate')
+            ->once()
+            ->andReturn(['success' => true, 'translated' => 'שלום עולם']);
+        $aiMock->shouldReceive('translate')
+            ->once()
+            ->andReturn(['success' => true, 'translated' => ['status' => 'error']]);
+
         // Case 1: provider returns structured translated_text
-        $aiMock->shouldReceive('translate')->andReturn(['success' => true, 'translated' => ['translated_text' => 'مرحبا']]);
         $res = $service->translateTitle('Hello', 'en', 'ar');
         $this->assertEquals('مرحبا', $res);
 
         // Case 2: provider returns a plain string
-        $aiMock->shouldReceive('translate')->andReturn(['success' => true, 'translated' => 'שלום עולם']);
         $res2 = $service->translateTitle('Hello', 'en', 'he');
         $this->assertEquals('שלום עולם', $res2);
 
-        // Case 3: provider returns only URL field -> should fallback to original
-        $aiMock->shouldReceive('translate')->andReturn(['success' => true, 'translated' => ['facebook' => 'https://www.facebook.com/share/1AgNaxBNLn/']]);
+        // Case 3: provider returns only excluded keys -> should fallback to original
         $res3 = $service->translateTitle('Hello', 'en', 'ar');
         $this->assertEquals('Hello', $res3);
     }

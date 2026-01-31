@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
+use App\Settings\AuthSettings;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +29,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,15 +43,81 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $identifier = $this->input('identifier');
+        $identifierType = $this->detectIdentifierType($identifier);
+        $authSettings = app(AuthSettings::class);
+
+        // Check if the login method is allowed
+        if ($identifierType === 'email' && ! $authSettings->allow_email_login) {
+            throw ValidationException::withMessages([
+                'identifier' => trans('auth.email_login_disabled'),
+            ]);
+        }
+
+        if ($identifierType === 'phone' && ! $authSettings->allow_phone_login) {
+            throw ValidationException::withMessages([
+                'identifier' => trans('auth.phone_login_disabled'),
+            ]);
+        }
+
+        $user = $this->findUser($identifier, $identifierType);
+
+        if (! $user || ! Auth::attempt([
+            'email' => $user->email,
+            'password' => $this->input('password'),
+        ], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'identifier' => trans('auth.failed'),
             ]);
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Detect if the identifier is an email or phone number.
+     */
+    protected function detectIdentifierType(string $identifier): string
+    {
+        // If it contains @, treat as email
+        if (str_contains($identifier, '@')) {
+            return 'email';
+        }
+
+        return 'phone';
+    }
+
+    /**
+     * Find a user by email or phone number.
+     */
+    protected function findUser(string $identifier, string $type): ?User
+    {
+        if ($type === 'email') {
+            return User::where('email', strtolower($identifier))->first();
+        }
+
+        // Normalize phone number for lookup
+        $normalizedPhone = $this->normalizePhone($identifier);
+
+        return User::where('phone', $normalizedPhone)->first();
+    }
+
+    /**
+     * Normalize phone number to E.164 format.
+     */
+    protected function normalizePhone(string $phone): string
+    {
+        // Remove all non-numeric characters except +
+        $normalized = preg_replace('/[^0-9+]/', '', $phone);
+
+        // Ensure it starts with +
+        if (! str_starts_with($normalized, '+')) {
+            $normalized = '+'.$normalized;
+        }
+
+        return $normalized;
     }
 
     /**
@@ -68,7 +136,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'identifier' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -80,6 +148,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('identifier')).'|'.$this->ip());
     }
 }

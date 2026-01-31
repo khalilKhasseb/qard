@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Settings\AiSettings;
+use App\Settings\AuthSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
 use App\Settings\PaymentSettings;
@@ -31,6 +32,7 @@ class ManageSettings extends SettingsPage
         $data['mail_settings'] = app(MailSettings::class)->toArray();
         $data['payment_settings'] = app(PaymentSettings::class)->toArray();
         $data['ai_settings'] = app(AiSettings::class)->toArray();
+        $data['auth_settings'] = app(AuthSettings::class)->toArray();
 
         return $data;
     }
@@ -63,6 +65,14 @@ class ManageSettings extends SettingsPage
                 $aiSettings->fill($data['ai_settings']);
                 $aiSettings->request_timeout = (int) ($data['ai_settings']['request_timeout'] ?? 120);
                 $aiSettings->save();
+            }
+
+            if (isset($data['auth_settings'])) {
+                $authSettings = app(AuthSettings::class);
+                $authSettings->fill($data['auth_settings']);
+                $authSettings->allow_email_login = (bool) ($data['auth_settings']['allow_email_login'] ?? true);
+                $authSettings->allow_phone_login = (bool) ($data['auth_settings']['allow_phone_login'] ?? true);
+                $authSettings->save();
             }
 
             $this->sendSuccessNotification();
@@ -105,6 +115,27 @@ class ManageSettings extends SettingsPage
                             ->image()
                             ->disk('public')
                             ->directory('settings'),
+                    ]),
+
+                Section::make('Authentication Settings')
+                    ->description('Configure user verification and login methods.')
+                    ->columns(2)
+                    ->statePath('auth_settings')
+                    ->schema([
+                        Select::make('verification_method')
+                            ->label('Verification Method')
+                            ->helperText('Choose how users verify their account after registration.')
+                            ->options([
+                                'email' => 'Email Verification',
+                                'phone' => 'Phone (SMS) Verification',
+                            ])
+                            ->required(),
+                        Toggle::make('allow_email_login')
+                            ->label('Allow Email Login')
+                            ->helperText('Users can sign in using their email address.'),
+                        Toggle::make('allow_phone_login')
+                            ->label('Allow Phone Login')
+                            ->helperText('Users can sign in using their phone number.'),
                     ]),
 
                 Section::make('Mail Settings')

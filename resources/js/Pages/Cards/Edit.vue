@@ -107,14 +107,14 @@
 import {ref, computed, onMounted, onBeforeUnmount} from 'vue';
 import {Head, useForm, router, usePage} from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import LanguageSwitcher from '@/Components/Cards/LanguageSwitcher.vue';
-import BasicInfoSection from '@/Components/Cards/BasicInfoSection.vue';
-import CardSectionsPanel from '@/Components/Cards/CardSectionsPanel.vue';
-import PublishingPanel from '@/Components/Cards/PublishingPanel.vue';
-import StatsPanel from '@/Components/Cards/StatsPanel.vue';
-import SharePanel from '@/Components/Cards/SharePanel.vue';
-import AITranslationPanel from '@/Components/Cards/AITranslationPanel.vue';
+import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
+import LanguageSwitcher from '@/Components/Card/LanguageSwitcher.vue';
+import BasicInfoSection from '@/Components/Card/BasicInfoSection.vue';
+import CardSectionsPanel from '@/Components/Card/CardSectionsPanel.vue';
+import PublishingPanel from '@/Components/Card/PublishingPanel.vue';
+import StatsPanel from '@/Components/Card/StatsPanel.vue';
+import SharePanel from '@/Components/Card/SharePanel.vue';
+import AITranslationPanel from '@/Components/Card/AITranslationPanel.vue';
 
 const props = defineProps({
     card: Object,

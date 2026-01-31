@@ -14,7 +14,8 @@ beforeEach(function () {
         'price' => 9.99,
         'billing_cycle' => 'monthly',
     ]);
-    $this->paymentService = new PaymentService;
+    // Use CashPaymentGateway for tests (not Lahza which needs external API)
+    $this->paymentService = new PaymentService(new CashPaymentGateway);
 });
 
 test('can create subscription payment', function () {

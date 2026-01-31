@@ -17,7 +17,7 @@ class EnsureUserHasActiveSubscription
         }
 
         // Allow access if user has active subscription or is on free tier
-        if ($user->hasActiveSubscription() || $user->subscription_tier === 'free') {
+        if ($user->isSubscriptionActive() || $user->subscription_tier === 'free') {
             return $next($request);
         }
 

@@ -13,8 +13,8 @@ test('api: user can create section for their card', function () {
     $response = $this->actingAs($this->user, 'sanctum')
         ->postJson(route('api.sections.store', $this->card), [
             'section_type' => 'contact',
-            'title' => 'Contact Info',
-            'content' => ['email' => 'test@example.com'],
+            'title' => ['en' => 'Contact Info'],
+            'content' => ['en' => ['email' => 'test@example.com']],
         ]);
 
     $response->assertCreated()
@@ -32,7 +32,7 @@ test('api: section creation validates required fields', function () {
     $this->actingAs($this->user, 'sanctum')
         ->postJson(route('api.sections.store', $this->card), [])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['section_type', 'title']);
+        ->assertJsonValidationErrors(['section_type']); // title is nullable
 });
 
 test('api: user cannot create section for other users card', function () {
@@ -43,7 +43,7 @@ test('api: user cannot create section for other users card', function () {
     $this->actingAs($this->user, 'sanctum')
         ->postJson(route('api.sections.store', $otherCard), [
             'section_type' => 'contact',
-            'title' => 'Test',
+            'title' => ['en' => 'Test'],
         ])
         ->assertForbidden();
 });
@@ -55,7 +55,7 @@ test('api: user can update their card section', function () {
 
     $response = $this->actingAs($this->user, 'sanctum')
         ->putJson(route('api.sections.update', $section), [
-            'title' => 'Updated Title',
+            'title' => ['en' => 'Updated Title'],
         ]);
 
     $response->assertOk();
@@ -71,7 +71,7 @@ test('api: user cannot update other users card section', function () {
 
     $this->actingAs($this->user, 'sanctum')
         ->putJson(route('api.sections.update', $section), [
-            'title' => 'Updated',
+            'title' => ['en' => 'Updated'],
         ])
         ->assertForbidden();
 });

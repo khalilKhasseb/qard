@@ -1,13 +1,13 @@
 <template>
   <AuthenticatedLayout>
-    <Head :title="`Edit Theme: ${theme.name}`" />
+    <Head :title="t('themes.edit_page.title', { name: theme.name })" />
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-semibold text-gray-900">Edit Theme: {{ theme.name }}</h2>
+          <h2 class="text-2xl font-semibold text-gray-900">{{ t('themes.edit_page.title', { name: theme.name }) }}</h2>
           <SecondaryButton @click="$inertia.visit(route('themes.index'))">
-            Back to Themes
+            {{ t('themes.back_to_themes') }}
           </SecondaryButton>
         </div>
 
@@ -16,10 +16,10 @@
           <div class="space-y-6">
             <!-- Basic Info -->
             <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('themes.edit_page.basic_info') }}</h3>
               <div class="space-y-4">
                 <div>
-                  <InputLabel for="name" value="Theme Name *" />
+                  <InputLabel for="name" :value="t('themes.fields.name_required')" />
                   <TextInput
                     id="name"
                     v-model="form.name"
@@ -37,8 +37,8 @@
                     type="checkbox"
                     class="h-4 w-4 text-indigo-600 rounded"
                   />
-                  <label for="is_public" class="ml-2 block text-sm text-gray-900">
-                    Make this theme public
+                  <label for="is_public" class="ms-2 block text-sm text-gray-900">
+                    {{ t('themes.fields.is_public') }}
                   </label>
                 </div>
               </div>
@@ -46,7 +46,7 @@
 
             <!-- Colors -->
             <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Colors</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('themes.edit_page.colors') }}</h3>
               <div class="grid grid-cols-2 gap-4">
                 <div v-for="(value, key) in form.config.colors" :key="key">
                   <InputLabel :for="`color-${key}`" :value="formatLabel(key)" />
@@ -70,10 +70,10 @@
 
             <!-- Fonts -->
             <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Typography</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('themes.edit_page.typography') }}</h3>
               <div class="space-y-4">
                 <div>
-                  <InputLabel for="font-heading" value="Heading Font" />
+                  <InputLabel for="font-heading" :value="t('themes.edit_page.heading_font')" />
                   <select
                     id="font-heading"
                     v-model="form.config.fonts.heading"
@@ -86,7 +86,7 @@
                 </div>
 
                 <div>
-                  <InputLabel for="font-body" value="Body Font" />
+                  <InputLabel for="font-body" :value="t('themes.edit_page.body_font')" />
                   <select
                     id="font-body"
                     v-model="form.config.fonts.body"
@@ -102,10 +102,10 @@
 
             <!-- Images -->
             <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Images</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('themes.edit_page.images') }}</h3>
               <div class="space-y-4">
                 <div v-for="imageType in ['background', 'header', 'logo']" :key="imageType">
-                  <InputLabel :value="formatLabel(imageType) + ' Image'" />
+                  <InputLabel :value="t(`themes.edit_page.${imageType}_image`)" />
                   <div class="mt-2">
                     <div v-if="form.config.images[imageType]?.url" class="mb-2">
                       <img
@@ -119,10 +119,10 @@
                       accept="image/*"
                       @change="uploadImage($event, imageType)"
                       :disabled="uploading"
-                      class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      class="block w-full text-sm text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     />
                     <p v-if="uploading && uploadingType === imageType" class="mt-1 text-xs text-gray-500">
-                      Uploading...
+                      {{ t('themes.edit_page.uploading') }}
                     </p>
                   </div>
                 </div>
@@ -131,23 +131,23 @@
 
             <!-- Layout -->
             <div class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Layout</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('themes.edit_page.layout') }}</h3>
               <div class="space-y-4">
                 <div>
-                  <InputLabel for="card-style" value="Card Style" />
+                  <InputLabel for="card-style" :value="t('themes.edit_page.card_style')" />
                   <select
                     id="card-style"
                     v-model="form.config.layout.card_style"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
                   >
-                    <option value="elevated">Elevated (Shadow)</option>
-                    <option value="outlined">Outlined (Border)</option>
-                    <option value="filled">Filled (Solid)</option>
+                    <option value="elevated">{{ t('themes.card_styles.elevated') }}</option>
+                    <option value="outlined">{{ t('themes.card_styles.outlined') }}</option>
+                    <option value="filled">{{ t('themes.card_styles.filled') }}</option>
                   </select>
                 </div>
 
                 <div>
-                  <InputLabel for="border-radius" value="Border Radius" />
+                  <InputLabel for="border-radius" :value="t('themes.edit_page.border_radius')" />
                   <TextInput
                     id="border-radius"
                     v-model="form.config.layout.border_radius"
@@ -158,15 +158,15 @@
                 </div>
 
                 <div>
-                  <InputLabel for="alignment" value="Text Alignment" />
+                  <InputLabel for="alignment" :value="t('themes.edit_page.text_alignment')" />
                   <select
                     id="alignment"
                     v-model="form.config.layout.alignment"
                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
                   >
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
+                    <option value="left">{{ t('themes.alignments.left') }}</option>
+                    <option value="center">{{ t('themes.alignments.center') }}</option>
+                    <option value="right">{{ t('themes.alignments.right') }}</option>
                   </select>
                 </div>
               </div>
@@ -174,12 +174,12 @@
 
             <!-- Custom CSS -->
             <div v-if="canUseCustomCSS" class="bg-white shadow-sm rounded-lg p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Custom CSS</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('themes.edit_page.custom_css') }}</h3>
               <textarea
                 v-model="form.config.custom_css"
                 rows="8"
                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm font-mono text-sm"
-                placeholder="/* Your custom CSS here */"
+                :placeholder="t('themes.edit_page.css_placeholder')"
               ></textarea>
             </div>
 
@@ -187,10 +187,10 @@
             <div class="bg-white shadow-sm rounded-lg p-6">
               <div class="flex gap-3">
                 <PrimaryButton @click="saveTheme" :disabled="form.processing" class="flex-1 justify-center">
-                  {{ form.processing ? 'Saving...' : 'Save Theme' }}
+                  {{ form.processing ? t('themes.edit_page.saving') : t('themes.edit_page.save_theme') }}
                 </PrimaryButton>
                 <SecondaryButton @click="previewTheme" class="flex-1 justify-center">
-                  Preview
+                  {{ t('themes.actions.preview') }}
                 </SecondaryButton>
               </div>
             </div>
@@ -200,21 +200,21 @@
           <div class="lg:sticky lg:top-6 space-y-6">
             <div class="bg-white shadow-sm rounded-lg p-6">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Live Preview</h3>
+                <h3 class="text-lg font-semibold text-gray-900">{{ t('themes.edit_page.live_preview') }}</h3>
                 <div class="flex gap-2">
                   <button
                     @click="previewDevice = 'desktop'"
                     :class="previewDevice === 'desktop' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700'"
                     class="px-3 py-1 text-sm rounded"
                   >
-                    Desktop
+                    {{ t('themes.edit_page.desktop') }}
                   </button>
                   <button
                     @click="previewDevice = 'mobile'"
                     :class="previewDevice === 'mobile' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-700'"
                     class="px-3 py-1 text-sm rounded"
                   >
-                    Mobile
+                    {{ t('themes.edit_page.mobile') }}
                   </button>
                 </div>
               </div>
@@ -265,12 +265,15 @@
 import { ref, computed } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import InputError from '@/Components/InputError.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
+import InputLabel from '@/Components/Shared/InputLabel.vue';
+import TextInput from '@/Components/Shared/TextInput.vue';
+import InputError from '@/Components/Shared/InputError.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
 import axios from 'axios';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 const props = defineProps({
   theme: Object,

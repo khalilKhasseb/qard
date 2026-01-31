@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\SubscriptionLimitException;
 use App\Models\BusinessCard;
 use App\Models\Theme;
 use App\Models\ThemeImage;
@@ -17,7 +18,7 @@ class ThemeService
     public function createTheme(User $user, array $data): Theme
     {
         if (! $user->canCreateTheme()) {
-            throw new \Exception('Theme limit reached for your plan');
+            throw new SubscriptionLimitException('Theme limit reached for your plan', 'themes');
         }
 
         $config = array_replace_recursive(
@@ -56,7 +57,7 @@ class ThemeService
     public function duplicateTheme(Theme $theme, User $user, ?string $newName = null): Theme
     {
         if (! $user->canCreateTheme()) {
-            throw new \Exception('Theme limit reached for your plan');
+            throw new SubscriptionLimitException('Theme limit reached for your plan', 'themes');
         }
 
         return Theme::create([

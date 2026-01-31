@@ -33,6 +33,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $general = app(GeneralSettings::class);
+        $locale = app()->getLocale();
 
         return [
             ...parent::share($request),
@@ -44,7 +45,9 @@ class HandleInertiaRequests extends Middleware
                 'location' => $request->url(),
             ],
             'languages' => Language::active()->get(['name', 'code', 'direction']),
-            'currentLanguage' => app()->getLocale(),
+            'currentLanguage' => $locale,
+            'currentDirection' => $this->getDirection($locale),
+            'translations' => fn () => $this->getTranslations($locale),
             'settings' => [
                 'site_name' => $general->site_name,
                 'site_description' => $general->site_description,
@@ -54,5 +57,36 @@ class HandleInertiaRequests extends Middleware
                 'favicon' => $general->favicon ? asset('storage/'.$general->favicon) : null,
             ],
         ];
+    }
+
+    /**
+     * Get translations for the frontend.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function getTranslations(string $locale): array
+    {
+        return [
+            'common' => trans('common', [], $locale),
+            'auth' => trans('auth', [], $locale),
+            'dashboard' => trans('dashboard', [], $locale),
+            'cards' => trans('cards', [], $locale),
+            'themes' => trans('themes', [], $locale),
+            'payments' => trans('payments', [], $locale),
+            'profile' => trans('profile', [], $locale),
+            'public' => trans('public', [], $locale),
+            'analytics' => trans('analytics', [], $locale),
+            'welcome' => trans('welcome', [], $locale),
+        ];
+    }
+
+    /**
+     * Get text direction for the locale.
+     */
+    private function getDirection(string $locale): string
+    {
+        $language = Language::where('code', $locale)->first();
+
+        return $language?->direction ?? 'ltr';
     }
 }

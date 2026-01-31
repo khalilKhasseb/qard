@@ -1,6 +1,6 @@
 <template>
   <AuthenticatedLayout>
-    <Head title="My Subscription" />
+    <Head :title="t('payments.subscription.my_subscription')" />
 
     <div class="py-12">
       <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
@@ -15,7 +15,7 @@
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-12">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p class="mt-4 text-gray-600">Loading subscription details...</p>
+          <p class="mt-4 text-gray-600">{{ t('payments.subscription.loading') }}</p>
         </div>
 
         <!-- Subscription Details -->
@@ -25,10 +25,10 @@
             <div class="bg-indigo-600 px-6 py-4 text-white">
               <div class="flex justify-between items-center">
                 <div>
-                  <h2 class="text-xl font-bold">Subscription Details</h2>
-                  <p class="text-indigo-100 text-sm">Your current plan and billing information</p>
+                  <h2 class="text-xl font-bold">{{ t('payments.subscription.details') }}</h2>
+                  <p class="text-indigo-100 text-sm">{{ t('payments.subscription.details_subtitle') }}</p>
                 </div>
-                <span 
+                <span
                   class="px-3 py-1 rounded-full text-sm font-medium"
                   :class="{
                     'bg-green-500 text-white': subscription.data.status === 'active',
@@ -46,7 +46,7 @@
               <!-- Plan Information -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.plan') }}</label>
                   <p class="text-lg font-semibold text-gray-900">
                     {{ subscription.data.plan?.name || 'N/A' }}
                   </p>
@@ -56,50 +56,50 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.price') }}</label>
                   <p class="text-lg font-semibold text-gray-900">
                     ${{ subscription.data.plan?.price }}/{{ subscription.data.plan?.billing_cycle }}
                   </p>
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.status') }}</label>
                   <p class="text-gray-900 capitalize">
                     {{ subscription.data.status }}
-                    <span v-if="subscription.data.is_active" class="text-green-600 ml-1">✓</span>
+                    <span v-if="subscription.data.is_active" class="text-green-600 ms-1">✓</span>
                   </p>
                 </div>
 
                 <div v-if="subscription.data.days_remaining">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Days Remaining</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.days_remaining') }}</label>
                   <p class="text-gray-900">
-                    {{ subscription.data.days_remaining }} days
+                    {{ t('payments.subscription.days', { count: subscription.data.days_remaining }) }}
                   </p>
                 </div>
 
                 <div v-if="subscription.data.starts_at">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.start_date') }}</label>
                   <p class="text-gray-900">
                     {{ formatDate(subscription.data.starts_at) }}
                   </p>
                 </div>
 
                 <div v-if="subscription.data.ends_at">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Renews On</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.renews_on') }}</label>
                   <p class="text-gray-900">
                     {{ formatDate(subscription.data.ends_at) }}
                   </p>
                 </div>
 
                 <div v-if="subscription.data.canceled_at">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Canceled On</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.canceled_on') }}</label>
                   <p class="text-gray-900">
                     {{ formatDate(subscription.data.canceled_at) }}
                   </p>
                 </div>
 
                 <div v-if="subscription.data.trial_ends_at && subscription.data.is_trial">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Trial Ends</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('payments.subscription.trial_ends') }}</label>
                   <p class="text-gray-900">
                     {{ formatDate(subscription.data.trial_ends_at) }}
                   </p>
@@ -107,27 +107,27 @@
 
                 <!-- Usage Stats -->
                 <div class="col-span-1 md:col-span-2">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Usage</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('payments.subscription.usage') }}</label>
                   <div class="bg-gray-50 rounded-lg p-4 space-y-3">
                     <!-- Cards Usage -->
                     <div class="flex justify-between items-center">
                       <div>
-                        <p class="font-medium text-gray-900">Business Cards</p>
+                        <p class="font-medium text-gray-900">{{ t('payments.subscription.business_cards', { count: '' }).replace(':', '') }}</p>
                         <p class="text-sm text-gray-600">
-                          {{ usageStats.cardCount }} of {{ subscription.data.plan?.card_limit }} used
+                          {{ t('payments.subscription.of_used', { count: usageStats.cardCount, limit: subscription.data.plan?.card_limit }) }}
                         </p>
                       </div>
                       <div class="flex items-center gap-2">
-                        <span 
+                        <span
                           class="px-2 py-1 text-xs font-medium rounded-full"
                           :class="usageStats.cardCount >= subscription.data.plan?.card_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
                         >
-                          {{ subscription.data.plan?.card_limit - usageStats.cardCount }} remaining
+                          {{ t('payments.subscription.remaining', { count: subscription.data.plan?.card_limit - usageStats.cardCount }) }}
                         </span>
                       </div>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         class="h-2 rounded-full transition-all"
                         :class="usageStats.cardCount >= subscription.data.plan?.card_limit ? 'bg-red-500' : 'bg-green-500'"
                         :style="`width: ${(usageStats.cardCount / subscription.data.plan?.card_limit) * 100}%`"
@@ -137,20 +137,20 @@
                     <!-- Themes Usage -->
                     <div class="flex justify-between items-center mt-3">
                       <div>
-                        <p class="font-medium text-gray-900">Custom Themes</p>
+                        <p class="font-medium text-gray-900">{{ t('payments.subscription.custom_themes', { count: '' }).replace(':', '') }}</p>
                         <p class="text-sm text-gray-600">
-                          {{ usageStats.themeCount }} of {{ subscription.data.plan?.theme_limit }} used
+                          {{ t('payments.subscription.of_used', { count: usageStats.themeCount, limit: subscription.data.plan?.theme_limit }) }}
                         </p>
                       </div>
-                      <span 
+                      <span
                         class="px-2 py-1 text-xs font-medium rounded-full"
                         :class="usageStats.themeCount >= subscription.data.plan?.theme_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
                       >
-                        {{ subscription.data.plan?.theme_limit - usageStats.themeCount }} remaining
+                        {{ t('payments.subscription.remaining', { count: subscription.data.plan?.theme_limit - usageStats.themeCount }) }}
                       </span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         class="h-2 rounded-full bg-green-500 transition-all"
                         :style="`width: ${(usageStats.themeCount / subscription.data.plan?.theme_limit) * 100}%`"
                       ></div>
@@ -161,14 +161,14 @@
 
               <!-- Plan Features -->
               <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Included Features</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('payments.subscription.included_features') }}</label>
                 <div v-if="subscription.data.plan?.features && Array.isArray(subscription.data.plan.features)" class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div 
-                    v-for="feature in subscription.data.plan.features" 
+                  <div
+                    v-for="feature in subscription.data.plan.features"
                     :key="feature"
                     class="flex items-center text-sm text-gray-700"
                   >
-                    <svg class="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-4 h-4 text-green-500 me-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
                     {{ feature }}
@@ -177,10 +177,10 @@
                 <div v-else class="bg-gray-50 rounded-lg p-4 text-center">
                   <p class="text-gray-600 text-sm">
                     <span v-if="subscription.data.status === 'free'">
-                      No premium features included in the free plan. Upgrade to unlock advanced features.
+                      {{ t('payments.subscription.no_premium_features') }}
                     </span>
                     <span v-else>
-                      No additional features available in this plan.
+                      {{ t('payments.subscription.no_additional_features') }}
                     </span>
                   </p>
                 </div>
@@ -190,92 +190,92 @@
 
           <!-- Actions -->
           <div class="bg-white shadow-sm rounded-lg overflow-hidden p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
-            
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('payments.subscription.actions') }}</h3>
+
             <div class="flex gap-4 flex-wrap">
               <!-- Upgrade Button (if active) -->
-              <button 
+              <button
                 v-if="subscription.data.status === 'active' && !subscription.data.is_trial"
                 @click="upgradePlan"
                 class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
               >
-                Upgrade Plan
+                {{ t('payments.subscription.upgrade_plan') }}
               </button>
 
               <!-- Renew Button (if expired or canceled) -->
-              <button 
+              <button
                 v-if="subscription.data.status === 'expired' || subscription.data.status === 'canceled'"
                 @click="renewSubscription"
                 class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
               >
-                Renew Subscription
+                {{ t('payments.subscription.renew') }}
               </button>
 
               <!-- Sync Button -->
-              <button 
+              <button
                 @click="syncSubscription"
                 class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
                 :disabled="syncing"
               >
-                {{ syncing ? 'Syncing...' : 'Refresh Details' }}
+                {{ syncing ? t('payments.subscription.syncing') : t('payments.subscription.refresh') }}
               </button>
 
               <!-- Cancel Button (if active) -->
-              <button 
+              <button
                 v-if="subscription.data.status === 'active' && !subscription.data.is_trial"
                 @click="cancelSubscription"
                 class="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition"
               >
-                Cancel Subscription
+                {{ t('payments.subscription.cancel') }}
               </button>
 
               <!-- View All Plans -->
-              <button 
+              <button
                 @click="$inertia.visit(route('payments.index'))"
                 class="bg-indigo-100 text-indigo-800 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-200 transition"
               >
-                View All Plans
+                {{ t('payments.subscription.view_all_plans') }}
               </button>
             </div>
           </div>
 
           <!-- Upgrade Available Section -->
           <div v-if="availablePlans.length > 0" class="bg-white shadow-sm rounded-lg overflow-hidden p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Upgrade Your Plan</h3>
-            <p class="text-gray-600 mb-4">You're currently using {{ usageStats.cardCount }} out of {{ subscription.data.plan?.cards_limit }} cards. Upgrade for more space!</p>
-            
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('payments.subscription.upgrade_your_plan') }}</h3>
+            <p class="text-gray-600 mb-4">{{ t('payments.subscription.upgrade_prompt', { count: usageStats.cardCount, limit: subscription.data.plan?.cards_limit }) }}</p>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div 
-                v-for="plan in availablePlans" 
+              <div
+                v-for="plan in availablePlans"
                 :key="plan.id"
                 class="border-2 rounded-lg p-4 transition-colors hover:border-indigo-500"
                 :class="plan.id === subscription.data.plan?.id ? 'border-green-500 bg-green-50' : 'border-gray-200'"
               >
                 <div class="flex justify-between items-start mb-2">
                   <h4 class="font-bold text-gray-900">{{ plan.name }}</h4>
-                  <span 
+                  <span
                     v-if="plan.id === subscription.data.plan?.id"
                     class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium"
                   >
-                    Current
+                    {{ t('payments.subscription.current') }}
                   </span>
                 </div>
                 <p class="text-2xl font-bold text-gray-900 mb-2">${{ plan.price }}<span class="text-sm text-gray-500">/{{ plan.billing_cycle }}</span></p>
-                <p class="text-sm text-gray-600 mb-3">{{ plan.cards_limit }} cards, {{ plan.themes_limit }} themes</p>
-                <button 
+                <p class="text-sm text-gray-600 mb-3">{{ t('payments.subscription.cards_themes', { cards: plan.cards_limit, themes: plan.themes_limit }) }}</p>
+                <button
                   v-if="plan.id !== subscription.data.plan?.id"
                   @click="upgradeToPlan(plan)"
                   class="w-full bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-indigo-700 transition"
                 >
-                  Upgrade
+                  {{ t('payments.subscription.upgrade') }}
                 </button>
-                <button 
+                <button
                   v-else
                   @click="syncSubscription"
                   class="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-300 transition"
                   :disabled="syncing"
                 >
-                  {{ syncing ? 'Syncing...' : 'Sync Plan' }}
+                  {{ syncing ? t('payments.subscription.syncing') : t('payments.subscription.sync_plan') }}
                 </button>
               </div>
             </div>
@@ -283,12 +283,12 @@
 
           <!-- Payment History -->
           <div class="bg-white shadow-sm rounded-lg overflow-hidden p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment History</h3>
-            <button 
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('payments.history.title') }}</h3>
+            <button
               @click="$inertia.visit(route('payments.index'))"
               class="text-indigo-600 hover:text-indigo-800 font-medium"
             >
-              View Payment History →
+              {{ t('payments.history.title') }} →
             </button>
           </div>
         </div>
@@ -301,22 +301,22 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">No Active Subscription</h3>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ t('payments.subscription.no_subscription_title') }}</h3>
             <p class="text-gray-600 mb-6 max-w-md mx-auto">
-              You don't have an active subscription. Upgrade your account to unlock more features and create more cards.
+              {{ t('payments.subscription.no_subscription_desc') }}
             </p>
             <div class="flex gap-4 justify-center">
-              <button 
+              <button
                 @click="$inertia.visit(route('payments.index'))"
                 class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
               >
-                Choose a Plan
+                {{ t('payments.subscription.choose_plan') }}
               </button>
-              <button 
+              <button
                 @click="$inertia.visit(route('dashboard'))"
                 class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
               >
-                Go to Dashboard
+                {{ t('payments.subscription.go_to_dashboard') }}
               </button>
             </div>
           </div>
@@ -337,12 +337,15 @@
 </template>
 
 <script setup>
-  
+
 import { ref, onMounted, computed } from 'vue';
-import { Head, router ,usePage} from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import axios from 'axios';
-const page = usePage()
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t, locale } = useTranslations();
+const page = usePage();
 
 const props = defineProps({
   availablePlans: {
@@ -420,7 +423,7 @@ const loadSubscription = async () => {
       themeCount.value = statsData.themeCount || 0;
     }
   } catch (err) {
-    error.value = 'Failed to load subscription details. Please try again.';
+    error.value = t('payments.subscription.load_error');
     console.error(err);
   } finally {
     loading.value = false;
@@ -458,9 +461,9 @@ const syncSubscription = async () => {
     }
 
     // Show success message
-    alert('Subscription details refreshed successfully!');
+    alert(t('payments.subscription.sync_success'));
   } catch (err) {
-    error.value = 'Failed to refresh subscription details. Please try again.';
+    error.value = t('payments.subscription.sync_error');
     console.error(err);
   } finally {
     syncing.value = false;
@@ -468,7 +471,7 @@ const syncSubscription = async () => {
 };
 
 const cancelSubscription = async () => {
-  if (!confirm('Are you sure you want to cancel your subscription? This action cannot be undone.')) {
+  if (!confirm(t('payments.subscription.cancel_confirm'))) {
     return;
   }
 
@@ -496,7 +499,7 @@ const cancelSubscription = async () => {
     const data = await response.json();
     subscription.value = data;
 
-    alert('Your subscription has been canceled. You can continue using your current plan until the end of the billing period.');
+    alert(t('payments.subscription.cancel_success'));
   } catch (err) {
     error.value = err.message;
     console.error(err);
@@ -517,7 +520,8 @@ const upgradeToPlan = (plan) => {
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('en-US', {
+  const localeCode = locale.value === 'ar' ? 'ar-SA' : locale.value === 'he' ? 'he-IL' : 'en-US';
+  return new Date(dateString).toLocaleDateString(localeCode, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

@@ -47,8 +47,9 @@ class LanguageSelectorTest extends TestCase
     {
         $user = User::factory()->create();
 
+        // Use postJson to get JSON response (post returns redirect)
         $response = $this->actingAs($user)
-            ->post('/language/switch', [
+            ->postJson('/language/switch', [
                 'language_code' => 'ar',
             ]);
 

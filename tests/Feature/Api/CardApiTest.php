@@ -1,11 +1,18 @@
 <?php
 
 use App\Models\BusinessCard;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Models\UserSubscription;
 
 beforeEach(function () {
-    $this->user = User::factory()->create([
-        'subscription_tier' => 'pro',
+    $this->user = User::factory()->create();
+
+    // Create a pro subscription plan and assign to user
+    $proPlan = SubscriptionPlan::factory()->pro()->create();
+    UserSubscription::factory()->active()->create([
+        'user_id' => $this->user->id,
+        'subscription_plan_id' => $proPlan->id,
     ]);
 });
 
@@ -96,15 +103,11 @@ test('api: user can update their own card', function () {
 
     $response = $this->actingAs($this->user, 'sanctum')
         ->putJson(route('api.cards.update', $card), [
-            'title' => 'Updated Title',
+            'title' => ['en' => 'Updated Title'],
         ]);
 
-    $response->assertOk()
-        ->assertJson([
-            'data' => [
-                'title' => 'Updated Title',
-            ],
-        ]);
+    $response->assertOk();
+    expect($response->json('data.title.en'))->toBe('Updated Title');
 });
 
 test('api: user cannot update other users card', function () {

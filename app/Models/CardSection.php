@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\SectionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,6 +48,9 @@ class CardSection extends Model
         ];
     }
 
+    /**
+     * @deprecated Use App\Enums\SectionType::options() instead
+     */
     public const SECTION_TYPES = [
         'contact' => 'Contact Information',
         'social' => 'Social Media Links',
@@ -66,11 +70,30 @@ class CardSection extends Model
         'qr_code' => 'QR Code',
     ];
 
-    public function card(): BelongsTo
+    /**
+     * Get section types from the canonical enum.
+     *
+     * @return array<string, string>
+     */
+    public static function getSectionTypes(): array
     {
-        return $this->belongsTo(BusinessCard::class, 'business_card_id');
+        return SectionType::options();
     }
 
+    /**
+     * Get the business card that owns this section.
+     *
+     * @deprecated Use businessCard() instead for consistency with model naming.
+     */
+    public function card(): BelongsTo
+    {
+        return $this->businessCard();
+    }
+
+    /**
+     * Get the business card that owns this section.
+     * This is the canonical relationship - use this one.
+     */
     public function businessCard(): BelongsTo
     {
         return $this->belongsTo(BusinessCard::class, 'business_card_id');

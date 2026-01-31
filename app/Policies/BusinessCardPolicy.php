@@ -14,7 +14,8 @@ class BusinessCardPolicy
 
     public function view(User $user, BusinessCard $businessCard): bool
     {
-        return $user->id === $businessCard->user_id;
+        // User can view their own cards or any published card
+        return $user->id === $businessCard->user_id || $businessCard->is_published;
     }
 
     public function create(User $user): bool

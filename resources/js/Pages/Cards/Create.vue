@@ -1,20 +1,20 @@
 <template>
   <AuthenticatedLayout>
-    <Head title="Create Business Card" />
+    <Head :title="t('cards.create_page.title')" />
 
     <div class="py-12">
       <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
         <div class="bg-white shadow-sm rounded-lg">
           <div class="p-6 border-b border-gray-200">
-            <h2 class="text-2xl font-semibold text-gray-900">Create New Business Card</h2>
-            <p class="mt-1 text-sm text-gray-600">Fill in the basic information for your card.</p>
+            <h2 class="text-2xl font-semibold text-gray-900">{{ t('cards.create_page.heading') }}</h2>
+            <p class="mt-1 text-sm text-gray-600">{{ t('cards.create_page.description') }}</p>
 
             <!-- Usage Indicator -->
             <div v-if="cardLimit > 0" class="mt-3">
               <div class="flex justify-between text-sm text-gray-600 mb-1">
-                <span>Usage: {{ cardCount }} / {{ cardLimit }} cards</span>
+                <span>{{ t('cards.create_page.usage', { count: cardCount, limit: cardLimit }) }}</span>
                 <span :class="cardCount >= cardLimit ? 'text-red-600 font-semibold' : 'text-gray-600'">
-                  {{ cardLimit - cardCount }} remaining
+                  {{ t('cards.create_page.remaining', { count: cardLimit - cardCount }) }}
                 </span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
@@ -30,13 +30,13 @@
           <form @submit.prevent="submit" class="p-6 space-y-6">
             <!-- Title -->
             <div>
-              <InputLabel for="title" value="Card Title *" />
+              <InputLabel for="title" :value="t('cards.fields.title_required')" />
               <TextInput
                 id="title"
                 v-model="form.title"
                 type="text"
                 class="mt-1 block w-full"
-                placeholder="Your Name or Business Name"
+                :placeholder="t('cards.fields.title_placeholder')"
                 required
                 autofocus
               />
@@ -45,26 +45,26 @@
 
             <!-- Subtitle -->
             <div>
-              <InputLabel for="subtitle" value="Subtitle" />
+              <InputLabel for="subtitle" :value="t('cards.fields.subtitle')" />
               <TextInput
                 id="subtitle"
                 v-model="form.subtitle"
                 type="text"
                 class="mt-1 block w-full"
-                placeholder="Your Title or Tagline"
+                :placeholder="t('cards.fields.subtitle_placeholder')"
               />
               <InputError :message="form.errors.subtitle" class="mt-2" />
             </div>
 
             <!-- Theme Selection -->
             <div>
-              <InputLabel for="theme_id" value="Theme" />
+              <InputLabel for="theme_id" :value="t('cards.fields.theme')" />
               <select
                 id="theme_id"
                 v-model="form.theme_id"
                 class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
-                <option :value="null">Default Theme</option>
+                <option :value="null">{{ t('cards.create_page.default_theme') }}</option>
                 <option v-for="theme in themes" :key="theme.id" :value="theme.id">
                   {{ theme.name }}
                 </option>
@@ -74,7 +74,7 @@
 
             <!-- Language Selection -->
             <div>
-              <InputLabel for="language_id" value="Primary Language *" />
+              <InputLabel for="language_id" :value="t('cards.fields.primary_language')" />
               <select
                 id="language_id"
                 v-model="form.language_id"
@@ -86,27 +86,27 @@
                 </option>
               </select>
               <p class="mt-1 text-xs text-gray-500">
-                This is the main language of your card. You can add content in other languages once the card is created!
+                {{ t('cards.create_page.primary_language_hint') }}
               </p>
               <InputError :message="form.errors.language_id" class="mt-2" />
             </div>
 
             <!-- Custom Slug -->
             <div>
-              <InputLabel for="custom_slug" value="Custom URL (optional)" />
+              <InputLabel for="custom_slug" :value="t('cards.fields.custom_url')" />
               <div class="mt-1 flex rounded-md shadow-sm">
-                <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                <span class="inline-flex items-center px-3 rounded-s-md border border-e-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
                   {{ appUrl }}/u/
                 </span>
                 <TextInput
                   id="custom_slug"
                   v-model="form.custom_slug"
                   type="text"
-                  class="flex-1 rounded-none rounded-r-md"
-                  placeholder="your-custom-url"
+                  class="flex-1 rounded-none rounded-e-md"
+                  :placeholder="t('cards.fields.custom_url_placeholder')"
                 />
               </div>
-              <p class="mt-1 text-xs text-gray-500">Leave empty to use a generated URL</p>
+              <p class="mt-1 text-xs text-gray-500">{{ t('cards.create_page.custom_url_hint') }}</p>
               <InputError :message="form.errors.custom_slug" class="mt-2" />
             </div>
 
@@ -118,18 +118,18 @@
                 type="checkbox"
                 class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <label for="is_published" class="ml-2 block text-sm text-gray-900">
-                Publish immediately
+              <label for="is_published" class="ms-2 block text-sm text-gray-900">
+                {{ t('cards.create_page.publish_immediately') }}
               </label>
             </div>
 
             <!-- Actions -->
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
               <SecondaryButton @click="$inertia.visit(route('cards.index'))">
-                Cancel
+                {{ t('common.buttons.cancel') }}
               </SecondaryButton>
               <PrimaryButton :disabled="form.processing">
-                {{ form.processing ? 'Creating...' : 'Create Card' }}
+                {{ form.processing ? t('cards.create_page.creating') : t('cards.create') }}
               </PrimaryButton>
             </div>
           </form>
@@ -142,11 +142,14 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import InputError from '@/Components/InputError.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
+import InputLabel from '@/Components/Shared/InputLabel.vue';
+import TextInput from '@/Components/Shared/TextInput.vue';
+import InputError from '@/Components/Shared/InputError.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t } = useTranslations();
 
 const props = defineProps({
   themes: Array,

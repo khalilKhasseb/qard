@@ -41,6 +41,8 @@ class SubscriptionPlanFactory extends Factory
             'themes_limit' => 1,
             'custom_css_allowed' => false,
             'analytics_enabled' => false,
+            'nfc_enabled' => false,
+            'custom_domain_allowed' => false,
         ]);
     }
 
@@ -54,6 +56,8 @@ class SubscriptionPlanFactory extends Factory
             'themes_limit' => 10,
             'custom_css_allowed' => true,
             'analytics_enabled' => true,
+            'nfc_enabled' => true,
+            'custom_domain_allowed' => true,
         ]);
     }
 }

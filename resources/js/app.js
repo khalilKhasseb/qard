@@ -5,7 +5,7 @@ import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, darkTheme, lightTheme } from 'naive-ui';
 import naive from 'naive-ui';
-import PublicCard from './Components/PublicCard.vue';
+import PublicCard from './Components/Public/PublicCard.vue';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

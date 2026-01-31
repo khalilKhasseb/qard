@@ -21,11 +21,13 @@ class ThemeResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
 
-            // User info
-            'user' => [
+            // User info (only include name when user is loaded)
+            'user' => $this->when($this->relationLoaded('user'), fn () => [
                 'id' => $this->user_id,
-                'name' => $this->user->name ?? null,
-            ],
+                'name' => $this->user->name,
+            ], [
+                'id' => $this->user_id,
+            ]),
         ];
     }
 }

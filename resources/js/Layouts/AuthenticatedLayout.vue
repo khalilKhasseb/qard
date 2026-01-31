@@ -1,15 +1,26 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import LanguageSelector from '@/Components/LanguageSelector.vue';
+import { onBeforeMount, ref } from 'vue';
+import ApplicationLogo from '@/Components/Shared/ApplicationLogo.vue';
+import Dropdown from '@/Components/Shared/Dropdown.vue';
+import DropdownLink from '@/Components/Shared/DropdownLink.vue';
+import NavLink from '@/Components/Shared/NavLink.vue';
+import ResponsiveNavLink from '@/Components/Shared/ResponsiveNavLink.vue';
+import LanguageSelector from '@/Components/Shared/LanguageSelector.vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import axios from "axios";
+import { useTranslations } from '@/composables/useTranslations';
 
+const { t } = useTranslations();
 const showingNavigationDropdown = ref(false);
 const page = usePage();
+
+onBeforeMount(async function () {
+    try {
+        await axios.get('/sanctum/csrf-cookie');
+    } catch (error) {
+        console.error('Failed to initialize CSRF protection:', error);
+    }
+});
 </script>
 
 <template>
@@ -33,31 +44,31 @@ const page = usePage();
 
                             <!-- Navigation Links -->
                             <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
+                                class="hidden ltr:space-x-8 rtl:space-x-reverse rtl:space-x-8 sm:-my-px sm:ms-10 sm:flex"
                             >
                                 <NavLink
                                     :href="route('dashboard')"
                                     :active="route().current('dashboard')"
                                 >
-                                    Dashboard
+                                    {{ t('common.nav.dashboard') }}
                                 </NavLink>
                                 <NavLink
                                     :href="route('cards.index')"
                                     :active="route().current('cards.*')"
                                 >
-                                    My Cards
+                                    {{ t('common.nav.my_cards') }}
                                 </NavLink>
                                 <NavLink
                                     :href="route('themes.index')"
                                     :active="route().current('themes.*')"
                                 >
-                                    Themes
+                                    {{ t('common.nav.themes') }}
                                 </NavLink>
                                 <NavLink
                                     :href="route('analytics.index')"
                                     :active="route().current('analytics.*')"
                                 >
-                                    Analytics
+                                    {{ t('common.nav.analytics') }}
                                 </NavLink>
                             </div>
                         </div>
@@ -101,14 +112,14 @@ const page = usePage();
                                         <DropdownLink
                                             :href="route('profile.edit')"
                                         >
-                                            Profile
+                                            {{ t('common.nav.profile') }}
                                         </DropdownLink>
                                         <DropdownLink
                                             :href="route('logout')"
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            {{ t('common.nav.logout') }}
                                         </DropdownLink>
                                     </template>
                                 </Dropdown>
@@ -171,25 +182,25 @@ const page = usePage();
                             :href="route('dashboard')"
                             :active="route().current('dashboard')"
                         >
-                            Dashboard
+                            {{ t('common.nav.dashboard') }}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('cards.index')"
                             :active="route().current('cards.*')"
                         >
-                            My Cards
+                            {{ t('common.nav.my_cards') }}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('themes.index')"
                             :active="route().current('themes.*')"
                         >
-                            Themes
+                            {{ t('common.nav.themes') }}
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             :href="route('analytics.index')"
                             :active="route().current('analytics.*')"
                         >
-                            Analytics
+                            {{ t('common.nav.analytics') }}
                         </ResponsiveNavLink>
                     </div>
 
@@ -210,14 +221,14 @@ const page = usePage();
 
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
+                                {{ t('common.nav.profile') }}
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 :href="route('logout')"
                                 method="post"
                                 as="button"
                             >
-                                Log Out
+                                {{ t('common.nav.logout') }}
                             </ResponsiveNavLink>
                         </div>
                     </div>

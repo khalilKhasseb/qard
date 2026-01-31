@@ -3,7 +3,9 @@
 use App\Models\Payment;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
+use App\Services\CashPaymentGateway;
 use App\Services\PaymentService;
+use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     $this->user = User::factory()->create([
@@ -13,8 +15,11 @@ beforeEach(function () {
     $this->plan = SubscriptionPlan::factory()->create([
         'slug' => 'pro',
         'price' => 29.99,
+        'cards_limit' => 5,  // Pro plan allows 5 cards
+        'themes_limit' => 10,
     ]);
-    $this->service = app(PaymentService::class);
+    // Use CashPaymentGateway for tests (not Lahza which needs external API)
+    $this->service = new PaymentService(new CashPaymentGateway);
 });
 
 test('flow: complete subscription upgrade flow', function () {
@@ -22,11 +27,11 @@ test('flow: complete subscription upgrade flow', function () {
     $payment = $this->service->createSubscriptionPayment(
         $this->user,
         $this->plan,
-        'cash'
+        ['notes' => 'Cash payment']
     );
 
     expect($payment->status)->toBe('pending');
-    expect($payment->amount)->toBe(29.99);
+    expect((float) $payment->amount)->toBe(29.99);
 
     // Step 2: User remains on free tier
     $this->user->refresh();
@@ -55,7 +60,7 @@ test('flow: user receives notification after payment confirmation', function () 
 
     Notification::assertSentTo(
         $this->user,
-        \App\Notifications\PaymentConfirmedNotification::class
+        \App\Notifications\PaymentConfirmed::class
     );
 });
 
@@ -74,13 +79,13 @@ test('flow: subscription expiry date is set correctly', function () {
 
 test('flow: payment history is maintained', function () {
     // Create multiple payments
-    $payment1 = $this->service->createSubscriptionPayment($this->user, $this->plan, 'cash');
+    $payment1 = $this->service->createSubscriptionPayment($this->user, $this->plan);
     $this->service->confirmPaymentAndActivateSubscription($payment1);
 
-    $payment2 = $this->service->createSubscriptionPayment($this->user, $this->plan, 'cash');
+    $payment2 = $this->service->createSubscriptionPayment($this->user, $this->plan);
     $this->service->confirmPaymentAndActivateSubscription($payment2);
 
-    $history = $this->service->getUserPaymentHistory($this->user);
+    $history = $this->service->getPaymentHistory($this->user);
 
     expect($history)->toHaveCount(2);
     expect($history->every(fn ($p) => $p->status === 'completed'))->toBeTrue();
@@ -145,12 +150,13 @@ test('flow: payment can be refunded', function () {
     expect($payment->fresh()->status)->toBe('refunded');
 });
 
-test('flow: multiple payment methods are supported', function () {
-    $cashPayment = $this->service->createSubscriptionPayment($this->user, $this->plan, 'cash');
-    expect($cashPayment->payment_method)->toBe('cash');
+test('flow: multiple payments can be created for same plan', function () {
+    $payment1 = $this->service->createSubscriptionPayment($this->user, $this->plan);
+    $payment2 = $this->service->createSubscriptionPayment($this->user, $this->plan);
 
-    $bankPayment = $this->service->createSubscriptionPayment($this->user, $this->plan, 'bank_transfer');
-    expect($bankPayment->payment_method)->toBe('bank_transfer');
+    expect($payment1->id)->not->toBe($payment2->id);
+    expect($payment1->subscription_plan_id)->toBe($this->plan->id);
+    expect($payment2->subscription_plan_id)->toBe($this->plan->id);
 });
 
 test('flow: user can have pending and completed payments', function () {

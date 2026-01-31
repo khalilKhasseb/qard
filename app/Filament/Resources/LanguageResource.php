@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 
 class LanguageResource extends Resource
@@ -96,10 +97,11 @@ class LanguageResource extends Resource
                 Columns\TextColumn::make('code')
                     ->searchable(),
                 Columns\TextColumn::make('direction'),
-                Columns\IconColumn::make('is_active')
-                    ->boolean(),
-                Columns\IconColumn::make('is_default')
-                    ->boolean(),
+                ToggleColumn::make('is_active'),
+                //                    ->boolean(),
+                //                Columns\IconColumn::make('is_default')
+                //                    ->boolean(),
+                ToggleColumn::make('is_default'),
                 Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

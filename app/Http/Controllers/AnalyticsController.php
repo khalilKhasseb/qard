@@ -18,6 +18,13 @@ class AnalyticsController extends Controller
     {
         $user = $request->user();
 
+        // Check analytics capability
+        if (! $user->canUseAnalytics()) {
+            return Inertia::render('Analytics/Upgrade', [
+                'message' => 'Analytics feature requires a paid subscription.',
+            ]);
+        }
+
         // Get overall stats
         $stats = [
             'total_views' => $this->analyticsService->getTotalViews($user),
@@ -32,9 +39,9 @@ class AnalyticsController extends Controller
             ->orderByDesc('views_count')
             ->get();
 
-        // Get recent events
+        // Get recent events (reuse $cardAnalytics to avoid N+1)
         $recentEvents = AnalyticsEvent::query()
-            ->whereIn('business_card_id', $user->cards->pluck('id'))
+            ->whereIn('business_card_id', $cardAnalytics->pluck('id'))
             ->with('card:id,title')
             ->latest()
             ->take(20)
@@ -43,7 +50,7 @@ class AnalyticsController extends Controller
                 return [
                     'id' => $event->id,
                     'event_type' => $event->event_type,
-                    'card_title' => $event->businessCard?->title ?? 'Unknown Card',
+                    'card_title' => $event->card?->title ?? 'Unknown Card',
                     'created_at' => $event->created_at,
                 ];
             });

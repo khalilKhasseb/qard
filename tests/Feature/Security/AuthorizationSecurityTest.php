@@ -93,7 +93,7 @@ test('security: SQL injection attempts are prevented', function () {
 
     $response = $this->actingAs($this->user, 'sanctum')
         ->putJson(route('api.cards.update', $card), [
-            'title' => "'; DROP TABLE business_cards; --",
+            'title' => ['en' => "'; DROP TABLE business_cards; --"],
         ]);
 
     $response->assertOk();
@@ -107,10 +107,12 @@ test('security: XSS attempts are escaped', function () {
 
     $this->actingAs($this->user, 'sanctum')
         ->putJson(route('api.cards.update', $card), [
-            'title' => $xssPayload,
+            'title' => ['en' => $xssPayload],
         ]);
 
     $card->refresh();
-    expect($card->title)->toBe($xssPayload); // Stored as-is
+    // Title is now multilingual array
+    expect($card->title)->toBeArray()
+        ->and($card->title['en'])->toBe($xssPayload); // Stored as-is
     // Frontend should escape when displaying
 });

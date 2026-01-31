@@ -15,9 +15,9 @@ class LanguageResource extends JsonResource
             'direction' => $this->direction,
             'is_active' => $this->is_active,
             'is_default' => $this->is_default,
-            'labels' => $this->labels ?? [],
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'labels' => (object) ($this->labels ?? []),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

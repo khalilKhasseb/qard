@@ -1,6 +1,6 @@
 <template>
   <AuthenticatedLayout>
-    <Head title="Payment Confirmation" />
+    <Head :title="t('payments.confirmation')" />
 
     <div class="py-12">
       <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
@@ -12,40 +12,40 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 class="text-3xl font-bold text-gray-900 mb-2">Payment Received!</h2>
-            <p class="text-gray-600">Thank you for your purchase</p>
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ t('payments.confirmation_page.title') }}</h2>
+            <p class="text-gray-600">{{ t('payments.confirmation_page.thank_you') }}</p>
           </div>
 
           <div class="p-6">
             <!-- Payment Details -->
             <div class="bg-gray-50 rounded-lg p-6 mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
-              
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('payments.confirmation_page.details') }}</h3>
+
               <div class="space-y-3">
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Order ID:</span>
+                  <span class="text-gray-600">{{ t('payments.confirmation_page.order_id') }}</span>
                   <span class="font-semibold text-gray-900">#{{ payment.id }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Plan:</span>
+                  <span class="text-gray-600">{{ t('payments.confirmation_page.plan') }}</span>
                   <span class="font-semibold text-gray-900">{{ payment.subscription_plan.name }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Amount:</span>
+                  <span class="text-gray-600">{{ t('payments.confirmation_page.amount') }}</span>
                   <span class="font-semibold text-gray-900">${{ payment.amount }} {{ payment.currency.toUpperCase() }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Payment Method:</span>
+                  <span class="text-gray-600">{{ t('payments.confirmation_page.payment_method') }}</span>
                   <span class="font-semibold text-gray-900 capitalize">{{ payment.payment_method }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Status:</span>
+                  <span class="text-gray-600">{{ t('payments.confirmation_page.status') }}</span>
                   <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
                     {{ payment.status }}
                   </span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-600">Date:</span>
+                  <span class="text-gray-600">{{ t('payments.confirmation_page.date') }}</span>
                   <span class="font-semibold text-gray-900">{{ formatDate(payment.created_at) }}</span>
                 </div>
               </div>
@@ -53,31 +53,31 @@
 
             <!-- Next Steps -->
             <div class="bg-blue-50 rounded-lg p-6 mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-3">What's Next?</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ t('payments.confirmation_page.whats_next') }}</h3>
               <ul class="space-y-2">
                 <li class="flex items-start">
-                  <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-5 h-5 text-blue-600 me-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                   </svg>
-                  <span class="text-gray-700">Your payment is being processed and will be confirmed shortly</span>
+                  <span class="text-gray-700">{{ t('payments.confirmation_page.processing_info') }}</span>
                 </li>
                 <li class="flex items-start">
-                  <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-5 h-5 text-blue-600 me-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                   </svg>
-                  <span class="text-gray-700">You'll receive a confirmation email with your receipt</span>
+                  <span class="text-gray-700">{{ t('payments.confirmation_page.email_confirmation') }}</span>
                 </li>
                 <li class="flex items-start">
-                  <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-5 h-5 text-blue-600 me-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                   </svg>
-                  <span class="text-gray-700">Your account will be upgraded once payment is confirmed</span>
+                  <span class="text-gray-700">{{ t('payments.confirmation_page.upgrade_info') }}</span>
                 </li>
                 <li class="flex items-start">
-                  <svg class="w-5 h-5 text-blue-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg class="w-5 h-5 text-blue-600 me-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                   </svg>
-                  <span class="text-gray-700">Contact support if you have any questions</span>
+                  <span class="text-gray-700">{{ t('payments.confirmation_page.support_info') }}</span>
                 </li>
               </ul>
             </div>
@@ -85,10 +85,10 @@
             <!-- Actions -->
             <div class="flex flex-col sm:flex-row gap-3">
               <PrimaryButton @click="$inertia.visit(route('dashboard'))" class="flex-1 justify-center">
-                Go to Dashboard
+                {{ t('payments.confirmation_page.go_to_dashboard') }}
               </PrimaryButton>
               <SecondaryButton @click="$inertia.visit(route('payments.index'))" class="flex-1 justify-center">
-                View Subscription
+                {{ t('payments.confirmation_page.view_subscription') }}
               </SecondaryButton>
             </div>
           </div>
@@ -97,8 +97,8 @@
         <!-- Support -->
         <div class="mt-6 text-center">
           <p class="text-sm text-gray-600">
-            Need help? 
-            <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium">Contact Support</a>
+            {{ t('payments.confirmation_page.need_help') }}
+            <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium">{{ t('payments.confirmation_page.contact_support') }}</a>
           </p>
         </div>
       </div>
@@ -109,15 +109,18 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
+import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
+import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
+import { useTranslations } from '@/composables/useTranslations';
+
+const { t, locale } = useTranslations();
 
 defineProps({
   payment: Object,
 });
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US', {
+  return new Date(date).toLocaleDateString(locale.value, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

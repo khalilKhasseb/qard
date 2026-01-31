@@ -1,22 +1,15 @@
 <?php
 
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'user.verified'])
     ->name('dashboard');
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -72,10 +65,11 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     })->name('subscription.index');
 
-    // Language switching
-    Route::post('/language/switch', [App\Http\Controllers\Api\LanguageController::class, 'switchLanguage'])
-        ->name('language.switch');
 });
+
+// Language switching (no authentication required)
+Route::post('/language/switch', [App\Http\Controllers\Api\LanguageController::class, 'switchLanguage'])
+    ->name('language.switch');
 
 // Health Check Routes (no authentication required)
 Route::get('/health', [HealthController::class, 'check'])->name('health.check');
