@@ -18,53 +18,72 @@ class ThemeResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-paint-brush';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Cards';
-
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.cards');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.themes.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.themes.plural');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.themes.navigation_label');
+    }
 
     public static function form(Schema $form): Schema
     {
         return $form
             ->schema([
-                Schemas\Components\Section::make('Theme Details')
+                Schemas\Components\Section::make(__('filament.themes.sections.theme_details'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label(__('filament.themes.fields.name'))
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Select::make('user_id')
+                            ->label(__('filament.themes.fields.owner'))
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
-                            ->nullable()
-                            ->label('Owner'),
+                            ->nullable(),
                         Forms\Components\Toggle::make('is_system_default')
-                            ->label('System Default')
-                            ->helperText('System themes are available to all users'),
+                            ->label(__('filament.themes.fields.is_system_default'))
+                            ->helperText(__('filament.themes.fields.system_helper')),
                         Forms\Components\Toggle::make('is_public')
-                            ->label('Public')
-                            ->helperText('Public themes can be used by other users'),
+                            ->label(__('filament.themes.fields.is_public'))
+                            ->helperText(__('filament.themes.fields.public_helper')),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Colors')
+                Schemas\Components\Section::make(__('filament.themes.sections.colors'))
                     ->schema([
                         Forms\Components\ColorPicker::make('config.colors.primary')
-                            ->label('Primary Color'),
+                            ->label(__('filament.themes.fields.primary_color')),
                         Forms\Components\ColorPicker::make('config.colors.secondary')
-                            ->label('Secondary Color'),
+                            ->label(__('filament.themes.fields.secondary_color')),
                         Forms\Components\ColorPicker::make('config.colors.background')
-                            ->label('Background Color'),
+                            ->label(__('filament.themes.fields.background_color')),
                         Forms\Components\ColorPicker::make('config.colors.text')
-                            ->label('Text Color'),
+                            ->label(__('filament.themes.fields.text_color')),
                         Forms\Components\ColorPicker::make('config.colors.card_bg')
-                            ->label('Card Background'),
+                            ->label(__('filament.themes.fields.card_bg')),
                         Forms\Components\ColorPicker::make('config.colors.border')
-                            ->label('Border Color'),
+                            ->label(__('filament.themes.fields.border_color')),
                     ])->columns(3),
 
-                Schemas\Components\Section::make('Typography')
+                Schemas\Components\Section::make(__('filament.themes.sections.typography'))
                     ->schema([
                         Forms\Components\Select::make('config.fonts.heading')
-                            ->label('Heading Font')
+                            ->label(__('filament.themes.fields.heading_font'))
                             ->options([
                                 'Inter' => 'Inter',
                                 'Roboto' => 'Roboto',
@@ -75,7 +94,7 @@ class ThemeResource extends Resource
                             ])
                             ->default('Inter'),
                         Forms\Components\Select::make('config.fonts.body')
-                            ->label('Body Font')
+                            ->label(__('filament.themes.fields.body_font'))
                             ->options([
                                 'Inter' => 'Inter',
                                 'Roboto' => 'Roboto',
@@ -86,49 +105,50 @@ class ThemeResource extends Resource
                             ->default('Inter'),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Layout')
+                Schemas\Components\Section::make(__('filament.themes.sections.layout'))
                     ->schema([
                         Forms\Components\Select::make('config.layout.card_style')
-                            ->label('Card Style')
+                            ->label(__('filament.themes.fields.card_style'))
                             ->options([
-                                'elevated' => 'Elevated (Shadow)',
-                                'outlined' => 'Outlined (Border)',
-                                'filled' => 'Filled (Flat)',
+                                'elevated' => __('filament.themes.card_styles.elevated'),
+                                'outlined' => __('filament.themes.card_styles.outlined'),
+                                'filled' => __('filament.themes.card_styles.filled'),
                             ])
                             ->default('elevated'),
                         Forms\Components\TextInput::make('config.layout.border_radius')
-                            ->label('Border Radius')
+                            ->label(__('filament.themes.fields.border_radius'))
                             ->default('12px')
                             ->maxLength(20),
                         Forms\Components\Select::make('config.layout.alignment')
-                            ->label('Text Alignment')
+                            ->label(__('filament.themes.fields.alignment'))
                             ->options([
-                                'left' => 'Left',
-                                'center' => 'Center',
-                                'right' => 'Right',
+                                'left' => __('filament.themes.alignments.left'),
+                                'center' => __('filament.themes.alignments.center'),
+                                'right' => __('filament.themes.alignments.right'),
                             ])
                             ->default('center'),
                         Forms\Components\Select::make('config.layout.spacing')
-                            ->label('Spacing')
+                            ->label(__('filament.themes.fields.spacing'))
                             ->options([
-                                'compact' => 'Compact',
-                                'normal' => 'Normal',
-                                'relaxed' => 'Relaxed',
+                                'compact' => __('filament.themes.spacings.compact'),
+                                'normal' => __('filament.themes.spacings.normal'),
+                                'relaxed' => __('filament.themes.spacings.relaxed'),
                             ])
                             ->default('normal'),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Custom CSS')
+                Schemas\Components\Section::make(__('filament.themes.sections.custom_css'))
                     ->schema([
                         Forms\Components\Textarea::make('config.custom_css')
-                            ->label('Custom CSS')
+                            ->label(__('filament.themes.fields.custom_css'))
                             ->rows(6)
-                            ->placeholder('/* Add your custom CSS here */'),
+                            ->placeholder(__('filament.themes.fields.css_placeholder')),
                     ]),
 
-                Schemas\Components\Section::make('Preview')
+                Schemas\Components\Section::make(__('filament.themes.sections.preview'))
                     ->schema([
                         Forms\Components\FileUpload::make('preview_image')
+                            ->label(__('filament.themes.fields.preview_image'))
                             ->image()
                             ->directory('theme-previews')
                             ->nullable(),
@@ -141,33 +161,35 @@ class ThemeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('filament.themes.fields.name'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Owner')
-                    ->placeholder('System')
+                    ->label(__('filament.themes.fields.owner'))
+                    ->placeholder(__('filament.themes.fields.system'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_system_default')
-                    ->boolean()
-                    ->label('System'),
+                    ->label(__('filament.themes.fields.system'))
+                    ->boolean(),
                 Tables\Columns\IconColumn::make('is_public')
-                    ->boolean()
-                    ->label('Public'),
+                    ->label(__('filament.themes.fields.is_public'))
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('used_by_cards_count')
+                    ->label(__('filament.themes.fields.used_by'))
                     ->numeric()
-                    ->sortable()
-                    ->label('Used By'),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_system_default')
-                    ->label('System Default'),
+                    ->label(__('filament.themes.filters.system_default')),
                 Tables\Filters\TernaryFilter::make('is_public')
-                    ->label('Public'),
+                    ->label(__('filament.themes.filters.public')),
             ])
             ->actions([
                 Actions\ViewAction::make(),

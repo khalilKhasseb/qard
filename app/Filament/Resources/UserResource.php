@@ -19,67 +19,92 @@ class UserResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'User Management';
-
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.user_management');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.users.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.users.plural');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.users.navigation_label');
+    }
 
     public static function form(Schema $form): Schema
     {
         return $form
             ->schema([
-                Schemas\Components\Section::make('User Information')
+                Schemas\Components\Section::make(__('filament.users.sections.user_information'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label(__('filament.users.fields.name'))
                             ->required()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('email')
+                            ->label(__('filament.users.fields.email'))
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
                         Forms\Components\TextInput::make('password')
+                            ->label(__('filament.users.fields.password'))
                             ->password()
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (string $context): bool => $context === 'create')
                             ->maxLength(255),
                         Forms\Components\Toggle::make('is_admin')
-                            ->label('Administrator')
-                            ->helperText('Administrators have full access to the admin panel')
+                            ->label(__('filament.users.fields.is_admin'))
+                            ->helperText(__('filament.users.fields.admin_helper'))
                             ->default(false),
                         Forms\Components\DateTimePicker::make('email_verified_at')
-                            ->label('Email Verified At')
-                            ->helperText('Set this to manually verify the user\'s email'),
+                            ->label(__('filament.users.fields.email_verified_at'))
+                            ->helperText(__('filament.users.fields.email_verified_helper')),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Subscription')
+                Schemas\Components\Section::make(__('filament.users.sections.subscription'))
                     ->schema([
                         Forms\Components\Select::make('subscription_tier')
+                            ->label(__('filament.users.fields.subscription_tier'))
                             ->options([
-                                'free' => 'Free',
-                                'pro' => 'Pro',
-                                'business' => 'Business',
+                                'free' => __('filament.users.tiers.free'),
+                                'pro' => __('filament.users.tiers.pro'),
+                                'business' => __('filament.users.tiers.business'),
                             ])
                             ->default('free')
                             ->required(),
                         Forms\Components\Select::make('subscription_status')
+                            ->label(__('filament.users.fields.subscription_status'))
                             ->options([
-                                'pending' => 'Pending',
-                                'active' => 'Active',
-                                'canceled' => 'Canceled',
-                                'expired' => 'Expired',
+                                'pending' => __('filament.users.statuses.pending'),
+                                'active' => __('filament.users.statuses.active'),
+                                'canceled' => __('filament.users.statuses.canceled'),
+                                'expired' => __('filament.users.statuses.expired'),
                             ])
                             ->default('pending')
                             ->required(),
                         Forms\Components\DateTimePicker::make('subscription_expires_at')
+                            ->label(__('filament.users.fields.subscription_expires_at'))
                             ->nullable(),
                     ])->columns(3),
 
-                Schemas\Components\Section::make('Preferences')
+                Schemas\Components\Section::make(__('filament.users.sections.preferences'))
                     ->schema([
                         Forms\Components\Select::make('language')
+                            ->label(__('filament.users.fields.language'))
                             ->options([
                                 'en' => 'English',
-                                'ar' => 'Arabic',
+                                'ar' => 'العربية',
                             ])
                             ->default('en'),
                     ])->columns(1),
@@ -91,17 +116,19 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('filament.users.fields.name'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->label(__('filament.users.fields.email'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_admin')
                     ->boolean()
-                    ->label('Admin')
+                    ->label(__('filament.users.fields.is_admin'))
                     ->sortable(),
                 Tables\Columns\IconColumn::make('email_verified_at')
-                    ->label('Verified')
+                    ->label(__('filament.common.verified'))
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
@@ -109,6 +136,7 @@ class UserResource extends Resource
                     ->falseColor('danger')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('subscription_tier')
+                    ->label(__('filament.users.fields.subscription_tier'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'free' => 'gray',
@@ -117,6 +145,7 @@ class UserResource extends Resource
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('subscription_status')
+                    ->label(__('filament.users.fields.subscription_status'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -126,56 +155,59 @@ class UserResource extends Resource
                     }),
                 Tables\Columns\TextColumn::make('cards_count')
                     ->counts('cards')
-                    ->label('Cards'),
+                    ->label(__('filament.users.fields.cards_count')),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('last_login')
+                    ->label(__('filament.users.fields.last_login'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\Filter::make('unverified')
-                    ->label('Unverified Users')
+                    ->label(__('filament.users.filters.unverified'))
                     ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereNull('email_verified_at')),
                 Tables\Filters\Filter::make('verified')
-                    ->label('Verified Users')
+                    ->label(__('filament.users.filters.verified'))
                     ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->whereNotNull('email_verified_at')),
                 Tables\Filters\SelectFilter::make('subscription_tier')
+                    ->label(__('filament.users.fields.subscription_tier'))
                     ->options([
-                        'free' => 'Free',
-                        'pro' => 'Pro',
-                        'business' => 'Business',
+                        'free' => __('filament.users.tiers.free'),
+                        'pro' => __('filament.users.tiers.pro'),
+                        'business' => __('filament.users.tiers.business'),
                     ]),
                 Tables\Filters\SelectFilter::make('subscription_status')
+                    ->label(__('filament.users.fields.subscription_status'))
                     ->options([
-                        'pending' => 'Pending',
-                        'active' => 'Active',
-                        'canceled' => 'Canceled',
-                        'expired' => 'Expired',
+                        'pending' => __('filament.users.statuses.pending'),
+                        'active' => __('filament.users.statuses.active'),
+                        'canceled' => __('filament.users.statuses.canceled'),
+                        'expired' => __('filament.users.statuses.expired'),
                     ]),
             ])
             ->recordActions([
                 \Filament\Actions\Action::make('verify')
-                    ->label('Verify Email')
+                    ->label(__('filament.users.actions.verify'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (User $record): bool => is_null($record->email_verified_at))
                     ->action(function (User $record) {
                         $record->email_verified_at = now();
                         $record->save();
-                        // $record->update(['email_verified_at' => now()]);
                         \Filament\Notifications\Notification::make()
-                            ->title('User verified successfully')
-                            ->body("Email for {$record->name} has been verified.")
+                            ->title(__('filament.users.notifications.verified'))
+                            ->body(__('filament.users.notifications.verified_body', ['name' => $record->name]))
                             ->success()
                             ->send();
                     })
                     ->requiresConfirmation(),
                 \Filament\Actions\Action::make('unverify')
-                    ->label('Unverify Email')
+                    ->label(__('filament.users.actions.unverify'))
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn (User $record): bool => ! is_null($record->email_verified_at))
@@ -183,8 +215,8 @@ class UserResource extends Resource
                         $record->email_verified_at = null;
                         $record->save();
                         \Filament\Notifications\Notification::make()
-                            ->title('User unverified')
-                            ->body("Email verification for {$record->name} has been removed.")
+                            ->title(__('filament.users.notifications.unverified'))
+                            ->body(__('filament.users.notifications.unverified_body', ['name' => $record->name]))
                             ->success()
                             ->send();
                     })
@@ -195,7 +227,7 @@ class UserResource extends Resource
             ->toolbarActions([
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('verify_selected')
-                        ->label('Verify Selected')
+                        ->label(__('filament.users.actions.verify_selected'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(function ($records) {
@@ -208,8 +240,8 @@ class UserResource extends Resource
                             }
 
                             \Filament\Notifications\Notification::make()
-                                ->title('Users verified')
-                                ->body("{$count} users have been verified.")
+                                ->title(__('filament.users.notifications.bulk_verified'))
+                                ->body(__('filament.users.notifications.bulk_verified_body', ['count' => $count]))
                                 ->success()
                                 ->send();
                         })

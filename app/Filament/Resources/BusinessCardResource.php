@@ -22,9 +22,27 @@ class BusinessCardResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Cards';
-
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.cards');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.business_cards.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.business_cards.plural');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.business_cards.navigation_label');
+    }
 
     public static function form(Schema $form): Schema
     {
@@ -40,24 +58,24 @@ class BusinessCardResource extends Resource
                 ])
                     ->schema([
                         // Card Basic Information Section
-                        Schemas\Components\Section::make('Card Information')
-                            ->description('Basic card details and ownership')
+                        Schemas\Components\Section::make(__('filament.business_cards.sections.card_information'))
+                            ->description(__('filament.business_cards.sections.card_description'))
                             ->schema([
 
                                 Forms\Components\Select::make('user_id')
+                                    ->label(__('filament.business_cards.fields.user'))
                                     ->relationship('user', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required(),
-                                // ->columnSpan(1),
 
                                 Forms\Components\Select::make('language_id')
+                                    ->label(__('filament.business_cards.fields.language'))
                                     ->relationship('language', 'name')
                                     ->required()
                                     ->searchable()
                                     ->preload()
                                     ->reactive(),
-                                // ->columnSpan(1),
 
                                 // Multi-language Title with enhanced UI
                                 Schemas\Components\Group::make([
@@ -69,7 +87,7 @@ class BusinessCardResource extends Resource
                                                     fn (Language $language) => Schemas\Components\Tabs\Tab::make($language->name)
                                                         ->schema([
                                                             Forms\Components\TextInput::make("title.{$language->code}")
-                                                                ->label("Title ({$language->name})")
+                                                                ->label(__('filament.business_cards.fields.title')." ({$language->name})")
                                                                 ->required($language->is_default)
                                                                 ->maxLength(255)
                                                                 ->live()
@@ -95,7 +113,7 @@ class BusinessCardResource extends Resource
                                                     fn (Language $language) => Schemas\Components\Tabs\Tab::make($language->name)
                                                         ->schema([
                                                             Forms\Components\TextInput::make("subtitle.{$language->code}")
-                                                                ->label("Subtitle ({$language->name})")
+                                                                ->label(__('filament.business_cards.fields.subtitle')." ({$language->name})")
                                                                 ->maxLength(255),
                                                         ])
                                                 )
@@ -108,13 +126,14 @@ class BusinessCardResource extends Resource
                             ->collapsible(),
 
                         // Media Section
-                        Schemas\Components\Section::make('Media & Images')
-                            ->description('Upload card images and media')
+                        Schemas\Components\Section::make(__('filament.business_cards.sections.media_images'))
+                            ->description(__('filament.business_cards.sections.media_description'))
                             ->schema([
                                 Forms\Components\FileUpload::make('cover_image_path')
                                     ->image()
                                     ->disk('public')
-                                    ->directory('covers')
+                                    ->directory(fn ($record) => $record ? "users/{$record->user_id}/cards/{$record->id}/cover" : 'covers')
+                                    ->visibility('public')
                                     ->imageEditor()
                                     ->imageEditorAspectRatios([
                                         '16:9',
@@ -123,20 +142,21 @@ class BusinessCardResource extends Resource
                                     ])
                                     ->maxSize(5120) // 5MB
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                                    ->label('Cover Image')
-                                    ->helperText('Recommended: 1200x675px (16:9) for best display')
+                                    ->label(__('filament.business_cards.fields.cover_image'))
+                                    ->helperText(__('filament.business_cards.fields.cover_helper'))
                                     ->columnSpan(1),
 
                                 Forms\Components\FileUpload::make('profile_image_path')
                                     ->image()
                                     ->disk('public')
-                                    ->directory('profiles')
+                                    ->directory(fn ($record) => $record ? "users/{$record->user_id}/cards/{$record->id}/profile" : 'profiles')
+                                    ->visibility('public')
                                     ->imageEditor()
                                     ->imageEditorAspectRatios(['1:1'])
                                     ->maxSize(2048) // 2MB
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                                    ->label('Profile Image')
-                                    ->helperText('Recommended: 400x400px (1:1) square format')
+                                    ->label(__('filament.business_cards.fields.profile_image'))
+                                    ->helperText(__('filament.business_cards.fields.profile_helper'))
                                     ->columnSpan(1),
                             ])
 
@@ -145,10 +165,11 @@ class BusinessCardResource extends Resource
                     ])->columnSpanFull(),
 
                 // Appearance & Design Section
-                Schemas\Components\Section::make('Design & Appearance')
-                    ->description('Customize the card appearance')
+                Schemas\Components\Section::make(__('filament.business_cards.sections.design_appearance'))
+                    ->description(__('filament.business_cards.sections.design_description'))
                     ->schema([
                         Forms\Components\Select::make('template_id')
+                            ->label(__('filament.business_cards.fields.template'))
                             ->relationship('template', 'name')
                             ->searchable()
                             ->preload()
@@ -157,6 +178,7 @@ class BusinessCardResource extends Resource
                             ->columnSpan(1),
 
                         Forms\Components\Select::make('theme_id')
+                            ->label(__('filament.business_cards.fields.theme'))
                             ->relationship('theme', 'name')
                             ->searchable()
                             ->preload()
@@ -166,9 +188,9 @@ class BusinessCardResource extends Resource
 
                         // Enhanced theme overrides with KeyValue
                         Forms\Components\KeyValue::make('theme_overrides')
-                            ->label('Theme Customizations')
-                            ->keyLabel('CSS Property')
-                            ->valueLabel('Value')
+                            ->label(__('filament.business_cards.fields.theme_customizations'))
+                            ->keyLabel(__('filament.business_cards.fields.css_property'))
+                            ->valueLabel(__('filament.common.value'))
                             ->nullable()
                             ->columnSpanFull(),
                     ])
@@ -176,37 +198,40 @@ class BusinessCardResource extends Resource
                     ->collapsible(),
 
                 // URLs & Access Section
-                Schemas\Components\Section::make('URLs & Access')
-                    ->description('Configure card URLs and access settings')
+                Schemas\Components\Section::make(__('filament.business_cards.sections.urls_access'))
+                    ->description(__('filament.business_cards.sections.urls_description'))
                     ->schema([
                         Forms\Components\TextInput::make('custom_slug')
+                            ->label(__('filament.business_cards.fields.custom_slug'))
                             ->unique(ignoreRecord: true)
                             ->nullable()
                             ->prefix('u/')
                             ->maxLength(255)
                             ->regex('/^[a-zA-Z0-9\-_]+$/')
-                            ->helperText('Only letters, numbers, hyphens, and underscores allowed')
+                            ->helperText(__('filament.business_cards.fields.slug_helper'))
                             ->columnSpan(1),
 
                         Forms\Components\TextInput::make('share_url')
+                            ->label(__('filament.business_cards.fields.share_url'))
                             ->disabled()
                             ->dehydrated(false)
                             ->prefix('c/')
-                            ->helperText('Auto-generated unique identifier')
+                            ->helperText(__('filament.business_cards.fields.share_helper'))
                             ->columnSpan(1),
 
                         Forms\Components\TextInput::make('nfc_identifier')
+                            ->label(__('filament.business_cards.fields.nfc_identifier'))
                             ->unique(ignoreRecord: true)
                             ->nullable()
                             ->maxLength(255)
-                            ->helperText('NFC tag identifier for contactless sharing')
+                            ->helperText(__('filament.business_cards.fields.nfc_helper'))
                             ->columnSpan(1),
 
                         Forms\Components\Placeholder::make('full_url_preview')
-                            ->label('Card URL Preview')
+                            ->label(__('filament.business_cards.fields.full_url_preview'))
                             ->content(function (?BusinessCard $record): string {
                                 if (! $record) {
-                                    return 'Will be generated after saving';
+                                    return __('filament.business_cards.fields.url_generated_after_save');
                                 }
 
                                 return $record->full_url;
@@ -217,37 +242,37 @@ class BusinessCardResource extends Resource
                     ->collapsible(),
 
                 // Status & Visibility Section
-                Schemas\Components\Section::make('Status & Visibility')
-                    ->description('Control card visibility and status')
+                Schemas\Components\Section::make(__('filament.business_cards.sections.status_visibility'))
+                    ->description(__('filament.business_cards.sections.status_description'))
                     ->schema([
                         Forms\Components\Toggle::make('is_published')
-                            ->label('Published')
-                            ->helperText('Make this card publicly accessible')
+                            ->label(__('filament.business_cards.fields.is_published'))
+                            ->helperText(__('filament.business_cards.fields.published_helper'))
                             ->default(false)
                             ->columnSpan(1),
 
                         Forms\Components\Toggle::make('is_primary')
-                            ->label('Primary Card')
-                            ->helperText('Set as the default card for this user')
+                            ->label(__('filament.business_cards.fields.is_primary'))
+                            ->helperText(__('filament.business_cards.fields.primary_helper'))
                             ->default(false)
                             ->columnSpan(1),
 
                         Forms\Components\Placeholder::make('views_count')
-                            ->label('Total Views')
+                            ->label(__('filament.business_cards.fields.views_count'))
                             ->content(
                                 fn (?BusinessCard $record): string => $record?->views_count ?? '0'
                             )
                             ->columnSpan(1),
 
                         Forms\Components\Placeholder::make('shares_count')
-                            ->label('Total Shares')
+                            ->label(__('filament.business_cards.fields.shares_count'))
                             ->content(
                                 fn (?BusinessCard $record): string => $record?->shares_count ?? '0'
                             )
                             ->columnSpan(1),
 
                         Forms\Components\Placeholder::make('sections_count')
-                            ->label('Sections Count')
+                            ->label(__('filament.business_cards.fields.sections_count'))
                             ->content(
                                 fn (?BusinessCard $record): string => $record?->sections()->count() ?? '0'
                             )
@@ -265,7 +290,7 @@ class BusinessCardResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('profile_image_path')
-                    ->label('Avatar')
+                    ->label(__('filament.business_cards.fields.avatar'))
                     ->circular()
                     ->disk('public')
                     ->visibility('public')
@@ -273,16 +298,16 @@ class BusinessCardResource extends Resource
                     ->defaultImageUrl(url('/images/default-avatar.png')),
 
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Owner')
+                    ->label(__('filament.business_cards.fields.owner'))
                     ->searchable(['users.name', 'users.email'])
                     ->sortable()
                     ->description(fn (BusinessCard $record): ?string => $record->user->email),
 
                 Tables\Columns\TextColumn::make('title')
-                    ->label('Title')
+                    ->label(__('filament.business_cards.fields.title'))
                     ->formatStateUsing(function ($state) {
                         if (is_array($state)) {
-                            $defaultLang = 'en'; // Simplified approach
+                            $defaultLang = 'en';
 
                             return $state[$defaultLang] ?? reset($state) ?? '-';
                         }
@@ -301,10 +326,10 @@ class BusinessCardResource extends Resource
                     }),
 
                 Tables\Columns\TextColumn::make('subtitle')
-                    ->label('Subtitle')
+                    ->label(__('filament.business_cards.fields.subtitle'))
                     ->formatStateUsing(function ($state) {
                         if (is_array($state)) {
-                            $defaultLang = 'en'; // Simplified approach
+                            $defaultLang = 'en';
 
                             return $state[$defaultLang] ?? reset($state) ?? '-';
                         }
@@ -315,7 +340,7 @@ class BusinessCardResource extends Resource
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('language.name')
-                    ->label('Primary Language')
+                    ->label(__('filament.business_cards.fields.primary_language'))
                     ->badge()
                     ->color('info')
                     ->sortable()
@@ -323,13 +348,13 @@ class BusinessCardResource extends Resource
 
                 Tables\Columns\IconColumn::make('is_published')
                     ->boolean()
-                    ->label('Published')
+                    ->label(__('filament.business_cards.fields.published'))
                     ->trueColor('success')
                     ->falseColor('danger'),
 
                 Tables\Columns\IconColumn::make('is_primary')
                     ->boolean()
-                    ->label('Primary')
+                    ->label(__('filament.business_cards.fields.primary'))
                     ->trueColor('warning')
                     ->falseColor('gray')
                     ->toggleable(),
@@ -337,7 +362,7 @@ class BusinessCardResource extends Resource
                 Tables\Columns\TextColumn::make('views_count')
                     ->numeric()
                     ->sortable()
-                    ->label('Views')
+                    ->label(__('filament.business_cards.fields.views'))
                     ->alignCenter()
                     ->badge()
                     ->color('success'),
@@ -345,19 +370,20 @@ class BusinessCardResource extends Resource
                 Tables\Columns\TextColumn::make('shares_count')
                     ->numeric()
                     ->sortable()
-                    ->label('Shares')
+                    ->label(__('filament.business_cards.fields.shares'))
                     ->alignCenter()
                     ->badge()
                     ->color('primary'),
 
                 Tables\Columns\TextColumn::make('sections_count')
                     ->counts('sections')
-                    ->label('Sections')
+                    ->label(__('filament.business_cards.fields.sections'))
                     ->alignCenter()
                     ->badge()
                     ->color('gray'),
 
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -366,45 +392,49 @@ class BusinessCardResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_published')
-                    ->label('Published Status')
-                    ->trueLabel('Published')
-                    ->falseLabel('Draft')
-                    ->placeholder('All'),
+                    ->label(__('filament.business_cards.filters.published_status'))
+                    ->trueLabel(__('filament.business_cards.filters.published'))
+                    ->falseLabel(__('filament.business_cards.filters.draft'))
+                    ->placeholder(__('filament.common.all')),
 
                 Tables\Filters\TernaryFilter::make('is_primary')
-                    ->label('Primary Card')
-                    ->trueLabel('Primary Cards')
-                    ->falseLabel('Secondary Cards')
-                    ->placeholder('All'),
+                    ->label(__('filament.business_cards.filters.primary_card'))
+                    ->trueLabel(__('filament.business_cards.filters.primary_cards'))
+                    ->falseLabel(__('filament.business_cards.filters.secondary_cards'))
+                    ->placeholder(__('filament.common.all')),
 
                 Tables\Filters\SelectFilter::make('user')
+                    ->label(__('filament.business_cards.fields.user'))
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
                     ->multiple(),
 
                 Tables\Filters\SelectFilter::make('language')
+                    ->label(__('filament.business_cards.fields.language'))
                     ->relationship('language', 'name')
                     ->searchable()
                     ->preload()
                     ->multiple(),
 
                 Tables\Filters\Filter::make('has_cover_image')
-                    ->label('Has Cover Image')
+                    ->label(__('filament.business_cards.filters.has_cover_image'))
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('cover_image_path')),
 
                 Tables\Filters\Filter::make('popular')
-                    ->label('Popular Cards (10+ views)')
+                    ->label(__('filament.business_cards.filters.popular'))
                     ->query(fn (Builder $query): Builder => $query->where('views_count', '>=', 10)),
             ])
             ->actions([
                 Actions\Action::make('preview')
+                    ->label(__('filament.business_cards.actions.preview'))
                     ->icon('heroicon-o-eye')
                     ->url(fn (BusinessCard $record): string => $record->full_url)
                     ->openUrlInNewTab()
-                    ->tooltip('Preview Card'),
+                    ->tooltip(__('filament.business_cards.actions.preview_card')),
 
                 Actions\Action::make('duplicate')
+                    ->label(__('filament.business_cards.actions.duplicate'))
                     ->icon('heroicon-o-document-duplicate')
                     ->action(function (BusinessCard $record) {
                         $newCard = $record->replicate();
@@ -425,7 +455,7 @@ class BusinessCardResource extends Resource
                         }
                     })
                     ->requiresConfirmation()
-                    ->tooltip('Duplicate Card'),
+                    ->tooltip(__('filament.business_cards.actions.duplicate_card')),
 
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
@@ -433,12 +463,14 @@ class BusinessCardResource extends Resource
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     Actions\BulkAction::make('publish')
+                        ->label(__('filament.business_cards.actions.publish'))
                         ->icon('heroicon-o-eye')
                         ->action(fn ($records) => $records->each(fn ($record) => $record->update(['is_published' => true])))
                         ->requiresConfirmation()
                         ->deselectRecordsAfterCompletion(),
 
                     Actions\BulkAction::make('unpublish')
+                        ->label(__('filament.business_cards.actions.unpublish'))
                         ->icon('heroicon-o-eye-slash')
                         ->action(fn ($records) => $records->each(fn ($record) => $record->update(['is_published' => false])))
                         ->requiresConfirmation()

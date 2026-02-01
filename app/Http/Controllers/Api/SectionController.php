@@ -56,7 +56,7 @@ class SectionController extends Controller
 
         $directory = "users/{$user->id}/cards/{$card->id}/gallery";
         $filename = uniqid('gallery_').'.'.$request->file('image')->getClientOriginalExtension();
-        $path = $request->file('image')->storeAs($directory, $filename, 'public');
+        $path = $request->file('image')->storeAs($directory, $filename, ['disk' => 'public', 'visibility' => 'public']);
         $url = \Illuminate\Support\Facades\Storage::url($path);
 
         $content = $section->content ?? [];

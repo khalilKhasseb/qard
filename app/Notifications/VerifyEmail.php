@@ -28,6 +28,8 @@ class VerifyEmail extends Notification implements ShouldQueue
     {
         $verificationUrl = $this->verificationUrl($notifiable);
 
+        \Log::info($verificationUrl);
+
         return (new MailMessage)
             ->subject('Verify Email Address - '.config('app.name'))
             ->greeting('Hello '.$notifiable->name.'!')

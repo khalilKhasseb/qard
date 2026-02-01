@@ -234,15 +234,38 @@ const paymentProcessing = ref(false);
 
 const handlePayment = () => {
   if (form.payment_method === 'cash') {
-    form.post(route('api.payments.create'), {
-      onSuccess: () => {
-        // Redirect handled by controller
-      },
-    });
+    initCashPayment();
   } else if (form.payment_method === 'card') {
     // Initialize Lahza payment
     initLahzaPayment();
   }
+};
+
+const initCashPayment = () => {
+  form.processing = true;
+  checkoutError.value = null;
+
+  window.axios.post(route('api.payments.create'), {
+    subscription_plan_id: props.plan.id,
+    payment_method: 'cash',
+  })
+    .then(response => {
+      // For Inertia redirect, the redirect happens automatically
+      // For API response, manually navigate
+      if (response.data?.data?.id) {
+        window.location.href = route('payments.confirmation', response.data.data.id);
+      }
+    })
+    .catch(error => {
+      const message = error.response?.data?.message
+        || error.message
+        || 'Failed to create payment. Please try again.';
+      checkoutError.value = message;
+      showCheckoutModal.value = true;
+    })
+    .finally(() => {
+      form.processing = false;
+    });
 };
 
 const initLahzaPayment = () => {

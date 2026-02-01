@@ -37,8 +37,8 @@ class GenerateQrCode implements ShouldQueue
         $qrcode = new \chillerlan\QRCode\QRCode($options);
         $imageData = $qrcode->render($url);
 
-        $filename = "qrcodes/{$this->card->id}_".time().'.png';
-        Storage::disk('public')->put($filename, $imageData);
+        $filename = "users/{$this->card->user_id}/cards/{$this->card->id}/qr/qrcode_".time().'.png';
+        Storage::disk('public')->put($filename, $imageData, 'public');
 
         $this->card->update([
             'qr_code_url' => Storage::disk('public')->url($filename),

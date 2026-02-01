@@ -24,16 +24,46 @@ export interface User {
 }
 
 /**
- * User usage stats
+ * User capabilities (shared via Inertia auth.capabilities)
+ */
+export interface UserCapabilities {
+    can_create_card: boolean;
+    can_create_theme: boolean;
+    can_use_custom_css: boolean;
+    can_use_nfc: boolean;
+    can_use_analytics: boolean;
+    can_use_custom_domain: boolean;
+    can_access_premium_templates: boolean;
+    card_limit: number;
+    theme_limit: number;
+}
+
+/**
+ * User usage stats (from API /usage endpoint)
  */
 export interface UserUsage {
-    cardCount: number;
-    themeCount: number;
-    cardLimit: number;
-    themeLimit: number;
-    canCreateCard: boolean;
-    canCreateTheme: boolean;
-    canUseCustomCss: boolean;
+    cards: {
+        used: number;
+        limit: number;
+        can_create: boolean;
+    };
+    themes: {
+        used: number;
+        limit: number;
+        can_create: boolean;
+    };
+    features: {
+        custom_css: boolean;
+        nfc: boolean;
+        analytics: boolean;
+        custom_domain: boolean;
+        premium_templates: boolean;
+    };
+    subscription: {
+        plan_name: string;
+        status: string;
+        expires_at: string | null;
+    };
 }
 
 /**

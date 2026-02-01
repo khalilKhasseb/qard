@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Notifications\WelcomeEmail;
 use App\Services\Sms\OtpManager;
@@ -25,7 +26,13 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        $plans = SubscriptionPlan::where('is_active', true)
+            ->orderBy('price')
+            ->get();
+
+        return Inertia::render('Auth/Register', [
+            'plans' => $plans,
+        ]);
     }
 
     /**
@@ -35,26 +42,30 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // Normalize phone BEFORE validation so unique check works on normalized value
+        if ($request->has('phone')) {
+            $request->merge([
+                'phone' => $this->normalizePhone($request->phone),
+            ]);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'phone' => 'required|string|min:10|max:20|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'plan_id' => 'required|exists:subscription_plans,id',
         ]);
-
-        $phone = $this->normalizePhone($request->phone);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $phone,
+            'phone' => $request->phone, // Already normalized
             'password' => Hash::make($request->password),
+            'pending_plan_id' => $request->plan_id,
         ]);
 
         event(new Registered($user));
-
-        // Send welcome email
-        $user->notify(new WelcomeEmail);
 
         Auth::login($user);
 
@@ -63,12 +74,17 @@ class RegisteredUserController extends Controller
 
         if ($authSettings->verification_method === 'phone') {
             // Send OTP for phone verification
-            $this->otpManager->send($phone, 'registration');
+            $this->otpManager->send($request->phone, 'registration');
+
+            // Send welcome email (non-blocking)
+            $user->notify(new WelcomeEmail);
 
             return redirect(route('phone.verification.notice', absolute: false));
         }
 
-        // Default to email verification (Registered event already sends verification email)
+        // Send email verification notification directly
+        $user->sendEmailVerificationNotification();
+
         return redirect(route('verification.notice', absolute: false));
     }
 

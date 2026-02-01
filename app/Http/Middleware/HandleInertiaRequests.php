@@ -33,21 +33,54 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $general = app(GeneralSettings::class);
-        $locale = app()->getLocale();
 
+        // Get the current locale from session or app (set by LanguageMiddleware)
+        $languageCode = session('locale', app()->getLocale());
+
+        // Fetch the language details from database
+        $currentLanguage = Language::where('code', $languageCode)->active()->first();
+
+        // Fallback to default language if the session language is not found/active
+        if (! $currentLanguage) {
+            $currentLanguage = Language::active()->default()->first();
+            $languageCode = $currentLanguage?->code ?? 'en';
+        }
+
+        $languageDirection = $currentLanguage?->direction ?? 'ltr';
+
+        $user = $request->user();
+
+        //        dd($request);
         return [
             ...parent::share($request),
+            // Note: CSRF is handled automatically by Inertia via XSRF-TOKEN cookie
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'warning' => fn () => $request->session()->get('warning'),
+            ],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'capabilities' => $user ? [
+                    'can_create_card' => $user->canCreateCard(),
+                    'can_create_theme' => $user->canCreateTheme(),
+                    'can_use_custom_css' => $user->canUseCustomCss(),
+                    'can_use_nfc' => $user->canUseNfc(),
+                    'can_use_analytics' => $user->canUseAnalytics(),
+                    'can_use_custom_domain' => $user->canUseCustomDomain(),
+                    'can_access_premium_templates' => $user->canAccessPremiumTemplates(),
+                    'card_limit' => $user->getCardLimit(),
+                    'theme_limit' => $user->getThemeLimit(),
+                ] : null,
             ],
             'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
             'languages' => Language::active()->get(['name', 'code', 'direction']),
-            'currentLanguage' => $locale,
-            'currentDirection' => $this->getDirection($locale),
-            'translations' => fn () => $this->getTranslations($locale),
+            'currentLanguage' => $languageCode,
+            'currentDirection' => $languageDirection,
+            'translations' => fn () => $this->getTranslations($languageCode),
             'settings' => [
                 'site_name' => $general->site_name,
                 'site_description' => $general->site_description,

@@ -36,8 +36,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'user.verified' => \App\Http\Middleware\EnsureUserIsVerified::class,
             'phone.verified' => \App\Http\Middleware\EnsurePhoneIsVerified::class,
+            'subscribed' => \App\Http\Middleware\EnsureUserHasActiveSubscription::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Handle 419 CSRF token mismatch gracefully for Inertia
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $exception, \Illuminate\Http\Request $request) {
+            if ($response->getStatusCode() === 419) {
+                // For Inertia requests, redirect back with a flash message
+                if ($request->header('X-Inertia')) {
+                    return redirect()->back()->with('error', __('Your session has expired. Please try again.'));
+                }
+            }
+
+            return $response;
+        });
     })->create();

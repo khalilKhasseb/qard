@@ -65,13 +65,8 @@ const inputType = computed(() => {
     return 'text';
 });
 
-const submit = async () => {
-    try {
-        await axios.get('/sanctum/csrf-cookie');
-    } catch (error) {
-        console.error('Failed to initialize CSRF protection:', error);
-    }
-
+const submit = () => {
+    // Inertia's useForm handles CSRF automatically
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
     });

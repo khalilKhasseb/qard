@@ -19,43 +19,68 @@ class LanguageResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-language';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'System Management';
-
     protected static ?int $navigationSort = 3;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.system_management');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.languages.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.languages.plural');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.languages.navigation_label');
+    }
 
     public static function form(Schema $form): Schema
     {
         return $form
             ->schema([
-                Schemas\Components\Section::make('Language Information')
+                Schemas\Components\Section::make(__('filament.languages.sections.language_information'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label(__('filament.languages.fields.name'))
                             ->required()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('code')
+                            ->label(__('filament.languages.fields.code'))
                             ->required()
                             ->maxLength(10)
                             ->unique(ignoreRecord: true),
                         Forms\Components\Select::make('direction')
+                            ->label(__('filament.languages.fields.direction'))
                             ->options([
-                                'ltr' => 'Left to Right',
-                                'rtl' => 'Right to Left',
+                                'ltr' => __('filament.languages.directions.ltr'),
+                                'rtl' => __('filament.languages.directions.rtl'),
                             ])
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
+                            ->label(__('filament.languages.fields.is_active'))
                             ->required(),
                         Forms\Components\Toggle::make('is_default')
+                            ->label(__('filament.languages.fields.is_default'))
                             ->required(),
                     ])->columns(2),
-                Schemas\Components\Section::make('UI Labels')
-                    ->description('Manage label translations for this language')
+                Schemas\Components\Section::make(__('filament.languages.sections.ui_labels'))
+                    ->description(__('filament.languages.sections.labels_description'))
                     ->schema([
                         Forms\Components\Repeater::make('labels')
-                            ->label('Labels')
+                            ->label(__('filament.languages.fields.labels'))
                             ->schema([
                                 Forms\Components\TextInput::make('key')
+                                    ->label(__('filament.common.key'))
                                     ->required(),
                                 Forms\Components\TextInput::make('value')
+                                    ->label(__('filament.common.value'))
                                     ->required(),
                             ])
                             ->columns(2)
@@ -93,20 +118,24 @@ class LanguageResource extends Resource
         return $table
             ->columns([
                 Columns\TextColumn::make('name')
+                    ->label(__('filament.languages.fields.name'))
                     ->searchable(),
                 Columns\TextColumn::make('code')
+                    ->label(__('filament.languages.fields.code'))
                     ->searchable(),
-                Columns\TextColumn::make('direction'),
-                ToggleColumn::make('is_active'),
-                //                    ->boolean(),
-                //                Columns\IconColumn::make('is_default')
-                //                    ->boolean(),
-                ToggleColumn::make('is_default'),
+                Columns\TextColumn::make('direction')
+                    ->label(__('filament.languages.fields.direction')),
+                ToggleColumn::make('is_active')
+                    ->label(__('filament.languages.fields.is_active')),
+                ToggleColumn::make('is_default')
+                    ->label(__('filament.languages.fields.is_default')),
                 Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Columns\TextColumn::make('updated_at')
+                    ->label(__('filament.common.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

@@ -133,7 +133,7 @@ async function verifyCode() {
     isVerifying.value = true;
 
     try {
-        await axios.get('/sanctum/csrf-cookie');
+        // Use axios directly - the interceptor in bootstrap.js handles CSRF refresh
         const response = await axios.post(route('phone.verification.verify'), { code });
 
         if (response.data.success) {
@@ -150,6 +150,8 @@ async function verifyCode() {
             // Clear inputs
             otpInputs.value = ['', '', '', '', '', ''];
             inputRefs.value[0]?.focus();
+        } else if (err.response?.status === 419) {
+            error.value = 'Session expired. Please refresh the page and try again.';
         } else {
             error.value = 'An error occurred. Please try again.';
         }
@@ -165,6 +167,7 @@ async function resendCode() {
     isSending.value = true;
 
     try {
+        // Use axios directly - the interceptor in bootstrap.js handles CSRF refresh
         const response = await axios.post(route('phone.verification.send'));
 
         if (response.data.success) {
@@ -180,6 +183,8 @@ async function resendCode() {
             error.value = 'Please wait before requesting another code';
             cooldown.value = err.response.data.cooldownSeconds || 60;
             startCooldownTimer();
+        } else if (err.response?.status === 419) {
+            error.value = 'Session expired. Please refresh the page and try again.';
         } else {
             error.value = err.response?.data?.message || 'Failed to send code';
         }

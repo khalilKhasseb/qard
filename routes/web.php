@@ -8,20 +8,16 @@ use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
-    ->middleware(['auth', 'user.verified'])
-    ->name('dashboard');
-
-Route::middleware('auth:sanctum')->group(function () {
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// Routes requiring active subscription
+Route::middleware(['auth', 'user.verified', 'subscribed'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+        ->name('dashboard');
 
     // Business Cards
     Route::resource('cards', App\Http\Controllers\CardController::class);
     Route::post('/cards/{card}/publish', [App\Http\Controllers\CardController::class, 'publish'])->name('cards.publish');
     Route::post('/cards/{card}/publish-draft', [App\Http\Controllers\CardController::class, 'publishDraft'])->name('cards.publish-draft');
+    Route::post('/cards/{card}/discard-draft', [App\Http\Controllers\CardController::class, 'discardDraft'])->name('cards.discard-draft');
     Route::put('/cards/{card}/sections', [App\Http\Controllers\CardController::class, 'updateSections'])->name('cards.sections.update');
     Route::post('/cards/{card}/sections', [App\Http\Controllers\SectionController::class, 'store'])->name('cards.sections.store');
     Route::post('/cards/{card}/sections/reorder', [App\Http\Controllers\SectionController::class, 'reorder'])->name('cards.sections.reorder');
@@ -37,6 +33,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Analytics
     Route::get('/analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])
         ->name('analytics.index');
+});
+
+// Routes accessible without subscription (needed to subscribe!)
+Route::middleware(['auth', 'user.verified'])->group(function () {
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Payments & Subscriptions
     Route::get('/payments', [App\Http\Controllers\PaymentController::class, 'index'])
@@ -54,17 +58,72 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/subscription', function () {
         $user = request()->user();
         $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
+        $plan = $subscription?->subscriptionPlan;
 
         // Get all active plans (available for upgrade)
         $plans = \App\Models\SubscriptionPlan::where('is_active', true)
             ->orderBy('price')
             ->get();
 
+        // Pass all subscription data so the page doesn't need API calls
         return Inertia::render('Subscription/Index', [
             'availablePlans' => $plans,
+            'subscription' => $subscription ? [
+                'data' => [
+                    'id' => $subscription->id,
+                    'status' => $subscription->status,
+                    'start_date' => $subscription->start_date,
+                    'end_date' => $subscription->end_date,
+                    'plan' => $plan ? [
+                        'id' => $plan->id,
+                        'name' => $plan->name,
+                        'price' => $plan->price,
+                        'billing_cycle' => $plan->billing_cycle,
+                        'cards_limit' => $plan->cards_limit,
+                        'themes_limit' => $plan->themes_limit,
+                        'features' => $plan->features,
+                    ] : null,
+                ],
+            ] : null,
+            'usage' => [
+                'cards' => [
+                    'used' => $user->cards()->count(),
+                    'limit' => $user->getCardLimit(),
+                    'can_create' => $user->canCreateCard(),
+                ],
+                'themes' => [
+                    'used' => $user->themes()->count(),
+                    'limit' => $user->getThemeLimit(),
+                    'can_create' => $user->canCreateTheme(),
+                ],
+            ],
         ]);
     })->name('subscription.index');
 
+    // Subscription sync (web route for Inertia)
+    Route::post('/subscription/sync', function () {
+        $user = request()->user();
+        $subscription = $user->activeSubscription()->first();
+
+        if ($subscription) {
+            // Sync logic here if needed
+            $subscription->touch(); // Update timestamp
+        }
+
+        return redirect()->back()->with('success', __('Subscription synced successfully.'));
+    })->name('subscription.sync');
+
+    // Subscription cancel (web route for Inertia)
+    Route::post('/subscription/cancel', function () {
+        $user = request()->user();
+        $subscription = $user->activeSubscription()->first();
+
+        if ($subscription) {
+            $subscription->update(['status' => 'cancelled']);
+        }
+
+        return redirect()->back()->with('success', __('Subscription cancelled successfully.'));
+    })->name('subscription.cancel');
 });
 
 // Language switching (no authentication required)

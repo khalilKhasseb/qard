@@ -36,6 +36,8 @@ return [
         'published' => 'Published',
         'cover_image' => 'Cover Image',
         'profile_image' => 'Profile Image',
+        'change' => 'Change',
+        'max_size' => 'Max 2MB',
     ],
 
     // Actions
@@ -53,6 +55,36 @@ return [
         'published' => 'Published',
         'draft' => 'Draft',
         'views' => ':count views',
+    ],
+
+    // Publishing & Draft
+    'publishing' => [
+        'title' => 'Publishing',
+        'status' => 'Status',
+        'published' => 'Published',
+        'draft' => 'Draft',
+        'pending_changes' => 'Pending Changes',
+        'unpublished_changes' => 'You have unpublished changes',
+        'unpublished_changes_hint' => 'The form shows your draft changes. These are not visible on the live card until published.',
+        'changed_fields' => 'Changed fields:',
+        'publish_changes' => 'Publish Changes',
+        'discard_changes' => 'Discard',
+        'discard_confirm' => 'Are you sure you want to discard all draft changes? This cannot be undone.',
+        'publish_card' => 'Publish Card',
+        'unpublish_card' => 'Unpublish Card',
+        'delete_card' => 'Delete Card',
+        'delete_confirm' => 'Are you sure you want to delete this card? This action cannot be undone.',
+        'editing_draft' => 'Editing draft',
+        'field_labels' => [
+            'title' => 'Title',
+            'subtitle' => 'Subtitle',
+            'theme_id' => 'Theme',
+            'language_id' => 'Language',
+            'cover_image_path' => 'Cover Image',
+            'profile_image_path' => 'Profile Image',
+            'custom_slug' => 'Custom URL',
+            'active_languages' => 'Active Languages',
+        ],
     ],
 
     // Messages

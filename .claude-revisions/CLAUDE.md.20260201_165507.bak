@@ -470,46 +470,6 @@ $pages->assertNoJavascriptErrors()->assertNoConsoleLogs();
 
 </code-snippet>
 
-### File Uploads with PUT/PATCH Requests (Method Spoofing)
-
-When uploading files with Inertia's `useForm`, using `form.put()` or `form.patch()` can cause **405 Method Not Allowed** errors. This happens because:
-
-1. HTML forms with `multipart/form-data` only support POST natively
-2. Inertia converts PUT/PATCH to POST with `_method` field (method spoofing)
-3. Server/middleware may redirect or mishandle the request, causing URL resolution issues
-
-**Symptoms:**
-- Error: `PUT http://example.com/resource/1/edit 405 (Method Not Allowed)`
-- The URL changes from `/resource/1` to `/resource/1/edit` (from Referer header)
-- Only happens when files are being uploaded (`forceFormData: true`)
-
-**Solution:** Use `form.post()` with manual `_method` spoofing for file uploads:
-
-<code-snippet name="File Upload with Method Spoofing" lang="javascript">
-const saveWithFiles = () => {
-    const updateUrl = route('resource.update', { resource: props.resource.id });
-
-    const options = {
-        preserveScroll: true,
-        onError: (errors) => console.error('Save error:', errors)
-    };
-
-    if (form.hasFile) {
-        options.forceFormData = true;
-    }
-
-    // Use post() with _method: 'put' for reliable file uploads
-    form.transform((data) => ({
-        ...data,
-        _method: 'put', // Method spoofing
-    })).post(updateUrl, options);
-};
-</code-snippet>
-
-**Important:** Always use explicit route parameters with Ziggy for resource routes:
-- ✅ `route('cards.update', { card: props.card.id })`
-- ❌ `route('cards.update', props.card.id)`
-
 === tailwindcss/core rules ===
 
 ## Tailwind CSS

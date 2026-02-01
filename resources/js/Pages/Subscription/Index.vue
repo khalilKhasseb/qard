@@ -114,23 +114,23 @@
                       <div>
                         <p class="font-medium text-gray-900">{{ t('payments.subscription.business_cards', { count: '' }).replace(':', '') }}</p>
                         <p class="text-sm text-gray-600">
-                          {{ t('payments.subscription.of_used', { count: usageStats.cardCount, limit: subscription.data.plan?.card_limit }) }}
+                          {{ t('payments.subscription.of_used', { count: usageStats.cardCount, limit: cardsLimit }) }}
                         </p>
                       </div>
                       <div class="flex items-center gap-2">
                         <span
                           class="px-2 py-1 text-xs font-medium rounded-full"
-                          :class="usageStats.cardCount >= subscription.data.plan?.card_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+                          :class="usageStats.cardCount >= cardsLimit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
                         >
-                          {{ t('payments.subscription.remaining', { count: subscription.data.plan?.card_limit - usageStats.cardCount }) }}
+                          {{ t('payments.subscription.remaining', { count: cardsRemaining }) }}
                         </span>
                       </div>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
                       <div
                         class="h-2 rounded-full transition-all"
-                        :class="usageStats.cardCount >= subscription.data.plan?.card_limit ? 'bg-red-500' : 'bg-green-500'"
-                        :style="`width: ${(usageStats.cardCount / subscription.data.plan?.card_limit) * 100}%`"
+                        :class="usageStats.cardCount >= cardsLimit ? 'bg-red-500' : 'bg-green-500'"
+                        :style="`width: ${cardsLimit > 0 ? (usageStats.cardCount / cardsLimit) * 100 : 0}%`"
                       ></div>
                     </div>
 
@@ -139,20 +139,20 @@
                       <div>
                         <p class="font-medium text-gray-900">{{ t('payments.subscription.custom_themes', { count: '' }).replace(':', '') }}</p>
                         <p class="text-sm text-gray-600">
-                          {{ t('payments.subscription.of_used', { count: usageStats.themeCount, limit: subscription.data.plan?.theme_limit }) }}
+                          {{ t('payments.subscription.of_used', { count: usageStats.themeCount, limit: themesLimit }) }}
                         </p>
                       </div>
                       <span
                         class="px-2 py-1 text-xs font-medium rounded-full"
-                        :class="usageStats.themeCount >= subscription.data.plan?.theme_limit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
+                        :class="usageStats.themeCount >= themesLimit ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
                       >
-                        {{ t('payments.subscription.remaining', { count: subscription.data.plan?.theme_limit - usageStats.themeCount }) }}
+                        {{ t('payments.subscription.remaining', { count: themesRemaining }) }}
                       </span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
                       <div
                         class="h-2 rounded-full bg-green-500 transition-all"
-                        :style="`width: ${(usageStats.themeCount / subscription.data.plan?.theme_limit) * 100}%`"
+                        :style="`width: ${themesLimit > 0 ? (usageStats.themeCount / themesLimit) * 100 : 0}%`"
                       ></div>
                     </div>
                   </div>
@@ -338,10 +338,9 @@
 
 <script setup>
 
-import { ref, onMounted, computed } from 'vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { Head, router, usePage, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import axios from 'axios';
 import { useTranslations } from '@/composables/useTranslations';
 
 const { t, locale } = useTranslations();
@@ -352,158 +351,76 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  subscription: {
+    type: Object,
+    default: null,
+  },
+  usage: {
+    type: Object,
+    default: () => ({ cards: { used: 0, limit: 0 }, themes: { used: 0, limit: 0 } }),
+  },
 });
 
-const subscription = ref(null);
-const loading = ref(true);
+const subscription = ref(props.subscription);
+const loading = ref(false);
 const error = ref(null);
 const syncing = ref(false);
-const cardCount = ref(0);
-const themeCount = ref(0);
+const cardCount = ref(props.usage?.cards?.used || 0);
+const themeCount = ref(props.usage?.themes?.used || 0);
+
+// Update local state when props change (after Inertia reload)
+watch(() => props.subscription, (newVal) => {
+  subscription.value = newVal;
+}, { deep: true });
+
+watch(() => props.usage, (newVal) => {
+  cardCount.value = newVal?.cards?.used || 0;
+  themeCount.value = newVal?.themes?.used || 0;
+}, { deep: true });
 
 const usageStats = computed(() => ({
   cardCount: cardCount.value,
   themeCount: themeCount.value,
 }));
 
-const loadSubscription = async () => {
-  loading.value = true;
-  error.value = null;
+// Safe getters for plan limits with fallback to 0
+const cardsLimit = computed(() => subscription.value?.data?.plan?.cards_limit ?? 0);
+const themesLimit = computed(() => subscription.value?.data?.plan?.themes_limit ?? 0);
+const cardsRemaining = computed(() => Math.max(0, cardsLimit.value - cardCount.value));
+const themesRemaining = computed(() => Math.max(0, themesLimit.value - themeCount.value));
 
-  try {
-    // Get the XSRF token from cookies (Laravel Sanctum session auth)
-    const xsrfToken = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('XSRF-TOKEN='))
-      ?.split('=')[1];
-
-    // Decode the token if it's URL encoded
-    const csrfToken = xsrfToken ? decodeURIComponent(xsrfToken) : null;
-    
-    // Load subscription data
-    // await axios.get('/sanctum/csrf-cookie');
-
-    // const t =await  axios.get('/api/subscription',{
-    //    withCredentials: true,
-    // });
-    //   console.log(t);
-
-    //   return ;
-    const response = await fetch('/api/subscription', {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to load subscription');
-    }
-
-    const data = await response.json();
-    
-    if (data.data) {
-      console.log(data);
-      subscription.value = data;
-    }
-
-    // Load usage stats
-    const statsResponse = await fetch('/api/usage', {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
-      },
-    });
-
-    if (statsResponse.ok) {
-      const statsData = await statsResponse.json();
-      cardCount.value = statsData.cardCount || 0;
-      themeCount.value = statsData.themeCount || 0;
-    }
-  } catch (err) {
-    error.value = t('payments.subscription.load_error');
-    console.error(err);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const syncSubscription = async () => {
+const syncSubscription = () => {
   syncing.value = true;
   error.value = null;
 
-  try {
-    const xsrfToken = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('XSRF-TOKEN='))
-      ?.split('=')[1];
-    const csrfToken = xsrfToken ? decodeURIComponent(xsrfToken) : null;
-    
-    const response = await fetch('/api/subscription/sync', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to sync subscription');
-    }
-
-    const data = await response.json();
-    
-    if (data.data) {
-      subscription.value = data;
-    }
-
-    // Show success message
-    alert(t('payments.subscription.sync_success'));
-  } catch (err) {
-    error.value = t('payments.subscription.sync_error');
-    console.error(err);
-  } finally {
-    syncing.value = false;
-  }
+  // Use Inertia POST which handles CSRF automatically
+  router.post(route('subscription.sync'), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      syncing.value = false;
+    },
+    onError: (errors) => {
+      error.value = errors.message || t('payments.subscription.sync_error');
+      syncing.value = false;
+    },
+    onFinish: () => {
+      syncing.value = false;
+    },
+  });
 };
 
-const cancelSubscription = async () => {
+const cancelSubscription = () => {
   if (!confirm(t('payments.subscription.cancel_confirm'))) {
     return;
   }
 
-  try {
-    const xsrfToken = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('XSRF-TOKEN='))
-      ?.split('=')[1];
-    const csrfToken = xsrfToken ? decodeURIComponent(xsrfToken) : null;
-    
-    const response = await fetch('/api/subscription/cancel', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...(csrfToken && { 'X-XSRF-TOKEN': csrfToken }),
-      },
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || 'Failed to cancel subscription');
-    }
-
-    const data = await response.json();
-    subscription.value = data;
-
-    alert(t('payments.subscription.cancel_success'));
-  } catch (err) {
-    error.value = err.message;
-    console.error(err);
-  }
+  // Use Inertia POST which handles CSRF automatically
+  router.post(route('subscription.cancel'), {}, {
+    preserveScroll: true,
+    onError: (errors) => {
+      error.value = errors.message || t('payments.subscription.cancel_error');
+    },
+  });
 };
 
 const upgradePlan = () => {
@@ -528,8 +445,5 @@ const formatDate = (dateString) => {
   });
 };
 
-onMounted(() => {
-
-  loadSubscription();
-});
+// Data is already loaded via props from the server, no API calls needed on mount
 </script>

@@ -11,11 +11,14 @@ class LatestPayments extends BaseWidget
 {
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Latest Payments';
-
     public static function getSort(): int
     {
         return 5;
+    }
+
+    public function getHeading(): string
+    {
+        return __('filament.widgets.latest_payments.heading');
     }
 
     public function table(Table $table): Table
@@ -26,16 +29,18 @@ class LatestPayments extends BaseWidget
             )
             ->columns([
                 Tables\Columns\TextColumn::make('transaction_id')
-                    ->label('Transaction')
+                    ->label(__('filament.widgets.latest_payments.transaction'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User'),
+                    ->label(__('filament.widgets.latest_payments.user')),
                 Tables\Columns\TextColumn::make('plan.name')
-                    ->label('Plan')
+                    ->label(__('filament.widgets.latest_payments.plan'))
                     ->placeholder('N/A'),
                 Tables\Columns\TextColumn::make('amount')
+                    ->label(__('filament.widgets.latest_payments.amount'))
                     ->money(fn ($record) => $record->currency),
                 Tables\Columns\TextColumn::make('status')
+                    ->label(__('filament.widgets.latest_payments.status'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -45,8 +50,8 @@ class LatestPayments extends BaseWidget
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->label('Date'),
+                    ->label(__('filament.widgets.latest_payments.date'))
+                    ->dateTime(),
             ])
             ->paginated(false);
     }

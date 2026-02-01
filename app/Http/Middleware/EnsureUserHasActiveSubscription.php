@@ -16,13 +16,22 @@ class EnsureUserHasActiveSubscription
             return redirect()->route('login');
         }
 
-        // Allow access if user has active subscription or is on free tier
-        if ($user->isSubscriptionActive() || $user->subscription_tier === 'free') {
+        // Admins bypass subscription check
+        if ($user->isAdmin()) {
             return $next($request);
         }
 
-        // Redirect to payment page if subscription is expired/canceled
-        return redirect()->route('payments.index')
-            ->with('warning', 'Please renew your subscription to continue.');
+        // Check for active subscription via UserSubscription model
+        $hasActiveSubscription = $user->activeSubscription()
+            ->where('status', 'active')
+            ->exists();
+
+        if ($hasActiveSubscription) {
+            return $next($request);
+        }
+
+        // No active subscription - redirect to plan selection
+        return redirect()->route('subscription.index')
+            ->with('warning', __('Please select a subscription plan to continue.'));
     }
 }

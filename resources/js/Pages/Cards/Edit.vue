@@ -27,7 +27,7 @@
                     :languages="languages"
                     :input-language="inputLanguage"
                     :active-languages="activeLanguages"
-                    :primary-language-id="form.language_id"
+                    :primary-language-id="Number(form.language_id)"
                     @switch-language="switchInputLanguage"
                     @toggle-language="toggleLanguageActivation"
                 />
@@ -42,6 +42,8 @@
                             :themes="themes"
                             :languages="languages"
                             :input-language="inputLanguage"
+                            :draft-fields="draftFields"
+                            :draft-image-urls="draftImageUrls"
                             :t="t"
                             @save="saveBasicInfo"
                             @update:form="updateForm"
@@ -64,9 +66,11 @@
                         <!-- Publishing -->
                         <PublishingPanel
                             :card="card"
+                            :draft-fields="draftFields"
                             :t="t"
                             @toggle-publish="togglePublish"
                             @publish-draft="publishDraftChanges"
+                            @discard-draft="discardDraft"
                             @delete-card="deleteCard"
                         />
 
@@ -122,6 +126,18 @@ const props = defineProps({
     themes: Array,
     languages: Array,
     publicUrl: String,
+    hasDraft: {
+        type: Boolean,
+        default: false,
+    },
+    draftFields: {
+        type: Array,
+        default: () => [],
+    },
+    draftImageUrls: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const page = usePage();
@@ -164,15 +180,51 @@ const initializeMultilingualObject = (existingData) => {
 
 const activeLanguages = ref(props.card.active_languages || [cardLangCode || 'en']);
 
+// Draft editing mode - when true, form shows draft values
+const editingDraft = ref(props.hasDraft);
+
+// Helper to get value from draft or live data
+const getDraftOrLiveValue = (field, liveValue) => {
+    if (props.hasDraft && props.card.draft_data && props.card.draft_data[field] !== undefined) {
+        return props.card.draft_data[field];
+    }
+    return liveValue;
+};
+
+// Check if a specific field has draft changes
+const fieldHasDraft = (field) => {
+    return props.draftFields.includes(field);
+};
+
+// Initialize form with draft data if available, otherwise use live data
 const form = useForm({
-    title: initializeMultilingualObject(props.card.title),
-    subtitle: initializeMultilingualObject(props.card.subtitle),
-    theme_id: props.card.theme_id || '',
-    language_id: props.card.language_id || props.languages[0]?.id || null,
+    title: initializeMultilingualObject(getDraftOrLiveValue('title', props.card.title)),
+    subtitle: initializeMultilingualObject(getDraftOrLiveValue('subtitle', props.card.subtitle)),
+    theme_id: getDraftOrLiveValue('theme_id', props.card.theme_id) || '',
+    language_id: getDraftOrLiveValue('language_id', props.card.language_id) || props.languages[0]?.id || null,
     active_languages: activeLanguages.value,
     cover_image: null,
     profile_image: null,
 });
+
+// Store original live values for comparison
+const liveData = {
+    title: props.card.title,
+    subtitle: props.card.subtitle,
+    theme_id: props.card.theme_id,
+    language_id: props.card.language_id,
+    cover_image_path: props.card.cover_image_path,
+    profile_image_path: props.card.profile_image_path,
+};
+
+// Discard draft and reload with live data
+const discardDraft = () => {
+    if (confirm('Are you sure you want to discard all draft changes? This cannot be undone.')) {
+        router.post(route('cards.discard-draft', { card: props.card.id }), {}, {
+            preserveScroll: true,
+        });
+    }
+};
 
 // Component methods
 const switchInputLanguage = (code) => {
@@ -227,10 +279,25 @@ const labelsByCode = computed(() => {
     return map;
 });
 
+// Get shared translations from Inertia
+const sharedTranslations = computed(() => page.props.translations?.cards || {});
+
 const t = (key, count = 0) => {
+    // First check language-specific labels
     const labels = labelsByCode.value[inputLanguage.value] || {};
     const fallback = labelsByCode.value.en || {};
-    let value = labels[key] ?? fallback[key] ?? key;
+
+    // Then check shared Inertia translations (nested keys like 'publishing.title')
+    const getNestedValue = (obj, path) => {
+        return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+    };
+
+    let value = labels[key] ?? fallback[key];
+
+    // If not found in labels, try shared translations
+    if (value === undefined) {
+        value = getNestedValue(sharedTranslations.value, key) ?? key;
+    }
 
     if (typeof value === 'string' && value.includes(':count')) {
         value = value.replace(':count', String(count));
@@ -251,14 +318,12 @@ const ensureTitleLanguageExists = () => {
 const saveBasicInfo = () => {
     ensureTitleLanguageExists();
 
-    const formData = {
-        ...form.data(),
-        save_as_draft: true
-    };
+    // Build the update URL explicitly with the card parameter
+    const updateUrl = route('cards.update', { card: props.card.id });
 
     const options = {
         preserveScroll: true,
-        only: ['card'],
+        only: ['card', 'hasDraft', 'draftFields', 'draftImageUrls'],
         onError: (errors) => {
             console.error('Save error:', errors);
         }
@@ -272,16 +337,18 @@ const saveBasicInfo = () => {
         };
     }
 
+    // Use post() with _method: 'put' for reliable file uploads (method spoofing)
     form.transform((data) => ({
         ...data,
+        _method: 'put',
         theme_id: data.theme_id === '' ? null : data.theme_id,
         save_as_draft: true
-    })).put(route('cards.update', props.card.id), options);
+    })).post(updateUrl, options);
 };
 
 const togglePublish = () => {
     router.post(
-        route('cards.publish', props.card.id),
+        route('cards.publish', { card: props.card.id }),
         {is_published: !props.card.is_published},
         {
             preserveScroll: true,
@@ -294,14 +361,14 @@ const togglePublish = () => {
 
 const deleteCard = () => {
     if (confirm('Are you sure you want to delete this card? This action cannot be undone.')) {
-        router.delete(route('cards.destroy', props.card.id));
+        router.delete(route('cards.destroy', { card: props.card.id }));
     }
 };
 
 const publishDraftChanges = () => {
     if (confirm('Are you sure you want to publish these draft changes?')) {
         router.post(
-            route('cards.publish-draft', props.card.id),
+            route('cards.publish-draft', { card: props.card.id }),
             {},
             {
                 preserveScroll: true,
@@ -315,7 +382,7 @@ const publishDraftChanges = () => {
 
 const saveSections = () => {
     savingSections.value = true;
-    router.put(route('cards.sections.update', props.card.id), {
+    router.put(route('cards.sections.update', { card: props.card.id }), {
         sections: sections.value
     }, {
         preserveScroll: true,

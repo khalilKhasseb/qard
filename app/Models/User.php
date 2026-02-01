@@ -7,6 +7,7 @@ use App\Notifications\VerifyEmail;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -29,6 +30,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'subscription_tier',
         'subscription_status',
         'subscription_expires_at',
+        'pending_plan_id',
         'last_login',
     ];
 
@@ -76,6 +78,29 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             ->latest();
     }
 
+    public function pendingPlan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'pending_plan_id');
+    }
+
+    /**
+     * Determine where to redirect user after verification.
+     */
+    public function getPostVerificationRedirect(): string
+    {
+        // If has pending plan and no active subscription, go to checkout
+        if ($this->pending_plan_id && ! $this->activeSubscription()->exists()) {
+            return route('payments.checkout', $this->pending_plan_id);
+        }
+
+        // If no subscription at all, go to plan selection
+        if (! $this->activeSubscription()->exists()) {
+            return route('subscription.index');
+        }
+
+        return route('dashboard');
+    }
+
     public function translationUsage(): HasMany
     {
         return $this->hasMany(UserTranslationUsage::class);
@@ -113,6 +138,18 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $this->cards()->count() < $limit;
     }
 
+    public function canUsePlan(): bool
+    {
+        // get user plan and  see if its active
+        //
+        return $this->whereHas('subscriptions', function ($query) {
+            $query->whereHas('subscriptionPlan', function ($query) {
+                $query->where('status', 'active');
+            });
+        })->get()->count() > 0;
+
+    }
+
     public function canCreateTheme(): bool
     {
         if ($this->isAdmin()) {
@@ -140,26 +177,24 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
     public function getCardLimit(): int
     {
-        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
-
-        if ($subscription && $subscription->subscriptionPlan) {
-            return $subscription->subscriptionPlan->cards_limit ?? 1;
+        if ($this->isAdmin()) {
+            return PHP_INT_MAX;
         }
 
-        // Free tier default (no subscription)
-        return 1;
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        return $subscription?->subscriptionPlan?->cards_limit ?? 0;
     }
 
     public function getThemeLimit(): int
     {
-        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
-
-        if ($subscription && $subscription->subscriptionPlan) {
-            return $subscription->subscriptionPlan->themes_limit ?? 1;
+        if ($this->isAdmin()) {
+            return PHP_INT_MAX;
         }
 
-        // Free tier default (no subscription)
-        return 1;
+        $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+
+        return $subscription?->subscriptionPlan?->themes_limit ?? 0;
     }
 
     public function isSubscriptionActive(): bool
@@ -321,7 +356,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
-        if ($subscription && $subscription->subscriptionPlan) {
+        if ($subscription?->subscriptionPlan) {
             // Check if explicitly enabled in features JSON
             if (isset($subscription->subscriptionPlan->features['ai_translation']) && $subscription->subscriptionPlan->features['ai_translation']) {
                 return true;
@@ -332,8 +367,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
                    $subscription->subscriptionPlan->unlimited_translations;
         }
 
-        // Free tier has basic access (10 credits)
-        return true;
+        // No subscription = no translation feature
+        return false;
     }
 
     /**
@@ -343,7 +378,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     {
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
-        if ($subscription && $subscription->subscriptionPlan) {
+        if ($subscription?->subscriptionPlan) {
             if ($subscription->subscriptionPlan->unlimited_translations) {
                 return PHP_INT_MAX;
             }
@@ -351,8 +386,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             return $subscription->subscriptionPlan->translation_credits_monthly ?? 0;
         }
 
-        // Free tier default (10 credits)
-        return 10;
+        // No subscription = no credits
+        return 0;
     }
 
     /**

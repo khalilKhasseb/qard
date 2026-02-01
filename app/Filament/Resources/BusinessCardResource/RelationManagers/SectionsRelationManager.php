@@ -118,7 +118,8 @@ class SectionsRelationManager extends RelationManager
                         Forms\Components\FileUpload::make('image_path')
                             ->image()
                             ->disk('public')
-                            ->directory('sections')
+                            ->directory(fn ($livewire) => "users/{$livewire->ownerRecord->user_id}/cards/{$livewire->ownerRecord->id}/sections")
+                            ->visibility('public')
                             ->label('Section Image')
                             ->helperText('Optional image for this section')
                             ->columnSpanFull(),
@@ -167,7 +168,8 @@ class SectionsRelationManager extends RelationManager
                         Forms\Components\FileUpload::make('image_path')
                             ->image()
                             ->disk('public')
-                            ->directory('sections')
+                            ->directory(fn ($livewire) => "users/{$livewire->ownerRecord->user_id}/cards/{$livewire->ownerRecord->id}/sections")
+                            ->visibility('public')
                             ->label('Section Image'),
                     ]),
 

@@ -68,8 +68,8 @@ return [
         // Sidebar features
         'hero_title' => 'انضم إلى آلاف المحترفين',
         'hero_subtitle' => 'أنشئ بطاقة عملك الرقمية وابدأ في ترك انطباعات دائمة في دقائق.',
-        'feature_free' => 'خطة مجانية للأبد',
-        'feature_free_desc' => 'لا حاجة لبطاقة ائتمان',
+        'feature_free' => 'خطط مرنة',
+        'feature_free_desc' => 'اختر الخطة التي تناسب احتياجاتك',
         'feature_setup' => 'إعداد في دقيقتين',
         'feature_setup_desc' => 'نتائج احترافية فوراً',
         'feature_share' => 'شارك في كل مكان',
@@ -81,6 +81,18 @@ return [
         'terms_of_service' => 'شروط الخدمة',
         'and' => 'و',
         'privacy_policy' => 'سياسة الخصوصية',
+        // Plan selection
+        'choose_plan' => 'اختر خطتك',
+        'choose_plan_desc' => 'اختر خطة اشتراك للبدء',
+        'continue' => 'متابعة',
+        'back' => 'رجوع',
+        'popular' => 'شائع',
+        'cards' => 'بطاقات',
+        'themes' => 'قوالب',
+        'analytics' => 'تحليلات',
+        'plan_selected' => 'تم اختيار الخطة',
+        'selected_plan' => 'الخطة المختارة',
+        'change_plan' => 'تغيير الخطة',
     ],
 
     // Forgot password

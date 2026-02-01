@@ -176,8 +176,8 @@ class CardService
             ->margin(2)
             ->generate($url);
 
-        $filename = "qrcodes/{$card->id}_".time().'.png';
-        \Storage::disk('public')->put($filename, $qrCode);
+        $filename = "users/{$card->user_id}/cards/{$card->id}/qr/qrcode_".time().'.png';
+        \Storage::disk('public')->put($filename, $qrCode, 'public');
 
         $card->update(['qr_code_url' => \Storage::disk('public')->url($filename)]);
 

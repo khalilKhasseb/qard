@@ -36,6 +36,8 @@ return [
         'published' => 'منشورة',
         'cover_image' => 'صورة الغلاف',
         'profile_image' => 'الصورة الشخصية',
+        'change' => 'تغيير',
+        'max_size' => 'الحد الأقصى 2 ميجابايت',
     ],
 
     // Actions
@@ -53,6 +55,36 @@ return [
         'published' => 'منشورة',
         'draft' => 'مسودة',
         'views' => ':count مشاهدة',
+    ],
+
+    // Publishing & Draft
+    'publishing' => [
+        'title' => 'النشر',
+        'status' => 'الحالة',
+        'published' => 'منشورة',
+        'draft' => 'مسودة',
+        'pending_changes' => 'تغييرات معلقة',
+        'unpublished_changes' => 'لديك تغييرات غير منشورة',
+        'unpublished_changes_hint' => 'النموذج يعرض تغييرات المسودة. هذه التغييرات غير مرئية في البطاقة المباشرة حتى يتم نشرها.',
+        'changed_fields' => 'الحقول المعدّلة:',
+        'publish_changes' => 'نشر التغييرات',
+        'discard_changes' => 'تجاهل',
+        'discard_confirm' => 'هل أنت متأكد من تجاهل جميع تغييرات المسودة؟ لا يمكن التراجع عن هذا الإجراء.',
+        'publish_card' => 'نشر البطاقة',
+        'unpublish_card' => 'إلغاء نشر البطاقة',
+        'delete_card' => 'حذف البطاقة',
+        'delete_confirm' => 'هل أنت متأكد من حذف هذه البطاقة؟ لا يمكن التراجع عن هذا الإجراء.',
+        'editing_draft' => 'تحرير المسودة',
+        'field_labels' => [
+            'title' => 'العنوان',
+            'subtitle' => 'العنوان الفرعي',
+            'theme_id' => 'السمة',
+            'language_id' => 'اللغة',
+            'cover_image_path' => 'صورة الغلاف',
+            'profile_image_path' => 'الصورة الشخصية',
+            'custom_slug' => 'الرابط المخصص',
+            'active_languages' => 'اللغات النشطة',
+        ],
     ],
 
     // Messages

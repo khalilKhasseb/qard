@@ -22,7 +22,15 @@ class ManageSettings extends SettingsPage
 
     protected static string $settings = GeneralSettings::class;
 
-    protected static string|null|\UnitEnum $navigationGroup = 'Settings';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.settings');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.settings.navigation_label');
+    }
 
     /**
      * @return array<string, mixed>
@@ -84,112 +92,135 @@ class ManageSettings extends SettingsPage
     protected function sendSuccessNotification(): void
     {
         \Filament\Notifications\Notification::make()
-            ->title('Settings saved successfully.')
+            ->title(__('filament.settings.notifications.saved'))
             ->success()
             ->send();
     }
 
     public function getTitle(): string
     {
-        return 'Manage Settings';
+        return __('filament.settings.title');
     }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
-                Section::make('General Settings')
+                Section::make(__('filament.settings.sections.general'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('site_name')
+                            ->label(__('filament.settings.fields.site_name'))
                             ->required(),
                         TextInput::make('site_description')
+                            ->label(__('filament.settings.fields.site_description'))
                             ->required(),
-                        TextInput::make('meta_keywords'),
-                        TextInput::make('meta_description'),
+                        TextInput::make('meta_keywords')
+                            ->label(__('filament.settings.fields.meta_keywords')),
+                        TextInput::make('meta_description')
+                            ->label(__('filament.settings.fields.meta_description')),
                         FileUpload::make('logo')
+                            ->label(__('filament.settings.fields.logo'))
                             ->image()
                             ->disk('public')
                             ->directory('settings'),
                         FileUpload::make('favicon')
+                            ->label(__('filament.settings.fields.favicon'))
                             ->image()
                             ->disk('public')
                             ->directory('settings'),
                     ]),
 
-                Section::make('Authentication Settings')
-                    ->description('Configure user verification and login methods.')
+                Section::make(__('filament.settings.sections.authentication'))
+                    ->description(__('filament.settings.sections.authentication_description'))
                     ->columns(2)
                     ->statePath('auth_settings')
                     ->schema([
                         Select::make('verification_method')
-                            ->label('Verification Method')
-                            ->helperText('Choose how users verify their account after registration.')
+                            ->label(__('filament.settings.fields.verification_method'))
+                            ->helperText(__('filament.settings.fields.verification_helper'))
                             ->options([
-                                'email' => 'Email Verification',
-                                'phone' => 'Phone (SMS) Verification',
+                                'email' => __('filament.settings.fields.email_verification'),
+                                'phone' => __('filament.settings.fields.phone_verification'),
                             ])
                             ->required(),
                         Toggle::make('allow_email_login')
-                            ->label('Allow Email Login')
-                            ->helperText('Users can sign in using their email address.'),
+                            ->label(__('filament.settings.fields.allow_email_login'))
+                            ->helperText(__('filament.settings.fields.email_login_helper')),
                         Toggle::make('allow_phone_login')
-                            ->label('Allow Phone Login')
-                            ->helperText('Users can sign in using their phone number.'),
+                            ->label(__('filament.settings.fields.allow_phone_login'))
+                            ->helperText(__('filament.settings.fields.phone_login_helper')),
                     ]),
 
-                Section::make('Mail Settings')
+                Section::make(__('filament.settings.sections.mail'))
                     ->columns(2)
                     ->statePath('mail_settings')
                     ->schema([
                         TextInput::make('mailer')
+                            ->label(__('filament.settings.fields.mailer'))
                             ->required(),
                         TextInput::make('host')
+                            ->label(__('filament.settings.fields.host'))
                             ->required(),
                         TextInput::make('port')
+                            ->label(__('filament.settings.fields.port'))
                             ->numeric()
                             ->required(),
-                        TextInput::make('username'),
+                        TextInput::make('username')
+                            ->label(__('filament.settings.fields.username')),
                         TextInput::make('password')
+                            ->label(__('filament.common.password'))
                             ->password(),
-                        TextInput::make('encryption'),
+                        TextInput::make('encryption')
+                            ->label(__('filament.settings.fields.encryption')),
                         TextInput::make('from_address')
+                            ->label(__('filament.settings.fields.from_address'))
                             ->email()
                             ->required(),
                         TextInput::make('from_name')
+                            ->label(__('filament.settings.fields.from_name'))
                             ->required(),
                     ]),
 
-                Section::make('Payment Settings')
+                Section::make(__('filament.settings.sections.payment'))
                     ->columns(2)
                     ->statePath('payment_settings')
                     ->schema([
                         Select::make('default_gateway')
+                            ->label(__('filament.settings.fields.default_gateway'))
                             ->options([
-                                'lahza' => 'Lahza',
-                                'cash' => 'Cash',
+                                'lahza' => __('filament.payments.methods.lahza'),
+                                'cash' => __('filament.payments.methods.cash'),
                             ])
                             ->required(),
-                        TextInput::make('lahza_public_key'),
+                        TextInput::make('lahza_public_key')
+                            ->label(__('filament.settings.fields.lahza_public_key')),
                         TextInput::make('lahza_secret_key')
+                            ->label(__('filament.settings.fields.lahza_secret_key'))
                             ->password(),
-                        Toggle::make('lahza_test_mode'),
+                        Toggle::make('lahza_test_mode')
+                            ->label(__('filament.settings.fields.lahza_test_mode')),
                         TextInput::make('lahza_currency')
+                            ->label(__('filament.settings.fields.lahza_currency'))
                             ->required(),
                     ]),
 
-                Section::make('AI Translation Settings')
+                Section::make(__('filament.settings.sections.ai_translation'))
                     ->columns(2)
                     ->statePath('ai_settings')
                     ->schema([
                         TextInput::make('openrouter_api_key')
+                            ->label(__('filament.settings.fields.openrouter_api_key'))
                             ->password()
                             ->required(),
                         TextInput::make('openrouter_url')
+                            ->label(__('filament.settings.fields.openrouter_url'))
                             ->required(),
                         TextInput::make('translation_model')
+                            ->label(__('filament.settings.fields.translation_model'))
                             ->required(),
                         TextInput::make('request_timeout')
+                            ->label(__('filament.settings.fields.request_timeout'))
                             ->numeric()
                             ->required(),
                     ]),

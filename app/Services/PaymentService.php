@@ -33,13 +33,27 @@ class PaymentService
         return $this;
     }
 
+    /**
+     * Get the appropriate gateway based on payment method.
+     */
+    protected function getGatewayForMethod(string $paymentMethod): PaymentGatewayInterface
+    {
+        return match ($paymentMethod) {
+            'cash' => new CashPaymentGateway,
+            'card', 'lahza' => new LahzaPaymentGateway,
+            default => $this->gateway,
+        };
+    }
+
     public function createPayment(
         User $user,
         SubscriptionPlan $plan,
         string $paymentMethod,
         ?string $notes = null
     ): Payment {
-        return $this->gateway->createPayment($user, $plan->price, [
+        $gateway = $this->getGatewayForMethod($paymentMethod);
+
+        return $gateway->createPayment($user, $plan->price, [
             'subscription_plan_id' => $plan->id,
             'currency' => 'USD',
             'notes' => $notes ?? "Subscription to {$plan->name}",
@@ -71,7 +85,8 @@ class PaymentService
         array $confirmationData = []
     ): UserSubscription {
         return DB::transaction(function () use ($payment, $confirmationData) {
-            $this->gateway->confirmPayment($payment, $confirmationData);
+            $gateway = $this->getGatewayForMethod($payment->payment_method ?? 'cash');
+            $gateway->confirmPayment($payment, $confirmationData);
 
             $plan = $payment->plan;
             $startsAt = now();
@@ -88,6 +103,9 @@ class PaymentService
             ]);
 
             $subscription->activate();
+
+            // Clear pending plan after successful subscription activation
+            $payment->user->update(['pending_plan_id' => null]);
 
             // Send payment confirmation notification
             $payment->user->notify(new PaymentConfirmed($payment));

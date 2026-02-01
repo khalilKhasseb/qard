@@ -36,7 +36,7 @@ class CardController extends Controller
         $user = $request->user();
 
         // Check if user can create more cards
-        if (! $user->canCreateCard()) {
+        if (! $user->canCreateCard() && ! $user->canUsePlan()) {
             return redirect()->route('subscription.index')
                 ->with('error', 'You have reached your card limit. Upgrade your plan to create more cards.');
         }
@@ -92,12 +92,28 @@ class CardController extends Controller
             ? route('card.public.slug', $card->custom_slug)
             : route('card.public.share', $card->share_url);
 
+        // Prepare draft info for the frontend
+        $hasDraft = ! empty($card->draft_data);
+        $draftFields = $hasDraft ? array_keys($card->draft_data) : [];
+
+        // Build draft image URLs if they exist
+        $draftImageUrls = [];
+        if ($hasDraft && isset($card->draft_data['cover_image_path'])) {
+            $draftImageUrls['cover_image_url'] = asset('storage/'.$card->draft_data['cover_image_path']);
+        }
+        if ($hasDraft && isset($card->draft_data['profile_image_path'])) {
+            $draftImageUrls['profile_image_url'] = asset('storage/'.$card->draft_data['profile_image_path']);
+        }
+
         return Inertia::render('Cards/Edit', [
             'card' => $card,
             'sections' => $card->sections,
             'themes' => $themes,
             'languages' => LanguageResource::collection($languages)->resolve(),
             'publicUrl' => $publicUrl,
+            'hasDraft' => $hasDraft,
+            'draftFields' => $draftFields,
+            'draftImageUrls' => $draftImageUrls,
         ]);
     }
 
@@ -108,30 +124,72 @@ class CardController extends Controller
         $validated = $request->validate([
             'title' => 'sometimes|array',
             'subtitle' => 'nullable|array',
-            'cover_image' => 'nullable|image|max:2048',
-            'profile_image' => 'nullable|image|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
+            'profile_image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
             'theme_id' => 'nullable|exists:themes,id',
             'language_id' => 'nullable|exists:languages,id',
             'active_languages' => 'nullable|array',
             'custom_slug' => 'nullable|string|max:255|unique:business_cards,custom_slug,'.$card->id,
-            'save_as_draft' => 'sometimes|boolean',
+        ], [
+            'cover_image.image' => __('The cover image must be a valid image file.'),
+            'cover_image.mimes' => __('The cover image must be a JPEG, PNG, GIF, or WebP file.'),
+            'cover_image.max' => __('The cover image must not exceed 2MB.'),
+            'profile_image.image' => __('The profile image must be a valid image file.'),
+            'profile_image.mimes' => __('The profile image must be a JPEG, PNG, GIF, or WebP file.'),
+            'profile_image.max' => __('The profile image must not exceed 2MB.'),
         ]);
 
         // Remove the file keys from validated since we're not storing them
         unset($validated['cover_image'], $validated['profile_image']);
 
+        // Determine if saving as draft (use filter_var to handle string "true" from FormData)
+        $saveAsDraft = filter_var($request->input('save_as_draft'), FILTER_VALIDATE_BOOLEAN);
+
+        // Build user-specific storage path
+        $userId = $request->user()->id;
+        $cardId = $card->id;
+        $basePath = "users/{$userId}/cards/{$cardId}";
+
+        // Handle cover image upload with old file cleanup
         if ($request->hasFile('cover_image')) {
-            $path = $request->file('cover_image')->store('covers', 'public');
+            // Delete old cover image (from draft or live depending on mode)
+            $oldPath = $saveAsDraft
+                ? ($card->draft_data['cover_image_path'] ?? null)
+                : $card->cover_image_path;
+
+            if ($oldPath && \Storage::disk('public')->exists($oldPath)) {
+                \Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $request->file('cover_image')->storeAs(
+                "{$basePath}/cover",
+                time().'_'.$request->file('cover_image')->getClientOriginalName(),
+                ['disk' => 'public', 'visibility' => 'public']
+            );
             $validated['cover_image_path'] = $path;
         }
 
+        // Handle profile image upload with old file cleanup
         if ($request->hasFile('profile_image')) {
-            $path = $request->file('profile_image')->store('profiles', 'public');
+            // Delete old profile image (from draft or live depending on mode)
+            $oldPath = $saveAsDraft
+                ? ($card->draft_data['profile_image_path'] ?? null)
+                : $card->profile_image_path;
+
+            if ($oldPath && \Storage::disk('public')->exists($oldPath)) {
+                \Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $request->file('profile_image')->storeAs(
+                "{$basePath}/profile",
+                time().'_'.$request->file('profile_image')->getClientOriginalName(),
+                ['disk' => 'public', 'visibility' => 'public']
+            );
             $validated['profile_image_path'] = $path;
         }
 
         // If saving as draft, store in draft_data instead of updating live data
-        if ($request->boolean('save_as_draft')) {
+        if ($saveAsDraft) {
             $draftData = array_merge($card->draft_data ?? [], $validated);
             $card->draft_data = $draftData;
             $card->save();
@@ -176,11 +234,53 @@ class CardController extends Controller
             return back()->with('error', 'No draft changes to publish.');
         }
 
+        // Delete old live images if draft has new ones
+        if (isset($card->draft_data['cover_image_path']) && $card->cover_image_path) {
+            if ($card->cover_image_path !== $card->draft_data['cover_image_path']) {
+                \Storage::disk('public')->delete($card->cover_image_path);
+            }
+        }
+
+        if (isset($card->draft_data['profile_image_path']) && $card->profile_image_path) {
+            if ($card->profile_image_path !== $card->draft_data['profile_image_path']) {
+                \Storage::disk('public')->delete($card->profile_image_path);
+            }
+        }
+
         $this->cardService->updateCard($card, $card->draft_data);
         $card->draft_data = null;
         $card->save();
 
         return back()->with('success', 'Draft changes published successfully!');
+    }
+
+    public function discardDraft(Request $request, BusinessCard $card)
+    {
+        $this->authorize('update', $card);
+
+        if (! $card->draft_data) {
+            return back()->with('error', 'No draft changes to discard.');
+        }
+
+        // Delete draft images that won't be used
+        if (isset($card->draft_data['cover_image_path'])) {
+            // Only delete if different from live image
+            if ($card->draft_data['cover_image_path'] !== $card->cover_image_path) {
+                \Storage::disk('public')->delete($card->draft_data['cover_image_path']);
+            }
+        }
+
+        if (isset($card->draft_data['profile_image_path'])) {
+            // Only delete if different from live image
+            if ($card->draft_data['profile_image_path'] !== $card->profile_image_path) {
+                \Storage::disk('public')->delete($card->draft_data['profile_image_path']);
+            }
+        }
+
+        $card->draft_data = null;
+        $card->save();
+
+        return back()->with('success', 'Draft changes discarded.');
     }
 
     public function updateSections(Request $request, BusinessCard $card)

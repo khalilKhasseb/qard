@@ -47,6 +47,8 @@
 </template>
 
 <script setup>
+import {onMounted} from "vue";
+
 const props = defineProps({
   languages: Array,
   inputLanguage: String,
@@ -54,11 +56,17 @@ const props = defineProps({
   primaryLanguageId: Number,
 });
 
+onMounted(
+    () => {
+        console.log(props.languages)
+    }
+)
+
 const emit = defineEmits(['switch-language', 'toggle-language']);
 
 const isActive = (code) => {
   return props.activeLanguages.includes(code);
-};
+}
 
 const isPrimary = (code) => {
   const primaryLang = props.languages.find(l => l.id === props.primaryLanguageId);

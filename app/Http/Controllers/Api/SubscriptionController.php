@@ -64,9 +64,10 @@ class SubscriptionController extends Controller
         $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
 
         if (! $subscription) {
-            return response()->json([
-                'message' => 'No active subscription found',
-            ], 404);
+            // Return free plan data for users without subscription
+            $freePlan = \App\Models\SubscriptionPlan::where('slug', 'free')->first();
+
+            return new UserSubscriptionResource($freePlan);
         }
 
         // Refresh the plan data to get latest changes

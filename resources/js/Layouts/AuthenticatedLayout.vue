@@ -7,20 +7,13 @@ import NavLink from '@/Components/Shared/NavLink.vue';
 import ResponsiveNavLink from '@/Components/Shared/ResponsiveNavLink.vue';
 import LanguageSelector from '@/Components/Shared/LanguageSelector.vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import axios from "axios";
 import { useTranslations } from '@/composables/useTranslations';
 
 const { t } = useTranslations();
 const showingNavigationDropdown = ref(false);
 const page = usePage();
 
-onBeforeMount(async function () {
-    try {
-        await axios.get('/sanctum/csrf-cookie');
-    } catch (error) {
-        console.error('Failed to initialize CSRF protection:', error);
-    }
-});
+// Note: CSRF protection is handled automatically by Inertia and axios interceptors
 </script>
 
 <template>

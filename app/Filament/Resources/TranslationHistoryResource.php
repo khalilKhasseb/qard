@@ -21,54 +21,82 @@ class TranslationHistoryResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-language';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Management';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.management');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.translation_history.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.translation_history.plural');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.translation_history.navigation_label');
+    }
 
     public static function form(Schema $form): Schema
     {
         return $form
             ->schema([
-                Schemas\Components\Section::make('Translation Details')
+                Schemas\Components\Section::make(__('filament.translation_history.sections.translation_details'))
                     ->schema([
                         Forms\Components\Select::make('user_id')
+                            ->label(__('filament.translation_history.fields.user'))
                             ->relationship('user', 'name')
-                            ->disabled()
-                            ->label('User'),
+                            ->disabled(),
                         Forms\Components\Select::make('business_card_id')
+                            ->label(__('filament.translation_history.fields.business_card'))
                             ->relationship('businessCard', 'title')
-                            ->disabled()
-                            ->label('Business Card'),
+                            ->disabled(),
                         Forms\Components\TextInput::make('source_language')
+                            ->label(__('filament.translation_history.fields.source_language'))
                             ->disabled(),
                         Forms\Components\TextInput::make('target_language')
+                            ->label(__('filament.translation_history.fields.target_language'))
                             ->disabled(),
                         Forms\Components\Textarea::make('source_text')
+                            ->label(__('filament.translation_history.fields.source_text'))
                             ->columnSpanFull()
                             ->disabled(),
                         Forms\Components\Textarea::make('translated_text')
+                            ->label(__('filament.translation_history.fields.translated_text'))
                             ->columnSpanFull()
                             ->disabled(),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Quality & Status')
+                Schemas\Components\Section::make(__('filament.translation_history.sections.quality_status'))
                     ->schema([
                         Forms\Components\TextInput::make('quality_score')
+                            ->label(__('filament.translation_history.fields.quality_score'))
                             ->numeric()
                             ->disabled(),
                         Forms\Components\TextInput::make('verification_status')
+                            ->label(__('filament.translation_history.fields.verification_status'))
                             ->disabled(),
                         Forms\Components\TextInput::make('cost')
+                            ->label(__('filament.translation_history.fields.cost'))
                             ->numeric()
                             ->prefix('$')
                             ->disabled(),
                         Forms\Components\TextInput::make('content_hash')
+                            ->label(__('filament.translation_history.fields.content_hash'))
                             ->disabled(),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Additional Information')
+                Schemas\Components\Section::make(__('filament.translation_history.sections.additional_information'))
                     ->schema([
                         Forms\Components\KeyValue::make('metadata')
+                            ->label(__('filament.translation_history.fields.metadata'))
                             ->disabled(),
                         Forms\Components\Textarea::make('error_message')
+                            ->label(__('filament.translation_history.fields.error_message'))
                             ->columnSpanFull()
                             ->disabled(),
                     ]),
@@ -80,20 +108,21 @@ class TranslationHistoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label(__('filament.translation_history.fields.user'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('businessCard.title')
-                    ->label('Card')
+                    ->label(__('filament.translation_history.fields.card'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('source_language')
-                    ->label('Source')
+                    ->label(__('filament.translation_history.fields.source'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('target_language')
-                    ->label('Target')
+                    ->label(__('filament.translation_history.fields.target'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quality_score')
+                    ->label(__('filament.translation_history.fields.quality_score'))
                     ->numeric()
                     ->sortable()
                     ->badge()
@@ -103,6 +132,7 @@ class TranslationHistoryResource extends Resource
                         default => 'danger',
                     }),
                 Tables\Columns\TextColumn::make('verification_status')
+                    ->label(__('filament.translation_history.fields.verification_status'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'approved' => 'success',
@@ -113,31 +143,36 @@ class TranslationHistoryResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('cost')
+                    ->label(__('filament.translation_history.fields.cost'))
                     ->money('USD')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('verification_status')
+                    ->label(__('filament.translation_history.fields.verification_status'))
                     ->options([
-                        'pending' => 'Pending',
-                        'auto_verified' => 'Auto Verified',
-                        'approved' => 'Approved',
-                        'rejected' => 'Rejected',
-                        'needs_review' => 'Needs Review',
+                        'pending' => __('filament.translation_history.verification_statuses.pending'),
+                        'auto_verified' => __('filament.translation_history.verification_statuses.auto_verified'),
+                        'approved' => __('filament.translation_history.verification_statuses.approved'),
+                        'rejected' => __('filament.translation_history.verification_statuses.rejected'),
+                        'needs_review' => __('filament.translation_history.verification_statuses.needs_review'),
                     ]),
                 SelectFilter::make('user_id')
-                    ->label('User')
+                    ->label(__('filament.translation_history.fields.user'))
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload(),
                 Filter::make('created_at')
                     ->form([
-                        DatePicker::make('created_from'),
-                        DatePicker::make('created_until'),
+                        DatePicker::make('created_from')
+                            ->label(__('filament.translation_history.filters.created_from')),
+                        DatePicker::make('created_until')
+                            ->label(__('filament.translation_history.filters.created_until')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -154,14 +189,14 @@ class TranslationHistoryResource extends Resource
             ->recordActions([
                 \Filament\Actions\ViewAction::make(),
                 \Filament\Actions\Action::make('approve')
-                    ->label('Approve')
+                    ->label(__('filament.translation_history.actions.approve'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
                     ->action(fn (TranslationHistory $record) => $record->update(['verification_status' => 'approved']))
                     ->visible(fn (TranslationHistory $record) => in_array($record->verification_status, ['pending', 'needs_review'])),
                 \Filament\Actions\Action::make('reject')
-                    ->label('Reject')
+                    ->label(__('filament.translation_history.actions.reject'))
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()

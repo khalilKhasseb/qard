@@ -46,14 +46,19 @@ class PaymentController extends Controller
             $validated['notes'] ?? null
         );
 
-        // If request expects JSON, return JSON
+        // If request is from Inertia, redirect to confirmation page
+        if ($request->header('X-Inertia')) {
+            return redirect()->route('payments.confirmation', $payment->id);
+        }
+
+        // If request expects JSON (pure API), return JSON
         if ($request->wantsJson()) {
             return (new PaymentResource($payment->load('subscriptionPlan')))
                 ->response()
                 ->setStatusCode(201);
         }
 
-        // Otherwise redirect to confirmation page (for Inertia)
+        // Otherwise redirect to confirmation page
         return redirect()->route('payments.confirmation', $payment->id);
     }
 

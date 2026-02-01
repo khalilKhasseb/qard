@@ -34,7 +34,11 @@ class SectionController extends Controller
             }
 
             foreach ($request->file('item_images') as $index => $file) {
-                $path = $file->store("users/{$request->user()->id}/cards/{$card->id}/gallery", 'public');
+                $path = $file->storeAs(
+                    "users/{$request->user()->id}/cards/{$card->id}/gallery",
+                    time().'_'.$index.'_'.$file->getClientOriginalName(),
+                    ['disk' => 'public', 'visibility' => 'public']
+                );
                 $url = \Illuminate\Support\Facades\Storage::url($path);
 
                 if (isset($content['items'][$index])) {
@@ -63,9 +67,14 @@ class SectionController extends Controller
         // Handle Main Section Image
         if ($request->hasFile('image')) {
             if ($section->image_path) {
-                \Illuminate\Support\Facades\Storage::delete($section->image_path);
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($section->image_path);
             }
-            $data['image_path'] = $request->file('image')->store('sections', 'public');
+            $card = $section->businessCard;
+            $data['image_path'] = $request->file('image')->storeAs(
+                "users/{$card->user_id}/cards/{$card->id}/sections",
+                time().'_'.$request->file('image')->getClientOriginalName(),
+                ['disk' => 'public', 'visibility' => 'public']
+            );
         }
 
         // Handle JSON content
@@ -75,14 +84,19 @@ class SectionController extends Controller
 
         // Handle Product/Service Item Images
         if ($request->hasFile('item_images')) {
+            $card = $section->businessCard;
             $content = $data['content'] ?? $section->content;
             foreach ($request->file('item_images') as $index => $file) {
                 if (isset($content['items'][$index])) {
                     // Delete old item image if it exists in the storage
                     if (! empty($content['items'][$index]['image_path'])) {
-                        \Illuminate\Support\Facades\Storage::delete($content['items'][$index]['image_path']);
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($content['items'][$index]['image_path']);
                     }
-                    $path = $file->store('section_items', 'public');
+                    $path = $file->storeAs(
+                        "users/{$card->user_id}/cards/{$card->id}/items",
+                        time().'_'.$index.'_'.$file->getClientOriginalName(),
+                        ['disk' => 'public', 'visibility' => 'public']
+                    );
                     $content['items'][$index]['image_path'] = $path;
                     $content['items'][$index]['image_url'] = \Illuminate\Support\Facades\Storage::url($path);
                     // Ensure legacy 'url' key is set for immediate frontend rendering

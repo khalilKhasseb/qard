@@ -20,31 +20,53 @@ class PaymentResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
-
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.finance');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('filament.payments.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('filament.payments.plural');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament.payments.navigation_label');
+    }
 
     public static function form(Schema $form): Schema
     {
         return $form
             ->schema([
-                Schemas\Components\Section::make('Payment Details')
+                Schemas\Components\Section::make(__('filament.payments.sections.payment_details'))
                     ->schema([
                         Forms\Components\Select::make('user_id')
+                            ->label(__('filament.payments.fields.user'))
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
                         Forms\Components\Select::make('subscription_plan_id')
+                            ->label(__('filament.payments.fields.plan'))
                             ->relationship('plan', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         Forms\Components\TextInput::make('amount')
+                            ->label(__('filament.payments.fields.amount'))
                             ->numeric()
                             ->prefix('$')
                             ->required(),
                         Forms\Components\Select::make('currency')
+                            ->label(__('filament.payments.fields.currency'))
                             ->options([
                                 'USD' => 'USD',
                                 'ILS' => 'ILS',
@@ -54,51 +76,56 @@ class PaymentResource extends Resource
                             ->required(),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Payment Method')
+                Schemas\Components\Section::make(__('filament.payments.sections.payment_method'))
                     ->schema([
                         Forms\Components\Select::make('payment_method')
+                            ->label(__('filament.payments.fields.payment_method'))
                             ->options([
-                                'cash' => 'Cash',
-                                'lahza' => 'Lahza Gateway',
-                                'bank_transfer' => 'Bank Transfer',
+                                'cash' => __('filament.payments.methods.cash'),
+                                'lahza' => __('filament.payments.methods.lahza'),
+                                'bank_transfer' => __('filament.payments.methods.bank_transfer'),
                             ])
                             ->default('lahza')
                             ->required(),
                         Forms\Components\Select::make('status')
+                            ->label(__('filament.payments.fields.status'))
                             ->options([
-                                'pending' => 'Pending',
-                                'completed' => 'Completed',
-                                'failed' => 'Failed',
-                                'refunded' => 'Refunded',
+                                'pending' => __('filament.payments.statuses.pending'),
+                                'completed' => __('filament.payments.statuses.completed'),
+                                'failed' => __('filament.payments.statuses.failed'),
+                                'refunded' => __('filament.payments.statuses.refunded'),
                             ])
                             ->default('pending')
                             ->required(),
                     ])->columns(2),
 
-                Schemas\Components\Section::make('Transaction Information')
+                Schemas\Components\Section::make(__('filament.payments.sections.transaction_information'))
                     ->schema([
                         Forms\Components\TextInput::make('transaction_id')
+                            ->label(__('filament.payments.fields.transaction_id'))
                             ->disabled()
                             ->dehydrated(false)
                             ->copyable(),
                         Forms\Components\TextInput::make('gateway_reference')
-                            ->label('Lahza Reference')
+                            ->label(__('filament.payments.fields.gateway_reference'))
                             ->disabled()
                             ->dehydrated(false)
                             ->copyable()
                             ->nullable(),
                         Forms\Components\Textarea::make('notes')
+                            ->label(__('filament.payments.fields.notes'))
                             ->rows(3)
                             ->nullable(),
                         Forms\Components\DateTimePicker::make('paid_at')
+                            ->label(__('filament.payments.fields.paid_at'))
                             ->nullable(),
                         Forms\Components\KeyValue::make('metadata')
-                            ->label('Metadata')
+                            ->label(__('filament.payments.fields.metadata'))
                             ->nullable()
                             ->deletable()
                             ->addable()
-                            ->keyLabel('Key')
-                            ->valueLabel('Value'),
+                            ->keyLabel(__('filament.common.key'))
+                            ->valueLabel(__('filament.common.value')),
                     ])->columns(2),
             ]);
     }
@@ -108,20 +135,23 @@ class PaymentResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('transaction_id')
+                    ->label(__('filament.payments.fields.transaction_id'))
                     ->searchable()
                     ->sortable()
                     ->copyable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label(__('filament.payments.fields.user'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('plan.name')
-                    ->label('Plan')
+                    ->label(__('filament.payments.fields.plan'))
                     ->placeholder('N/A'),
                 Tables\Columns\TextColumn::make('amount')
+                    ->label(__('filament.payments.fields.amount'))
                     ->money(fn ($record) => $record->currency)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('payment_method')
+                    ->label(__('filament.payments.fields.payment_method'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'cash' => 'success',
@@ -130,6 +160,7 @@ class PaymentResource extends Resource
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('status')
+                    ->label(__('filament.payments.fields.status'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -139,38 +170,42 @@ class PaymentResource extends Resource
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('paid_at')
+                    ->label(__('filament.payments.fields.paid_at'))
                     ->dateTime()
                     ->sortable()
-                    ->placeholder('Not paid'),
+                    ->placeholder(__('filament.payments.fields.not_paid')),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('filament.common.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
+                    ->label(__('filament.payments.fields.status'))
                     ->options([
-                        'pending' => 'Pending',
-                        'completed' => 'Completed',
-                        'failed' => 'Failed',
-                        'refunded' => 'Refunded',
+                        'pending' => __('filament.payments.statuses.pending'),
+                        'completed' => __('filament.payments.statuses.completed'),
+                        'failed' => __('filament.payments.statuses.failed'),
+                        'refunded' => __('filament.payments.statuses.refunded'),
                     ]),
                 Tables\Filters\SelectFilter::make('payment_method')
+                    ->label(__('filament.payments.fields.payment_method'))
                     ->options([
-                        'cash' => 'Cash',
-                        'lahza' => 'Lahza Gateway',
-                        'bank_transfer' => 'Bank Transfer',
+                        'cash' => __('filament.payments.methods.cash'),
+                        'lahza' => __('filament.payments.methods.lahza'),
+                        'bank_transfer' => __('filament.payments.methods.bank_transfer'),
                     ]),
             ])
             ->actions([
                 Actions\Action::make('verify_with_lahza')
-                    ->label('Verify')
+                    ->label(__('filament.payments.actions.verify'))
                     ->icon('heroicon-o-shield-check')
                     ->color('primary')
                     ->visible(fn (Payment $record): bool => $record->isPending() && $record->payment_method === 'lahza')
                     ->requiresConfirmation()
-                    ->modalHeading('Verify Payment with Lahza')
-                    ->modalDescription('This will verify the payment status with Lahza and activate the subscription if successful.')
+                    ->modalHeading(__('filament.payments.actions.verify_heading'))
+                    ->modalDescription(__('filament.payments.actions.verify_description'))
                     ->action(function (Payment $record) {
                         $paymentService = new PaymentService;
 
@@ -181,24 +216,25 @@ class PaymentResource extends Resource
                             ]);
 
                             Notification::make()
-                                ->title('Payment verified and subscription activated')
+                                ->title(__('filament.payments.notifications.verified'))
                                 ->success()
                                 ->send();
                         } catch (\Exception $e) {
                             Notification::make()
-                                ->title('Verification failed')
+                                ->title(__('filament.payments.notifications.verification_failed'))
                                 ->body($e->getMessage())
                                 ->danger()
                                 ->send();
                         }
                     }),
                 Actions\Action::make('confirm')
+                    ->label(__('filament.payments.actions.confirm'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Payment $record): bool => $record->isPending() && $record->payment_method !== 'lahza')
                     ->requiresConfirmation()
-                    ->modalHeading('Confirm Payment')
-                    ->modalDescription('Are you sure you want to confirm this payment? This will activate the user\'s subscription.')
+                    ->modalHeading(__('filament.payments.actions.confirm_heading'))
+                    ->modalDescription(__('filament.payments.actions.confirm_description'))
                     ->action(function (Payment $record) {
                         $paymentService = new PaymentService;
                         $paymentService->confirmPaymentAndActivateSubscription($record, [
@@ -206,26 +242,27 @@ class PaymentResource extends Resource
                         ]);
 
                         Notification::make()
-                            ->title('Payment confirmed')
+                            ->title(__('filament.payments.notifications.confirmed'))
                             ->success()
                             ->send();
                     }),
                 Actions\Action::make('refund')
+                    ->label(__('filament.payments.actions.refund'))
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('danger')
                     ->visible(fn (Payment $record): bool => $record->isCompleted())
                     ->requiresConfirmation()
-                    ->modalHeading('Refund Payment')
-                    ->modalDescription('This will refund the payment and cancel the user\'s subscription.')
+                    ->modalHeading(__('filament.payments.actions.refund_heading'))
+                    ->modalDescription(__('filament.payments.actions.refund_description'))
                     ->form([
                         Forms\Components\TextInput::make('amount')
-                            ->label('Refund Amount')
+                            ->label(__('filament.payments.actions.refund_amount'))
                             ->numeric()
                             ->prefix('$')
                             ->default(fn (Payment $record) => $record->amount)
                             ->required(),
                         Forms\Components\Textarea::make('reason')
-                            ->label('Reason for Refund')
+                            ->label(__('filament.payments.actions.refund_reason'))
                             ->required(),
                     ])
                     ->action(function (Payment $record, array $data) {
@@ -233,7 +270,6 @@ class PaymentResource extends Resource
 
                         try {
                             if ($record->payment_method === 'lahza') {
-                                // Use Lahza refund endpoint
                                 $lahzaGateway = new \App\Services\LahzaPaymentGateway;
                                 $lahzaGateway->refundPayment($record, $data['amount']);
                             }
@@ -241,12 +277,12 @@ class PaymentResource extends Resource
                             $paymentService->refundAndCancelSubscription($record, $data['amount']);
 
                             Notification::make()
-                                ->title('Payment refunded')
+                                ->title(__('filament.payments.notifications.refunded'))
                                 ->success()
                                 ->send();
                         } catch (\Exception $e) {
                             Notification::make()
-                                ->title('Refund failed')
+                                ->title(__('filament.payments.notifications.refund_failed'))
                                 ->body($e->getMessage())
                                 ->danger()
                                 ->send();

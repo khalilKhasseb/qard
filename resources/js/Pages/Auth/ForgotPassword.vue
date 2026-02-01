@@ -20,13 +20,8 @@ const form = useForm({
     email: '',
 });
 
-const submit = async () => {
-    try {
-        await axios.get('/sanctum/csrf-cookie');
-    } catch (error) {
-        console.error('Failed to initialize CSRF protection:', error);
-    }
-
+const submit = () => {
+    // Inertia's useForm handles CSRF automatically
     form.post(route('password.email'));
 };
 </script>

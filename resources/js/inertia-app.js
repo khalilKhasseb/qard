@@ -26,7 +26,7 @@ createInertiaApp({
         // Sync direction on initial page load
         syncDocumentDirection(props.initialPage);
 
-        // Listen for Inertia navigation events to sync direction
+        // Listen for Inertia navigation events
         router.on('navigate', (event) => {
             syncDocumentDirection(event.detail.page);
         });

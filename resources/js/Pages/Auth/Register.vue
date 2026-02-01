@@ -6,8 +6,16 @@ import TextInput from '@/Components/Shared/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import { useTranslations } from '@/composables/useTranslations';
+import { ref, computed } from 'vue';
 
 const { t } = useTranslations();
+
+const props = defineProps({
+    plans: {
+        type: Array,
+        default: () => [],
+    },
+});
 
 const form = useForm({
     name: '',
@@ -15,23 +23,47 @@ const form = useForm({
     phone: '',
     password: '',
     password_confirmation: '',
+    plan_id: null,
 });
 
-const submit = async () => {
-    try {
-        await axios.get('/sanctum/csrf-cookie');
-    } catch (error) {
-        console.error('Failed to initialize CSRF protection:', error);
-    }
+const currentStep = ref(1);
 
+const selectedPlan = computed(() => {
+    return props.plans.find(plan => plan.id === form.plan_id);
+});
+
+const selectPlan = (planId) => {
+    form.plan_id = planId;
+};
+
+const goToStep2 = () => {
+    if (form.plan_id) {
+        currentStep.value = 2;
+    }
+};
+
+const goBackToStep1 = () => {
+    currentStep.value = 1;
+};
+
+const submit = () => {
+    // Inertia's useForm handles CSRF automatically
     form.post(route('register'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
+
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+    }).format(price);
+};
 </script>
 
 <template>
-    <div class="flex min-h-screen  flex justify-center items-center bg-white ">
+    <div class="flex min-h-screen flex justify-center items-center bg-white">
         <Head :title="t('auth.register.title')" />
 
         <div class="container mx-auto w-3/4 sm:w-full mt-3 flex items-center py-3">
@@ -133,7 +165,7 @@ const submit = async () => {
 
             <!-- Right Side - Form -->
             <div class="flex-1 flex flex-col justify-center px-6 py-12 lg:px-12 xl:px-20">
-                <div class="mx-auto w-full max-w-md">
+                <div class="mx-auto w-full max-w-xl">
                     <!-- Mobile logo -->
                     <div class="lg:hidden mb-8 text-center">
                         <Link href="/" class="flex items-center justify-center space-x-2">
@@ -144,122 +176,259 @@ const submit = async () => {
                         </Link>
                     </div>
 
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.register.heading') }}</h2>
-                        <p class="text-gray-600">{{ t('auth.register.description') }}</p>
+                    <!-- Step Indicator -->
+                    <div class="flex items-center justify-center mb-8">
+                        <div class="flex items-center">
+                            <div
+                                class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold"
+                                :class="currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'"
+                            >
+                                1
+                            </div>
+                            <div class="w-16 h-1 mx-2" :class="currentStep >= 2 ? 'bg-indigo-600' : 'bg-gray-200'"></div>
+                            <div
+                                class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold"
+                                :class="currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'"
+                            >
+                                2
+                            </div>
+                        </div>
                     </div>
 
-                    <form @submit.prevent="submit" class="space-y-6">
-                        <div>
-                            <InputLabel for="name" :value="t('auth.register.name')" class="text-gray-700 font-medium" />
-
-                            <TextInput
-                                id="name"
-                                type="text"
-                                class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
-                                v-model="form.name"
-                                required
-                                autofocus
-                                autocomplete="name"
-                            />
-
-                            <InputError class="mt-2" :message="form.errors.name" />
+                    <!-- Step 1: Plan Selection -->
+                    <div v-if="currentStep === 1">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.register.choose_plan') }}</h2>
+                            <p class="text-gray-600">{{ t('auth.register.choose_plan_desc') }}</p>
                         </div>
 
-                        <div>
-                            <InputLabel for="email" :value="t('auth.register.email')" class="text-gray-700 font-medium" />
+                        <!-- Plan Cards -->
+                        <div class="space-y-4 mb-8">
+                            <div
+                                v-for="plan in plans"
+                                :key="plan.id"
+                                @click="selectPlan(plan.id)"
+                                class="border-2 rounded-xl p-4 cursor-pointer transition-all duration-200"
+                                :class="form.plan_id === plan.id
+                                    ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-600 ring-offset-2'
+                                    : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <h3 class="text-lg font-semibold text-gray-900">{{ plan.name }}</h3>
+                                            <span
+                                                v-if="plan.slug === 'pro' || plan.slug === 'professional'"
+                                                class="px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full"
+                                            >
+                                                {{ t('auth.register.popular') }}
+                                            </span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-3">{{ plan.description }}</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            <span class="inline-flex items-center text-xs text-gray-600">
+                                                <svg class="w-4 h-4 text-green-500 me-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                                {{ plan.cards_limit }} {{ t('auth.register.cards') }}
+                                            </span>
+                                            <span class="inline-flex items-center text-xs text-gray-600">
+                                                <svg class="w-4 h-4 text-green-500 me-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                                {{ plan.themes_limit }} {{ t('auth.register.themes') }}
+                                            </span>
+                                            <span v-if="plan.analytics_enabled" class="inline-flex items-center text-xs text-gray-600">
+                                                <svg class="w-4 h-4 text-green-500 me-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                                {{ t('auth.register.analytics') }}
+                                            </span>
+                                            <span v-if="plan.nfc_enabled" class="inline-flex items-center text-xs text-gray-600">
+                                                <svg class="w-4 h-4 text-green-500 me-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                                </svg>
+                                                NFC
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right ms-4">
+                                        <div class="text-2xl font-bold text-gray-900">{{ formatPrice(plan.price) }}</div>
+                                        <div class="text-xs text-gray-500">/{{ plan.billing_cycle }}</div>
+                                    </div>
+                                </div>
 
-                            <TextInput
-                                id="email"
-                                type="email"
-                                class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
-                                v-model="form.email"
-                                required
-                                autocomplete="username"
-                            />
-
-                            <InputError class="mt-2" :message="form.errors.email" />
+                                <!-- Selection indicator -->
+                                <div v-if="form.plan_id === plan.id" class="mt-3 pt-3 border-t border-indigo-200">
+                                    <div class="flex items-center text-indigo-600 text-sm font-medium">
+                                        <svg class="w-5 h-5 me-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        </svg>
+                                        {{ t('auth.register.plan_selected') }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div>
-                            <InputLabel for="phone" :value="t('auth.register.phone')" class="text-gray-700 font-medium" />
+                        <InputError class="mb-4" :message="form.errors.plan_id" />
 
-                            <TextInput
-                                id="phone"
-                                type="tel"
-                                class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
-                                v-model="form.phone"
-                                required
-                                autocomplete="tel"
-                                placeholder="+1 (555) 123-4567"
-                            />
+                        <button
+                            @click="goToStep2"
+                            :disabled="!form.plan_id"
+                            class="w-full bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-lg font-medium transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {{ t('auth.register.continue') }}
+                        </button>
 
-                            <InputError class="mt-2" :message="form.errors.phone" />
-                        </div>
-
-                        <div>
-                            <InputLabel for="password" :value="t('auth.register.password')" class="text-gray-700 font-medium" />
-
-                            <TextInput
-                                id="password"
-                                type="password"
-                                class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
-                                v-model="form.password"
-                                required
-                                autocomplete="new-password"
-                            />
-
-                            <InputError class="mt-2" :message="form.errors.password" />
-                        </div>
-
-                        <div>
-                            <InputLabel
-                                for="password_confirmation"
-                                :value="t('auth.register.confirm_password')"
-                                class="text-gray-700 font-medium"
-                            />
-
-                            <TextInput
-                                id="password_confirmation"
-                                type="password"
-                                class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
-                                v-model="form.password_confirmation"
-                                required
-                                autocomplete="new-password"
-                            />
-
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.password_confirmation"
-                            />
-                        </div>
-
-                        <div class="flex items-center justify-between pt-4">
+                        <div class="mt-6 text-center">
                             <Link
                                 :href="route('login')"
                                 class="text-sm text-gray-600 hover:text-gray-900 transition"
                             >
                                 {{ t('auth.register.have_account') }}
                             </Link>
-
-                            <PrimaryButton
-                                class="bg-gray-900 hover:bg-gray-800 text-white px-8 py-2 rounded-lg font-medium transition shadow-sm"
-                                :class="{ 'opacity-25': form.processing }"
-                                :disabled="form.processing"
-                            >
-                                <span v-if="form.processing">{{ t('auth.register.submitting') }}</span>
-                                <span v-else>{{ t('auth.register.submit') }}</span>
-                            </PrimaryButton>
                         </div>
-                    </form>
+                    </div>
 
-                    <div class="mt-8 text-center">
-                        <p class="text-xs text-gray-500">
-                            {{ t('auth.register.terms_agree') }}
-                            <a href="#" class="text-gray-700 hover:text-gray-900 underline">{{ t('auth.register.terms_of_service') }}</a>
-                            {{ t('auth.register.and') }}
-                            <a href="#" class="text-gray-700 hover:text-gray-900 underline">{{ t('auth.register.privacy_policy') }}</a>
-                        </p>
+                    <!-- Step 2: Account Details -->
+                    <div v-else>
+                        <div class="text-center mb-6">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ t('auth.register.heading') }}</h2>
+                            <p class="text-gray-600">{{ t('auth.register.description') }}</p>
+                        </div>
+
+                        <!-- Selected Plan Summary -->
+                        <div v-if="selectedPlan" class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm text-indigo-600 font-medium">{{ t('auth.register.selected_plan') }}</p>
+                                    <p class="text-lg font-semibold text-gray-900">{{ selectedPlan.name }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-bold text-gray-900">{{ formatPrice(selectedPlan.price) }}</p>
+                                    <button @click="goBackToStep1" class="text-sm text-indigo-600 hover:text-indigo-800">
+                                        {{ t('auth.register.change_plan') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form @submit.prevent="submit" class="space-y-5">
+                            <div>
+                                <InputLabel for="name" :value="t('auth.register.name')" class="text-gray-700 font-medium" />
+
+                                <TextInput
+                                    id="name"
+                                    type="text"
+                                    class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
+                                    v-model="form.name"
+                                    required
+                                    autofocus
+                                    autocomplete="name"
+                                />
+
+                                <InputError class="mt-2" :message="form.errors.name" />
+                            </div>
+
+                            <div>
+                                <InputLabel for="email" :value="t('auth.register.email')" class="text-gray-700 font-medium" />
+
+                                <TextInput
+                                    id="email"
+                                    type="email"
+                                    class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
+                                    v-model="form.email"
+                                    required
+                                    autocomplete="username"
+                                />
+
+                                <InputError class="mt-2" :message="form.errors.email" />
+                            </div>
+
+                            <div>
+                                <InputLabel for="phone" :value="t('auth.register.phone')" class="text-gray-700 font-medium" />
+
+                                <TextInput
+                                    id="phone"
+                                    type="tel"
+                                    class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
+                                    v-model="form.phone"
+                                    required
+                                    autocomplete="tel"
+                                    placeholder="+1 (555) 123-4567"
+                                />
+
+                                <InputError class="mt-2" :message="form.errors.phone" />
+                            </div>
+
+                            <div>
+                                <InputLabel for="password" :value="t('auth.register.password')" class="text-gray-700 font-medium" />
+
+                                <TextInput
+                                    id="password"
+                                    type="password"
+                                    class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
+                                    v-model="form.password"
+                                    required
+                                    autocomplete="new-password"
+                                />
+
+                                <InputError class="mt-2" :message="form.errors.password" />
+                            </div>
+
+                            <div>
+                                <InputLabel
+                                    for="password_confirmation"
+                                    :value="t('auth.register.confirm_password')"
+                                    class="text-gray-700 font-medium"
+                                />
+
+                                <TextInput
+                                    id="password_confirmation"
+                                    type="password"
+                                    class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900"
+                                    v-model="form.password_confirmation"
+                                    required
+                                    autocomplete="new-password"
+                                />
+
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.password_confirmation"
+                                />
+                            </div>
+
+                            <div class="flex items-center justify-between pt-4">
+                                <button
+                                    type="button"
+                                    @click="goBackToStep1"
+                                    class="text-sm text-gray-600 hover:text-gray-900 transition flex items-center"
+                                >
+                                    <svg class="w-4 h-4 me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                    {{ t('auth.register.back') }}
+                                </button>
+
+                                <PrimaryButton
+                                    class="bg-gray-900 hover:bg-gray-800 text-white px-8 py-2 rounded-lg font-medium transition shadow-sm"
+                                    :class="{ 'opacity-25': form.processing }"
+                                    :disabled="form.processing"
+                                >
+                                    <span v-if="form.processing">{{ t('auth.register.submitting') }}</span>
+                                    <span v-else>{{ t('auth.register.submit') }}</span>
+                                </PrimaryButton>
+                            </div>
+                        </form>
+
+                        <div class="mt-8 text-center">
+                            <p class="text-xs text-gray-500">
+                                {{ t('auth.register.terms_agree') }}
+                                <a href="#" class="text-gray-700 hover:text-gray-900 underline">{{ t('auth.register.terms_of_service') }}</a>
+                                {{ t('auth.register.and') }}
+                                <a href="#" class="text-gray-700 hover:text-gray-900 underline">{{ t('auth.register.privacy_policy') }}</a>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

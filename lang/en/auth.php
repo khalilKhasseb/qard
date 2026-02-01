@@ -68,8 +68,8 @@ return [
         // Sidebar features
         'hero_title' => 'Join thousands of professionals',
         'hero_subtitle' => 'Create your digital business card and start making lasting impressions in minutes.',
-        'feature_free' => 'Free forever plan',
-        'feature_free_desc' => 'No credit card required',
+        'feature_free' => 'Flexible plans',
+        'feature_free_desc' => 'Choose the plan that fits your needs',
         'feature_setup' => 'Setup in 2 minutes',
         'feature_setup_desc' => 'Professional results instantly',
         'feature_share' => 'Share everywhere',
@@ -81,6 +81,18 @@ return [
         'terms_of_service' => 'Terms of Service',
         'and' => 'and',
         'privacy_policy' => 'Privacy Policy',
+        // Plan selection
+        'choose_plan' => 'Choose Your Plan',
+        'choose_plan_desc' => 'Select a subscription plan to get started',
+        'continue' => 'Continue',
+        'back' => 'Back',
+        'popular' => 'Popular',
+        'cards' => 'Cards',
+        'themes' => 'Themes',
+        'analytics' => 'Analytics',
+        'plan_selected' => 'Plan Selected',
+        'selected_plan' => 'Selected Plan',
+        'change_plan' => 'Change Plan',
     ],
 
     // Forgot password

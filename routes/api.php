@@ -82,13 +82,35 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('subscription/cancel', [SubscriptionController::class, 'cancel'])
         ->name('api.subscription.cancel');
 
-    // Usage stats endpoint
+    // Usage stats and capabilities endpoint
     Route::get('usage', function (Request $request) {
         $user = $request->user();
+        $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
+        $plan = $subscription?->subscriptionPlan;
 
         return response()->json([
-            'cardCount' => $user->cards()->count(),
-            'themeCount' => $user->themes()->count(),
+            'cards' => [
+                'used' => $user->cards()->count(),
+                'limit' => $user->getCardLimit(),
+                'can_create' => $user->canCreateCard(),
+            ],
+            'themes' => [
+                'used' => $user->themes()->count(),
+                'limit' => $user->getThemeLimit(),
+                'can_create' => $user->canCreateTheme(),
+            ],
+            'features' => [
+                'custom_css' => $user->canUseCustomCss(),
+                'nfc' => $user->canUseNfc(),
+                'analytics' => $user->canUseAnalytics(),
+                'custom_domain' => $user->canUseCustomDomain(),
+                'premium_templates' => $user->canAccessPremiumTemplates(),
+            ],
+            'subscription' => [
+                'plan_name' => $plan?->name ?? 'Free',
+                'status' => $subscription?->status ?? 'none',
+                'expires_at' => $subscription?->end_date,
+            ],
         ]);
     })->name('api.usage');
 });

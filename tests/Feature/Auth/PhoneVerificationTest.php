@@ -1,31 +1,44 @@
 <?php
 
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Services\Sms\OtpManager;
+use App\Settings\AuthSettings;
 use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
     Cache::flush();
+
+    // Set phone verification as default for these tests
+    $authSettings = app(AuthSettings::class);
+    $authSettings->verification_method = 'phone';
+    $authSettings->save();
 });
 
 test('registration requires phone number', function () {
+    $plan = SubscriptionPlan::factory()->create(['is_active' => true]);
+
     $response = $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'password123',
         'password_confirmation' => 'password123',
+        'plan_id' => $plan->id,
     ]);
 
     $response->assertSessionHasErrors('phone');
 });
 
 test('registration with valid phone redirects to phone verification', function () {
+    $plan = SubscriptionPlan::factory()->create(['is_active' => true]);
+
     $response = $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
         'phone' => '+1234567890',
         'password' => 'password123',
         'password_confirmation' => 'password123',
+        'plan_id' => $plan->id,
     ]);
 
     $response->assertRedirect(route('phone.verification.notice'));
@@ -44,12 +57,15 @@ test('registration with valid phone redirects to phone verification', function (
 });
 
 test('phone number is normalized on registration', function () {
+    $plan = SubscriptionPlan::factory()->create(['is_active' => true]);
+
     $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test2@example.com',
         'phone' => '1 234 567 890',
         'password' => 'password123',
         'password_confirmation' => 'password123',
+        'plan_id' => $plan->id,
     ]);
 
     $this->assertDatabaseHas('users', [

@@ -22,7 +22,7 @@ class PhoneVerificationController extends Controller
         $user = $request->user();
 
         if ($user->hasVerifiedPhone()) {
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended($user->getPostVerificationRedirect());
         }
 
         if (! $user->phone) {
@@ -118,15 +118,17 @@ class PhoneVerificationController extends Controller
         if ($isValid) {
             $user->markPhoneAsVerified();
 
+            $redirectUrl = $user->getPostVerificationRedirect();
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Phone verified successfully.',
-                    'redirect' => route('dashboard'),
+                    'redirect' => $redirectUrl,
                 ]);
             }
 
-            return redirect()->intended(route('dashboard', absolute: false))
+            return redirect()->intended($redirectUrl)
                 ->with('status', 'phone-verified');
         }
 
@@ -162,19 +164,24 @@ class PhoneVerificationController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        // Normalize phone BEFORE validation so unique check works on normalized value
+        if ($request->has('phone')) {
+            $request->merge([
+                'phone' => $this->normalizePhone($request->phone),
+            ]);
+        }
+
         $request->validate([
             'phone' => ['required', 'string', 'min:10', 'max:20', 'unique:users,phone,'.$request->user()->id],
         ]);
 
-        $phone = $this->normalizePhone($request->phone);
-
         $request->user()->update([
-            'phone' => $phone,
+            'phone' => $request->phone, // Already normalized
             'phone_verified_at' => null, // Reset verification when phone changes
         ]);
 
         // Send OTP to new number
-        $this->otpManager->send($phone, 'registration');
+        $this->otpManager->send($request->phone, 'registration');
 
         return redirect()->route('phone.verification.notice')
             ->with('status', 'Verification code sent to your new number.');
