@@ -1,11 +1,20 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
     item: Object,
     translations: Object,
-    sectionId: Number
+    sectionId: [Number, String]
 });
 
 const emit = defineEmits(['update:item']);
+
+// Check if section has been saved to database (real ID vs temporary timestamp)
+// Database IDs are typically < 1 billion, timestamps are 13+ digits
+const isSectionSaved = computed(() => {
+    const id = Number(props.sectionId);
+    return id > 0 && id < 1000000000;
+});
 
 const updateField = (field, value) => {
     emit('update:item', { ...props.item, [field]: value });
@@ -13,11 +22,19 @@ const updateField = (field, value) => {
 
 const uploadGalleryImage = async (file) => {
     if (!file) return;
-    
-    const updatedItem = { 
-        ...props.item, 
-        uploading: true, 
-        uploadError: null 
+
+    if (!isSectionSaved.value) {
+        emit('update:item', {
+            ...props.item,
+            uploadError: 'Please save the section first before uploading images'
+        });
+        return;
+    }
+
+    const updatedItem = {
+        ...props.item,
+        uploading: true,
+        uploadError: null
     };
     emit('update:item', updatedItem);
 
@@ -32,7 +49,7 @@ const uploadGalleryImage = async (file) => {
                 emit('update:item', { ...updatedItem, progress });
             }
         });
-        
+
         emit('update:item', {
             ...props.item,
             url: resp.data.url,
@@ -80,15 +97,20 @@ const uploadGalleryImage = async (file) => {
             <img :src="item.url" alt="preview" class="w-32 h-32 object-cover rounded border border-gray-200" />
         </div>
 
-        <div v-if="item.inputType === 'upload'" class="flex items-center gap-2">
-            <input
-                type="file"
-                accept="image/*"
-                :disabled="item.uploading"
-                @change="uploadGalleryImage($event.target.files[0])"
-                class="block w-full text-sm border border-gray-300 rounded bg-white px-3 py-2 text-gray-900"
-            />
-            <span v-if="item.uploading" class="text-xs text-gray-500">{{ item.progress || 0 }}%</span>
+        <div v-if="item.inputType === 'upload'" class="space-y-2">
+            <div v-if="!isSectionSaved" class="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200">
+                ⚠️ Save the section first to enable image uploads
+            </div>
+            <div class="flex items-center gap-2">
+                <input
+                    type="file"
+                    accept="image/*"
+                    :disabled="item.uploading || !isSectionSaved"
+                    @change="uploadGalleryImage($event.target.files[0])"
+                    class="block w-full text-sm border border-gray-300 rounded bg-white px-3 py-2 text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <span v-if="item.uploading" class="text-xs text-gray-500">{{ item.progress || 0 }}%</span>
+            </div>
         </div>
 
         <div v-if="item.inputType === 'url'" class="flex items-center gap-2">
