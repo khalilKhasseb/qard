@@ -348,7 +348,7 @@ const updateArrayItems = (section, sectionIndex, newItems) => {
 
 const updateSimpleContent = (section, sectionIndex, newContent) => {
     // For simple content sections, save as {text: "content"} to match translation format
-    if (['text', 'image', 'video', 'link'].includes(section.section_type)) {
+    if (['text'].includes(section.section_type)) {
         section.content[currentLanguage.value] = {text: newContent};
     } else {
         // For other types, save directly
@@ -474,10 +474,6 @@ const handleDrop = (targetIndex) => {
                     <select v-model="section.section_type" @change="handleTypeChange(section, index)"
                             class="mt-1 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2">
                         <option value="text">{{ t('text') }}</option>
-                        <option value="image">{{ t('image') }}</option>
-                        <option value="video">{{ t('video') }}</option>
-                        <option value="link">{{ t('link') }}</option>
-                        <option value="qr_code">{{ t('qr_code') }}</option>
                         <option value="contact">{{ t('contact') }}</option>
                         <option value="social">{{ t('social') }}</option>
                         <option value="services">{{ t('services') }}</option>
@@ -508,7 +504,7 @@ const handleDrop = (targetIndex) => {
 
                 <!-- Text / Image / Video / Link -->
                 <SimpleContentSection
-                    v-if="['text', 'image', 'video', 'link'].includes(section.section_type)"
+                    v-if="['text'].includes(section.section_type)"
                     :content="getSimpleContent(section)"
                     :placeholder="t('placeholder') + ' ' + currentLanguage"
                     :language="currentLanguage"

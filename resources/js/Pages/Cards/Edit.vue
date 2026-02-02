@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue';
+import {ref, computed, watch, onMounted, onBeforeUnmount} from 'vue';
 import {Head, useForm, router, usePage} from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
@@ -143,6 +143,11 @@ const props = defineProps({
 const page = usePage();
 const sections = ref([...props.sections]);
 const savingSections = ref(false);
+
+// Watch for props.sections changes (e.g., after reload)
+watch(() => props.sections, (newSections) => {
+    sections.value = [...newSections];
+}, { deep: true });
 
 // Translation state
 const translationCredits = ref({
@@ -382,15 +387,30 @@ const publishDraftChanges = () => {
 
 const saveSections = () => {
     savingSections.value = true;
-    router.put(route('cards.sections.update', { card: props.card.id }), {
-        sections: sections.value
-    }, {
+
+    const url = route('cards.sections.update', { card: props.card.id });
+    const data = {
+        sections: sections.value,
+        _method: 'put'
+    };
+
+    console.log('=== saveSections called ===');
+    console.log('URL:', url);
+    console.log('Card ID:', props.card.id);
+    console.log('Sections count:', sections.value.length);
+    console.log('Sections data:', JSON.stringify(sections.value, null, 2));
+
+    router.post(url, data, {
         preserveScroll: true,
         onSuccess: () => {
+            console.log('=== saveSections SUCCESS ===');
             savingSections.value = false;
-            alert('Sections saved successfully!');
+            // Reload sections to get new IDs from database
+            router.reload({ only: ['sections'] });
         },
-        onError: () => {
+        onError: (errors) => {
+            console.error('=== saveSections ERROR ===');
+            console.error('Errors:', errors);
             savingSections.value = false;
             alert('Failed to save sections.');
         }

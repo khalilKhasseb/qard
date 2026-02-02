@@ -285,32 +285,56 @@ class CardController extends Controller
 
     public function updateSections(Request $request, BusinessCard $card)
     {
+        \Log::info('=== updateSections called ===');
+        \Log::info('Card ID: ' . $card->id);
+        \Log::info('Request method: ' . $request->method());
+        \Log::info('Request all data: ', $request->all());
+
         $this->authorize('update', $card);
 
-        $validated = $request->validate([
-            'sections' => 'required|array',
-            'sections.*.id' => 'nullable',
-            'sections.*.section_type' => 'required|string',
-            'sections.*.title' => 'nullable',
-            'sections.*.content' => 'required|array',
-            'sections.*.order' => 'nullable|integer',
-            'sections.*.is_active' => 'nullable|boolean',
-        ]);
+        \Log::info('Authorization passed');
 
-        DB::transaction(function () use ($card, $validated) {
-            $card->sections()->delete();
+        try {
+            $validated = $request->validate([
+                'sections' => 'required|array',
+                'sections.*.id' => 'nullable',
+                'sections.*.section_type' => 'required|string',
+                'sections.*.title' => 'nullable',
+                'sections.*.content' => 'required|array',
+                'sections.*.order' => 'nullable|integer',
+                'sections.*.is_active' => 'nullable|boolean',
+            ]);
 
-            foreach ($validated['sections'] as $index => $sectionData) {
-                $card->sections()->create([
-                    'section_type' => $sectionData['section_type'],
-                    'title' => $sectionData['title'] ?? ucfirst($sectionData['section_type']),
-                    'content' => $sectionData['content'],
-                    'sort_order' => $sectionData['order'] ?? ($index + 1),
-                    'is_active' => $sectionData['is_active'] ?? true,
-                ]);
-            }
-        });
+            \Log::info('Validation passed, sections count: ' . count($validated['sections']));
+            \Log::info('Validated sections: ', $validated['sections']);
 
-        return back()->with('success', 'Sections updated successfully!');
+            DB::transaction(function () use ($card, $validated) {
+                \Log::info('Deleting old sections for card: ' . $card->id);
+                $deleted = $card->sections()->delete();
+                \Log::info('Deleted sections count: ' . $deleted);
+
+                foreach ($validated['sections'] as $index => $sectionData) {
+                    \Log::info("Creating section {$index}: " . $sectionData['section_type']);
+                    $created = $card->sections()->create([
+                        'section_type' => $sectionData['section_type'],
+                        'title' => $sectionData['title'] ?? ucfirst($sectionData['section_type']),
+                        'content' => $sectionData['content'],
+                        'sort_order' => $sectionData['order'] ?? ($index + 1),
+                        'is_active' => $sectionData['is_active'] ?? true,
+                    ]);
+                    \Log::info("Created section ID: " . $created->id);
+                }
+            });
+
+            \Log::info('=== updateSections completed successfully ===');
+            return back()->with('success', 'Sections updated successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed: ', $e->errors());
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('updateSections error: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            throw $e;
+        }
     }
 }
