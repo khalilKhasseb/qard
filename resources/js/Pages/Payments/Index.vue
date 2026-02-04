@@ -321,10 +321,8 @@ const selectPlan = (plan) => {
 
 const cancelSubscription = () => {
   if (confirm(t('payments.subscription.cancel_confirm'))) {
-    router.post(route('api.subscription.cancel'), {}, {
-      onSuccess: () => {
-        router.reload();
-      },
+    router.post(route('subscription.cancel'), {}, {
+      preserveScroll: true,
     });
   }
 };
