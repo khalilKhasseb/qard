@@ -48,6 +48,11 @@ return [
         'syncing' => 'جاري المزامنة...',
         'sync_plan' => 'مزامنة الخطة',
         'view_all_plans' => 'عرض جميع الخطط',
+        'browse_addons' => 'تصفح الإضافات',
+        'purchased_addons' => 'الإضافات المشتراة',
+        'addon_extra_cards' => '+:count فتحة بطاقة إضافية',
+        'addon_feature_unlock' => 'فتح ميزة',
+        'includes_addons' => 'الخطة: :plan + الإضافات: :addons فتحة إضافية',
         'sync_success' => 'تم تحديث تفاصيل الاشتراك بنجاح!',
         // Upgrade section
         'upgrade_your_plan' => 'قم بترقية خطتك',
@@ -161,11 +166,23 @@ return [
     'history' => [
         'title' => 'سجل المدفوعات',
         'date' => 'التاريخ',
+        'description' => 'الوصف',
         'amount' => 'المبلغ',
         'method' => 'الطريقة',
         'status' => 'الحالة',
         'invoice' => 'الفاتورة',
         'no_history' => 'لا يوجد سجل مدفوعات بعد',
+    ],
+
+    // Add-ons section on payments page
+    'addons' => [
+        'title' => 'الإضافات المشتراة',
+        'browse' => 'تصفح الإضافات',
+        'store_title' => 'متجر الإضافات',
+        'store_desc' => 'عزّز حسابك بفتحات بطاقات إضافية وميزات مفتوحة.',
+        'via_purchase' => 'مشترى',
+        'via_admin' => 'ممنوح من المدير',
+        'via_promo' => 'ترويجي',
     ],
 
     // Payment modal

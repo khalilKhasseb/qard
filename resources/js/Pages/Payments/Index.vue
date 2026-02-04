@@ -131,6 +131,58 @@
           </div>
         </div>
 
+        <!-- Purchased Add-ons -->
+        <div v-if="purchasedAddons.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-900">{{ t('payments.addons.title') }}</h3>
+              <Link :href="route('addons.index')" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                {{ t('payments.addons.browse') }} →
+              </Link>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div
+                v-for="addon in purchasedAddons"
+                :key="addon.id"
+                class="flex items-center gap-3 p-3 rounded-lg border border-gray-200"
+              >
+                <span
+                  class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                  :class="addon.type === 'extra_cards' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'"
+                >
+                  <svg v-if="addon.type === 'extra_cards'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </span>
+                <div>
+                  <p class="text-sm font-medium text-gray-900">{{ addon.name }}</p>
+                  <p class="text-xs text-gray-500">
+                    {{ addon.granted_by === 'purchase' ? t('payments.addons.via_purchase') : addon.granted_by === 'admin_grant' ? t('payments.addons.via_admin') : t('payments.addons.via_promo') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add-ons Store Link (when no addons purchased yet) -->
+        <div v-else class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200 mb-6">
+          <div class="p-6 flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">{{ t('payments.addons.store_title') }}</h3>
+              <p class="text-sm text-gray-600 mt-1">{{ t('payments.addons.store_desc') }}</p>
+            </div>
+            <Link :href="route('addons.index')" class="inline-flex items-center bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition">
+              {{ t('payments.addons.browse') }}
+            </Link>
+          </div>
+        </div>
+
         <!-- Payment History -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
           <div class="p-6 border-b border-gray-200">
@@ -143,6 +195,9 @@
                   <tr>
                     <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {{ t('payments.history.date') }}
+                    </th>
+                    <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {{ t('payments.history.description') }}
                     </th>
                     <th class="px-4 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {{ t('payments.history.amount') }}
@@ -159,6 +214,17 @@
                   <tr v-for="payment in payments" :key="payment.id">
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {{ formatDate(payment.created_at) }}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span v-if="payment.addon" class="inline-flex items-center gap-1">
+                        <span class="inline-block w-2 h-2 rounded-full bg-purple-500"></span>
+                        {{ payment.addon.name }}
+                      </span>
+                      <span v-else-if="payment.subscription_plan" class="inline-flex items-center gap-1">
+                        <span class="inline-block w-2 h-2 rounded-full bg-indigo-500"></span>
+                        {{ payment.subscription_plan.name }}
+                      </span>
+                      <span v-else class="text-gray-400">—</span>
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       ${{ payment.amount }} {{ payment.currency }}
@@ -211,7 +277,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PrimaryButton from '@/Components/Shared/PrimaryButton.vue';
 import SecondaryButton from '@/Components/Shared/SecondaryButton.vue';
@@ -220,10 +286,14 @@ import { useTranslations } from '@/composables/useTranslations';
 
 const { t, locale } = useTranslations();
 
-defineProps({
+const props = defineProps({
   subscription: Object,
   plans: Array,
   payments: Array,
+  purchasedAddons: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const showPlans = ref(false);

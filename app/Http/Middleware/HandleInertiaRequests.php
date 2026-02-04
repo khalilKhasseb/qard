@@ -110,6 +110,7 @@ class HandleInertiaRequests extends Middleware
             'public' => trans('public', [], $locale),
             'analytics' => trans('analytics', [], $locale),
             'welcome' => trans('welcome', [], $locale),
+            'addons' => trans('addons', [], $locale),
         ];
     }
 

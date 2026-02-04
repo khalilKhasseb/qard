@@ -3,8 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers\AddonsRelationManager;
 use App\Filament\Resources\UserResource\RelationManagers\SubscriptionsRelationManager;
+use App\Models\Addon;
 use App\Models\User;
+use App\Services\AddonService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
@@ -221,6 +224,34 @@ class UserResource extends Resource
                             ->send();
                     })
                     ->requiresConfirmation(),
+                \Filament\Actions\Action::make('grant_addon')
+                    ->label(__('filament.users.actions.grant_addon'))
+                    ->icon('heroicon-o-gift')
+                    ->color('info')
+                    ->form([
+                        Forms\Components\Select::make('addon_id')
+                            ->label(__('filament.addons.label'))
+                            ->options(Addon::query()->active()->pluck('name', 'id'))
+                            ->searchable()
+                            ->required(),
+                        Forms\Components\Textarea::make('notes')
+                            ->label(__('filament.common.notes'))
+                            ->rows(2)
+                            ->nullable(),
+                    ])
+                    ->action(function (User $record, array $data) {
+                        $addon = Addon::findOrFail($data['addon_id']);
+                        app(AddonService::class)->grantAddon($record, $addon, $data['notes'] ?? null);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('filament.users.notifications.addon_granted'))
+                            ->body(__('filament.users.notifications.addon_granted_body', [
+                                'addon' => $addon->name,
+                                'user' => $record->name,
+                            ]))
+                            ->success()
+                            ->send();
+                    }),
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
             ])
@@ -255,6 +286,7 @@ class UserResource extends Resource
     {
         return [
             SubscriptionsRelationManager::class,
+            AddonsRelationManager::class,
         ];
     }
 

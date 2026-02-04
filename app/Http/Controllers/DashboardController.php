@@ -29,11 +29,29 @@ class DashboardController extends Controller
             ->with('subscriptionPlan')
             ->first();
 
-        // dd($subscription);
+        $cardLimit = $user->getCardLimit();
+        $extraCardSlots = $user->getExtraCardSlots();
+
+        $purchasedAddons = $user->userAddons()
+            ->with('addon')
+            ->latest()
+            ->get()
+            ->map(fn ($ua) => [
+                'id' => $ua->id,
+                'name' => $ua->addon->name,
+                'type' => $ua->addon->type,
+                'value' => $ua->addon->value,
+                'feature_key' => $ua->addon->feature_key,
+                'created_at' => $ua->created_at,
+            ]);
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'recentCards' => $recentCards,
             'subscription' => $subscription,
+            'cardLimit' => $cardLimit,
+            'extraCardSlots' => $extraCardSlots,
+            'purchasedAddons' => $purchasedAddons,
         ]);
     }
 }

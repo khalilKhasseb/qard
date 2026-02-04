@@ -28,10 +28,11 @@ class SubscriptionLimitException extends Exception
                 'message' => $this->getMessage(),
                 'feature' => $this->feature,
                 'upgrade_url' => route('subscription.index'),
+                'addons_url' => route('addons.index'),
             ], 403);
         }
 
-        return redirect()->route('subscription.index')
+        return redirect()->route('addons.index')
             ->with('warning', $this->getMessage());
     }
 }

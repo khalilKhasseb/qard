@@ -23,6 +23,13 @@ return [
         'business_cards' => 'بطاقات العمل: :used / :limit',
         'remaining' => ':count متبقية',
         'days_remaining' => ':count يوم متبقي',
+        'includes_addons' => 'الخطة: :plan + الإضافات: :addons فتحة إضافية',
+    ],
+
+    // Add-ons
+    'addons' => [
+        'title' => 'الإضافات المشتراة',
+        'browse' => 'تصفح الإضافات',
     ],
 
     // Quick actions

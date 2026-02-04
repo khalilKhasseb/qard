@@ -130,9 +130,12 @@
                       <div
                         class="h-2 rounded-full transition-all"
                         :class="usageStats.cardCount >= cardsLimit ? 'bg-red-500' : 'bg-green-500'"
-                        :style="`width: ${cardsLimit > 0 ? (usageStats.cardCount / cardsLimit) * 100 : 0}%`"
+                        :style="`width: ${cardsLimit > 0 ? Math.min(100, (usageStats.cardCount / cardsLimit) * 100) : 0}%`"
                       ></div>
                     </div>
+                    <p v-if="extraCardSlots > 0" class="mt-1 text-xs text-indigo-600">
+                      {{ t('payments.subscription.includes_addons', { plan: planCardsLimit, addons: extraCardSlots }) }}
+                    </p>
 
                     <!-- Themes Usage -->
                     <div class="flex justify-between items-center mt-3">
@@ -229,6 +232,14 @@
                 {{ t('payments.subscription.cancel') }}
               </button>
 
+              <!-- Browse Add-ons -->
+              <Link
+                :href="route('addons.index')"
+                class="bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition"
+              >
+                {{ t('payments.subscription.browse_addons') }}
+              </Link>
+
               <!-- View All Plans -->
               <button
                 @click="$inertia.visit(route('payments.index'))"
@@ -239,10 +250,53 @@
             </div>
           </div>
 
+          <!-- Purchased Add-ons -->
+          <div v-if="purchasedAddons.length > 0" class="bg-white shadow-sm rounded-lg overflow-hidden p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">{{ t('payments.subscription.purchased_addons') }}</h3>
+              <Link :href="route('addons.index')" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                {{ t('payments.subscription.browse_addons') }} →
+              </Link>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div
+                v-for="addon in purchasedAddons"
+                :key="addon.id"
+                class="flex items-center justify-between p-3 rounded-lg border border-gray-200"
+              >
+                <div class="flex items-center gap-3">
+                  <span
+                    class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm"
+                    :class="addon.type === 'extra_cards' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'"
+                  >
+                    <svg v-if="addon.type === 'extra_cards'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </span>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ addon.name }}</p>
+                    <p class="text-xs text-gray-500">
+                      {{ addon.type === 'extra_cards'
+                        ? t('payments.subscription.addon_extra_cards', { count: addon.value })
+                        : t('payments.subscription.addon_feature_unlock')
+                      }}
+                    </p>
+                  </div>
+                </div>
+                <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                  {{ t('common.status.active') }}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <!-- Upgrade Available Section -->
           <div v-if="availablePlans.length > 0" class="bg-white shadow-sm rounded-lg overflow-hidden p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('payments.subscription.upgrade_your_plan') }}</h3>
-            <p class="text-gray-600 mb-4">{{ t('payments.subscription.upgrade_prompt', { count: usageStats.cardCount, limit: subscription.data.plan?.cards_limit }) }}</p>
+            <p class="text-gray-600 mb-4">{{ t('payments.subscription.upgrade_prompt', { count: usageStats.cardCount, limit: cardsLimit }) }}</p>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div
@@ -339,7 +393,7 @@
 <script setup>
 
 import { ref, computed, watch } from 'vue';
-import { Head, router, usePage, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, usePage, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useTranslations } from '@/composables/useTranslations';
 
@@ -358,6 +412,14 @@ const props = defineProps({
   usage: {
     type: Object,
     default: () => ({ cards: { used: 0, limit: 0 }, themes: { used: 0, limit: 0 } }),
+  },
+  extraCardSlots: {
+    type: Number,
+    default: 0,
+  },
+  purchasedAddons: {
+    type: Array,
+    default: () => [],
   },
 });
 
@@ -384,7 +446,9 @@ const usageStats = computed(() => ({
 }));
 
 // Safe getters for plan limits with fallback to 0
-const cardsLimit = computed(() => subscription.value?.data?.plan?.cards_limit ?? 0);
+// cardsLimit uses the server-computed usage.cards.limit which includes addon extra slots
+const cardsLimit = computed(() => props.usage?.cards?.limit ?? subscription.value?.data?.plan?.cards_limit ?? 0);
+const planCardsLimit = computed(() => subscription.value?.data?.plan?.cards_limit ?? 0);
 const themesLimit = computed(() => subscription.value?.data?.plan?.themes_limit ?? 0);
 const cardsRemaining = computed(() => Math.max(0, cardsLimit.value - cardCount.value));
 const themesRemaining = computed(() => Math.max(0, themesLimit.value - themeCount.value));

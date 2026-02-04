@@ -51,6 +51,28 @@ test('new users can register with phone verification', function () {
     $response->assertRedirect(route('phone.verification.notice', absolute: false));
 });
 
+test('registration regenerates the session to prevent CSRF token mismatch', function () {
+    $plan = SubscriptionPlan::factory()->create(['is_active' => true]);
+
+    $authSettings = app(AuthSettings::class);
+    $authSettings->verification_method = 'email';
+    $authSettings->save();
+
+    $sessionIdBefore = session()->getId();
+
+    $this->post('/register', [
+        'name' => 'Test User',
+        'email' => 'session-test@example.com',
+        'phone' => '+1234567899',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'plan_id' => $plan->id,
+    ]);
+
+    $this->assertAuthenticated();
+    expect(session()->getId())->not->toBe($sessionIdBefore);
+});
+
 test('registration requires plan selection', function () {
     $response = $this->post('/register', [
         'name' => 'Test User',

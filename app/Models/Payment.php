@@ -15,6 +15,7 @@ class Payment extends Model
     protected $fillable = [
         'user_id',
         'subscription_plan_id',
+        'addon_id',
         'amount',
         'currency',
         'payment_method',
@@ -66,6 +67,11 @@ class Payment extends Model
     public function subscriptionPlan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
+    }
+
+    public function addon(): BelongsTo
+    {
+        return $this->belongsTo(Addon::class);
     }
 
     public function subscription(): HasOne

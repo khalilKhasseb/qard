@@ -19,20 +19,46 @@ class PhoneVerificationController extends Controller
      */
     public function notice(Request $request): Response|RedirectResponse
     {
+        \Log::info('Start Notice');
         $user = $request->user();
 
+        \Log::info('User', ['user' => $user]);
+
         if ($user->hasVerifiedPhone()) {
+            \Log::info('Phone already verified, redirecting to intended page');
+
             return redirect()->intended($user->getPostVerificationRedirect());
         }
 
         if (! $user->phone) {
+            \Log::info('User Has no PPhone, redirecting to phone update page');
+
             return redirect()->route('phone.update');
         }
 
         // Get current OTP status
+        \Log::info('Checking OTP status for user', ['phone' => $user->phone]);
         $hasOtp = $this->otpManager->hasValidOtp($user->phone, 'registration');
+        \Log::info('OTP status', ['hasOtp' => $hasOtp]);
         $cooldown = $this->otpManager->getCooldownSeconds($user->phone, 'registration');
+        \Log::info('CoolDown stats', [
+            'cooldown' => $cooldown,
+        ]);
         $remainingAttempts = $this->otpManager->getRemainingAttempts($user->phone, 'registration');
+        \Log::info('Remaining Attempts', [
+            'remainingAttempts' => $remainingAttempts,
+        ]);
+
+        if (! $hasOtp && $cooldown === 0) {
+            // Send OTP if not already sent and no cooldown
+            \Log::info('No valid OTP and no cooldown, sending new OTP');
+            $result = $this->otpManager->send($user->phone, 'registration');
+            \Log::info('OTP send result', [
+                'success' => $result->isSuccess(),
+                'rateLimited' => $result->isRateLimited(),
+                'error' => $result->error,
+            ]);
+        }
 
         return Inertia::render('Auth/VerifyPhone', [
             'phone' => $this->maskPhone($user->phone),

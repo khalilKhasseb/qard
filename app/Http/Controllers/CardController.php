@@ -20,7 +20,8 @@ class CardController extends Controller
 
     public function index(Request $request): Response
     {
-        $cards = $request->user()
+        $user = $request->user();
+        $cards = $user
             ->cards()
             ->with(['theme', 'sections'])
             ->latest()
@@ -28,6 +29,9 @@ class CardController extends Controller
 
         return Inertia::render('Cards/Index', [
             'cards' => $cards,
+            'canCreateCard' => $user->canCreateCard(),
+            'cardCount' => $user->cards()->count(),
+            'cardLimit' => $user->getCardLimit(),
         ]);
     }
 
@@ -81,11 +85,13 @@ class CardController extends Controller
 
     public function edit(Request $request, BusinessCard $card): Response
     {
+
         $this->authorize('update', $card);
 
         $card->load(['sections' => fn ($q) => $q->ordered(), 'theme', 'language']);
 
         $themes = Theme::forUser($request->user()->id)->get();
+
         $languages = Language::active()->get();
 
         $publicUrl = $card->custom_slug
@@ -119,8 +125,11 @@ class CardController extends Controller
 
     public function update(Request $request, BusinessCard $card)
     {
+        \Log::info('=== CardController@update called ===');
+        \Log::info('Card ID: '.$card->id);
         $this->authorize('update', $card);
 
+        \Log::info('Authorization passed');
         $validated = $request->validate([
             'title' => 'sometimes|array',
             'subtitle' => 'nullable|array',
@@ -139,12 +148,17 @@ class CardController extends Controller
             'profile_image.max' => __('The profile image must not exceed 2MB.'),
         ]);
 
+        \Log::info('Validation passed, data: ', $validated);
+
         // Remove the file keys from validated since we're not storing them
         unset($validated['cover_image'], $validated['profile_image']);
+
+        \Log::info('After unsetting files, data: ', $validated);
 
         // Determine if saving as draft (use filter_var to handle string "true" from FormData)
         $saveAsDraft = filter_var($request->input('save_as_draft'), FILTER_VALIDATE_BOOLEAN);
 
+        \Log::info('Save as draft: '.($saveAsDraft ? 'true' : 'false'));
         // Build user-specific storage path
         $userId = $request->user()->id;
         $cardId = $card->id;
@@ -169,6 +183,8 @@ class CardController extends Controller
             $validated['cover_image_path'] = $path;
         }
 
+        \Log::info('After handling cover image, data: ', $validated);
+
         // Handle profile image upload with old file cleanup
         if ($request->hasFile('profile_image')) {
             // Delete old profile image (from draft or live depending on mode)
@@ -188,8 +204,12 @@ class CardController extends Controller
             $validated['profile_image_path'] = $path;
         }
 
+        \Log::info('After handling profile image, data: ', $validated);
+
         // If saving as draft, store in draft_data instead of updating live data
+        \Log::info('Final validated data before save: ', $validated);
         if ($saveAsDraft) {
+            \Log::info('Saving to draft data');
             $draftData = array_merge($card->draft_data ?? [], $validated);
             $card->draft_data = $draftData;
             $card->save();
@@ -197,7 +217,11 @@ class CardController extends Controller
             return back()->with('success', 'Draft saved successfully!');
         }
 
+        \Log::info('Saving to live data');
+
         $this->cardService->updateCard($card, $validated);
+
+        \Log::info('=== CardController@update completed successfully ===');
 
         return back()->with('success', 'Card updated successfully!');
     }
@@ -286,8 +310,8 @@ class CardController extends Controller
     public function updateSections(Request $request, BusinessCard $card)
     {
         \Log::info('=== updateSections called ===');
-        \Log::info('Card ID: ' . $card->id);
-        \Log::info('Request method: ' . $request->method());
+        \Log::info('Card ID: '.$card->id);
+        \Log::info('Request method: '.$request->method());
         \Log::info('Request all data: ', $request->all());
 
         $this->authorize('update', $card);
@@ -305,16 +329,16 @@ class CardController extends Controller
                 'sections.*.is_active' => 'nullable|boolean',
             ]);
 
-            \Log::info('Validation passed, sections count: ' . count($validated['sections']));
+            \Log::info('Validation passed, sections count: '.count($validated['sections']));
             \Log::info('Validated sections: ', $validated['sections']);
 
             DB::transaction(function () use ($card, $validated) {
-                \Log::info('Deleting old sections for card: ' . $card->id);
+                \Log::info('Deleting old sections for card: '.$card->id);
                 $deleted = $card->sections()->delete();
-                \Log::info('Deleted sections count: ' . $deleted);
+                \Log::info('Deleted sections count: '.$deleted);
 
                 foreach ($validated['sections'] as $index => $sectionData) {
-                    \Log::info("Creating section {$index}: " . $sectionData['section_type']);
+                    \Log::info("Creating section {$index}: ".$sectionData['section_type']);
                     $created = $card->sections()->create([
                         'section_type' => $sectionData['section_type'],
                         'title' => $sectionData['title'] ?? ucfirst($sectionData['section_type']),
@@ -322,17 +346,18 @@ class CardController extends Controller
                         'sort_order' => $sectionData['order'] ?? ($index + 1),
                         'is_active' => $sectionData['is_active'] ?? true,
                     ]);
-                    \Log::info("Created section ID: " . $created->id);
+                    \Log::info('Created section ID: '.$created->id);
                 }
             });
 
             \Log::info('=== updateSections completed successfully ===');
+
             return back()->with('success', 'Sections updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation failed: ', $e->errors());
             throw $e;
         } catch (\Exception $e) {
-            \Log::error('updateSections error: ' . $e->getMessage());
+            \Log::error('updateSections error: '.$e->getMessage());
             \Log::error($e->getTraceAsString());
             throw $e;
         }

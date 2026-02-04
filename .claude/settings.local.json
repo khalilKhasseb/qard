@@ -12,7 +12,8 @@
       "Bash(npm install)",
       "Bash(npm install:*)",
       "WebSearch",
-      "WebFetch(domain:inertiajs.com)"
+      "WebFetch(domain:inertiajs.com)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -108,6 +108,21 @@ const page = usePage();
                                             {{ t('common.nav.profile') }}
                                         </DropdownLink>
                                         <DropdownLink
+                                            :href="route('subscription.index')"
+                                        >
+                                            {{ t('common.nav.subscription') }}
+                                        </DropdownLink>
+                                        <DropdownLink
+                                            :href="route('payments.index')"
+                                        >
+                                            {{ t('common.nav.payments') }}
+                                        </DropdownLink>
+                                        <DropdownLink
+                                            :href="route('addons.index')"
+                                        >
+                                            {{ t('common.nav.addons') }}
+                                        </DropdownLink>
+                                        <DropdownLink
                                             :href="route('logout')"
                                             method="post"
                                             as="button"
@@ -215,6 +230,15 @@ const page = usePage();
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.edit')">
                                 {{ t('common.nav.profile') }}
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('subscription.index')">
+                                {{ t('common.nav.subscription') }}
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('payments.index')">
+                                {{ t('common.nav.payments') }}
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink :href="route('addons.index')">
+                                {{ t('common.nav.addons') }}
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 :href="route('logout')"

@@ -23,6 +23,13 @@ return [
         'business_cards' => 'Business Cards: :used / :limit',
         'remaining' => ':count remaining',
         'days_remaining' => ':count days remaining',
+        'includes_addons' => 'Plan: :plan + Add-ons: :addons extra slots',
+    ],
+
+    // Add-ons
+    'addons' => [
+        'title' => 'Purchased Add-ons',
+        'browse' => 'Browse Add-ons',
     ],
 
     // Quick actions

@@ -196,7 +196,7 @@ class PaymentService
         return $payment;
     }
 
-    public function processCallback(string $reference): ?UserSubscription
+    public function processCallback(string $reference): UserSubscription|\App\Models\UserAddon|null
     {
         $payment = Payment::where('transaction_id', $reference)
             ->orWhere('gateway_reference', $reference)
@@ -208,6 +208,11 @@ class PaymentService
             ]);
 
             return null;
+        }
+
+        // Route to AddonService if this payment is for an add-on
+        if ($payment->addon_id) {
+            return app(AddonService::class)->confirmPaymentAndGrantAddon($payment);
         }
 
         // Skip verification for Lahza - it's already verified via webhook or direct API call

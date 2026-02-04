@@ -343,6 +343,7 @@ const saveBasicInfo = () => {
     }
 
     // Use post() with _method: 'put' for reliable file uploads (method spoofing)
+    console.log('Saving basic info with data:', form.data());
     form.transform((data) => ({
         ...data,
         _method: 'put',

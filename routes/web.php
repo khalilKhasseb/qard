@@ -54,16 +54,38 @@ Route::middleware(['auth', 'user.verified'])->group(function () {
     Route::get('/payments/callback', [App\Http\Controllers\PaymentController::class, 'callback'])
         ->name('payments.callback');
 
+    // Add-Ons
+    Route::get('/addons', [App\Http\Controllers\AddonController::class, 'index'])->name('addons.index');
+    Route::get('/addons/checkout/{addon}', [App\Http\Controllers\AddonController::class, 'checkout'])->name('addons.checkout');
+    Route::post('/addons/{addon}/initialize', [App\Http\Controllers\AddonController::class, 'initialize'])->name('addons.initialize');
+    Route::get('/addons/callback', [App\Http\Controllers\AddonController::class, 'callback'])->name('addons.callback');
+
     // Subscription Management
     Route::get('/subscription', function () {
         $user = request()->user();
-        $subscription = $user->activeSubscription()->with('subscriptionPlan')->first();
+        $subscription = $user->subscriptions()->with('subscriptionPlan')->first();
         $plan = $subscription?->subscriptionPlan;
 
         // Get all active plans (available for upgrade)
         $plans = \App\Models\SubscriptionPlan::where('is_active', true)
             ->orderBy('price')
             ->get();
+
+        // Get purchased add-ons
+        $purchasedAddons = $user->userAddons()
+            ->with('addon')
+            ->latest()
+            ->get()
+            ->map(fn ($ua) => [
+                'id' => $ua->id,
+                'name' => $ua->addon->name,
+                'type' => $ua->addon->type,
+                'value' => $ua->addon->value,
+                'feature_key' => $ua->addon->feature_key,
+                'created_at' => $ua->created_at,
+            ]);
+
+        $extraCardSlots = $user->getExtraCardSlots();
 
         // Pass all subscription data so the page doesn't need API calls
         return Inertia::render('Subscription/Index', [
@@ -97,6 +119,8 @@ Route::middleware(['auth', 'user.verified'])->group(function () {
                     'can_create' => $user->canCreateTheme(),
                 ],
             ],
+            'extraCardSlots' => $extraCardSlots,
+            'purchasedAddons' => $purchasedAddons,
         ]);
     })->name('subscription.index');
 
@@ -119,7 +143,7 @@ Route::middleware(['auth', 'user.verified'])->group(function () {
         $subscription = $user->activeSubscription()->first();
 
         if ($subscription) {
-            $subscription->update(['status' => 'cancelled']);
+            $subscription->update(['status' => 'canceled']);
         }
 
         return redirect()->back()->with('success', __('Subscription cancelled successfully.'));

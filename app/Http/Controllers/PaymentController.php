@@ -29,14 +29,30 @@ class PaymentController extends Controller
             ->get();
 
         $payments = Payment::where('user_id', $user->id)
+            ->with(['subscriptionPlan:id,name', 'addon:id,name,type'])
             ->latest()
             ->take(10)
             ->get();
+
+        $purchasedAddons = $user->userAddons()
+            ->with('addon')
+            ->latest()
+            ->get()
+            ->map(fn ($ua) => [
+                'id' => $ua->id,
+                'name' => $ua->addon->name,
+                'type' => $ua->addon->type,
+                'value' => $ua->addon->value,
+                'feature_key' => $ua->addon->feature_key,
+                'granted_by' => $ua->granted_by,
+                'created_at' => $ua->created_at,
+            ]);
 
         return Inertia::render('Payments/Index', [
             'subscription' => $subscription,
             'plans' => $plans,
             'payments' => $payments,
+            'purchasedAddons' => $purchasedAddons,
         ]);
     }
 

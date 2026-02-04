@@ -174,8 +174,23 @@ class LahzaWebhookController extends Controller
             'amount' => $payment->amount,
         ]);
 
-        // Activate subscription if not already active
-        if (! $payment->subscription) {
+        // Route to appropriate service based on payment type
+        if ($payment->addon_id) {
+            // Add-on payment: grant add-on
+            $existingGrant = \App\Models\UserAddon::where('payment_id', $payment->id)->first();
+            if (! $existingGrant) {
+                $addonService = app(\App\Services\AddonService::class);
+                $userAddon = $addonService->confirmPaymentAndGrantAddon($payment);
+
+                Log::info('Add-on granted via webhook', [
+                    'payment_id' => $payment->id,
+                    'user_id' => $payment->user_id,
+                    'addon_id' => $payment->addon_id,
+                    'user_addon_id' => $userAddon->id,
+                ]);
+            }
+        } elseif (! $payment->subscription) {
+            // Subscription payment: activate subscription
             $subscription = $payment->subscriptionPlan;
             if ($subscription) {
                 $this->paymentService->confirmPaymentAndActivateSubscription($payment, [

@@ -8,6 +8,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -81,6 +82,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function pendingPlan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class, 'pending_plan_id');
+    }
+
+    public function userAddons(): HasMany
+    {
+        return $this->hasMany(UserAddon::class);
+    }
+
+    public function addons(): BelongsToMany
+    {
+        return $this->belongsToMany(Addon::class, 'user_addons')->withTimestamps();
     }
 
     /**
@@ -168,11 +179,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
-        if ($subscription && $subscription->subscriptionPlan) {
-            return $subscription->subscriptionPlan->custom_css_allowed ?? false;
+        if (! $subscription || ! $subscription->isActive()) {
+            return false;
         }
 
-        return false;
+        if ($subscription->subscriptionPlan?->custom_css_allowed) {
+            return true;
+        }
+
+        return $this->hasFeatureAddon('custom_css');
     }
 
     public function getCardLimit(): int
@@ -182,8 +197,13 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         }
 
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
+        $planLimit = $subscription?->subscriptionPlan?->cards_limit ?? 0;
 
-        return $subscription?->subscriptionPlan?->cards_limit ?? 0;
+        if ($subscription && $subscription->isActive()) {
+            return $planLimit + $this->getExtraCardSlots();
+        }
+
+        return $planLimit;
     }
 
     public function getThemeLimit(): int
@@ -408,7 +428,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
-        return $subscription?->subscriptionPlan?->nfc_enabled ?? false;
+        if (! $subscription || ! $subscription->isActive()) {
+            return false;
+        }
+
+        if ($subscription->subscriptionPlan?->nfc_enabled) {
+            return true;
+        }
+
+        return $this->hasFeatureAddon('nfc');
     }
 
     public function canUseAnalytics(): bool
@@ -419,7 +447,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
-        return $subscription?->subscriptionPlan?->analytics_enabled ?? false;
+        if (! $subscription || ! $subscription->isActive()) {
+            return false;
+        }
+
+        if ($subscription->subscriptionPlan?->analytics_enabled) {
+            return true;
+        }
+
+        return $this->hasFeatureAddon('analytics');
     }
 
     public function canUseCustomDomain(): bool
@@ -430,7 +466,15 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
-        return $subscription?->subscriptionPlan?->custom_domain_allowed ?? false;
+        if (! $subscription || ! $subscription->isActive()) {
+            return false;
+        }
+
+        if ($subscription->subscriptionPlan?->custom_domain_allowed) {
+            return true;
+        }
+
+        return $this->hasFeatureAddon('custom_domain');
     }
 
     public function canAccessPremiumTemplates(): bool
@@ -443,6 +487,32 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         $subscription = $this->activeSubscription()->with('subscriptionPlan')->first();
 
         return $subscription?->subscriptionPlan?->price > 0;
+    }
+
+    /**
+     * Check if user has a specific feature unlock add-on.
+     */
+    public function hasFeatureAddon(string $featureKey): bool
+    {
+        return $this->userAddons()
+            ->whereHas('addon', function ($query) use ($featureKey) {
+                $query->where('type', 'feature_unlock')
+                    ->where('feature_key', $featureKey);
+            })
+            ->exists();
+    }
+
+    /**
+     * Get total extra card slots from purchased add-ons.
+     */
+    public function getExtraCardSlots(): int
+    {
+        return (int) $this->userAddons()
+            ->whereHas('addon', function ($query) {
+                $query->where('type', 'extra_cards');
+            })
+            ->join('addons', 'addons.id', '=', 'user_addons.addon_id')
+            ->sum('addons.value');
     }
 
     /**

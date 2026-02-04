@@ -24,6 +24,18 @@ const props = defineProps({
     subscription: {
         type: Object,
         default: null
+    },
+    cardLimit: {
+        type: Number,
+        default: 0
+    },
+    extraCardSlots: {
+        type: Number,
+        default: 0
+    },
+    purchasedAddons: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -161,16 +173,19 @@ onMounted(() => {
                                 <!-- Usage Bar -->
                                 <div v-if="subscription && subscription.subscription_plan" class="mt-3">
                                     <div class="flex justify-between text-xs text-gray-600 mb-1">
-                                        <span>{{ t('dashboard.subscription.business_cards', { used: stats.total_cards, limit: subscription.subscription_plan.cards_limit }) }}</span>
-                                        <span :class="stats.total_cards >= subscription.subscription_plan.cards_limit ? 'text-red-600 font-semibold' : ''">
-                                            {{ t('dashboard.subscription.remaining', { count: subscription.subscription_plan.cards_limit - stats.total_cards }) }}
+                                        <span>{{ t('dashboard.subscription.business_cards', { used: stats.total_cards, limit: cardLimit }) }}</span>
+                                        <span :class="stats.total_cards >= cardLimit ? 'text-red-600 font-semibold' : ''">
+                                            {{ t('dashboard.subscription.remaining', { count: Math.max(0, cardLimit - stats.total_cards) }) }}
                                         </span>
                                     </div>
                                     <div class="w-full bg-gray-200 rounded-full h-2">
                                         <div class="h-2 rounded-full transition-all"
-                                             :class="stats.total_cards >= subscription.subscription_plan.cards_limit ? 'bg-red-500' : 'bg-green-500'"
-                                             :style="`width: ${(stats.total_cards / subscription.subscription_plan.cards_limit) * 100}%`"></div>
+                                             :class="stats.total_cards >= cardLimit ? 'bg-red-500' : 'bg-green-500'"
+                                             :style="`width: ${cardLimit > 0 ? Math.min(100, (stats.total_cards / cardLimit) * 100) : 0}%`"></div>
                                     </div>
+                                    <p v-if="extraCardSlots > 0" class="mt-1 text-xs text-indigo-600">
+                                        {{ t('dashboard.subscription.includes_addons', { plan: subscription.subscription_plan.cards_limit, addons: extraCardSlots }) }}
+                                    </p>
                                 </div>
 
                                 <p v-if="subscription && subscription.days_remaining" class="mt-1 text-sm text-gray-500">
@@ -180,6 +195,28 @@ onMounted(() => {
                             <Link href="/subscription" class="ms-4 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                                 {{ t('dashboard.subscription.manage') }}
                             </Link>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Purchased Add-ons -->
+                <div v-if="purchasedAddons.length > 0" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-semibold text-gray-900">{{ t('dashboard.addons.title') }}</h3>
+                            <Link :href="route('addons.index')" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                {{ t('dashboard.addons.browse') }} →
+                            </Link>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span
+                                v-for="addon in purchasedAddons"
+                                :key="addon.id"
+                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+                                :class="addon.type === 'extra_cards' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'"
+                            >
+                                {{ addon.name }}
+                            </span>
                         </div>
                     </div>
                 </div>

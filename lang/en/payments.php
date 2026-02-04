@@ -48,6 +48,11 @@ return [
         'syncing' => 'Syncing...',
         'sync_plan' => 'Sync Plan',
         'view_all_plans' => 'View All Plans',
+        'browse_addons' => 'Browse Add-ons',
+        'purchased_addons' => 'Purchased Add-ons',
+        'addon_extra_cards' => '+:count extra card slots',
+        'addon_feature_unlock' => 'Feature unlock',
+        'includes_addons' => 'Plan: :plan + Add-ons: :addons extra slots',
         'sync_success' => 'Subscription details refreshed successfully!',
         // Upgrade section
         'upgrade_your_plan' => 'Upgrade Your Plan',
@@ -161,11 +166,23 @@ return [
     'history' => [
         'title' => 'Payment History',
         'date' => 'Date',
+        'description' => 'Description',
         'amount' => 'Amount',
         'method' => 'Method',
         'status' => 'Status',
         'invoice' => 'Invoice',
         'no_history' => 'No payment history yet',
+    ],
+
+    // Add-ons section on payments page
+    'addons' => [
+        'title' => 'Purchased Add-ons',
+        'browse' => 'Browse Add-ons',
+        'store_title' => 'Add-ons Store',
+        'store_desc' => 'Enhance your account with extra card slots and feature unlocks.',
+        'via_purchase' => 'Purchased',
+        'via_admin' => 'Granted by admin',
+        'via_promo' => 'Promotional',
     ],
 
     // Payment modal

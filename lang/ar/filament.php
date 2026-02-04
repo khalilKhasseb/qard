@@ -104,6 +104,7 @@ return [
             'verify' => 'التحقق من البريد',
             'unverify' => 'إلغاء التحقق',
             'verify_selected' => 'التحقق من المحددين',
+            'grant_addon' => 'منح إضافة',
         ],
 
         'notifications' => [
@@ -113,6 +114,8 @@ return [
             'unverified_body' => 'تم إزالة التحقق من البريد لـ :name.',
             'bulk_verified' => 'تم التحقق من المستخدمين',
             'bulk_verified_body' => 'تم التحقق من :count مستخدم.',
+            'addon_granted' => 'تم منح الإضافة بنجاح',
+            'addon_granted_body' => 'تم منح :addon لـ :user.',
         ],
     ],
 
@@ -572,6 +575,66 @@ return [
     ],
 
     // Relation Managers
+    // Addon Resource
+    'addons' => [
+        'label' => 'إضافة',
+        'plural' => 'الإضافات',
+        'navigation_label' => 'الإضافات',
+
+        'sections' => [
+            'addon_details' => 'تفاصيل الإضافة',
+            'type_config' => 'النوع والإعدادات',
+            'pricing' => 'التسعير',
+        ],
+
+        'fields' => [
+            'name' => 'الاسم',
+            'slug' => 'الرابط المختصر',
+            'description' => 'الوصف',
+            'type' => 'النوع',
+            'feature_key' => 'مفتاح الميزة',
+            'value' => 'القيمة',
+            'value_helper' => 'عدد فتحات البطاقات الإضافية (لنوع البطاقات الإضافية)',
+            'price' => 'السعر',
+            'currency' => 'العملة',
+            'sort_order' => 'ترتيب العرض',
+            'is_active' => 'نشط',
+            'purchases' => 'المشتريات',
+        ],
+
+        'types' => [
+            'extra_cards' => 'فتحات بطاقات إضافية',
+            'feature_unlock' => 'فتح ميزة',
+        ],
+
+        'feature_keys' => [
+            'nfc' => 'NFC',
+            'custom_domain' => 'نطاق مخصص',
+            'analytics' => 'التحليلات',
+            'custom_css' => 'CSS مخصص',
+        ],
+    ],
+
+    // User Addon Resource
+    'user_addons' => [
+        'label' => 'إضافة المستخدم',
+        'plural' => 'إضافات المستخدمين',
+        'navigation_label' => 'إضافات المستخدمين',
+
+        'fields' => [
+            'user' => 'المستخدم',
+            'addon' => 'الإضافة',
+            'granted_by' => 'ممنوح بواسطة',
+            'transaction_id' => 'رقم المعاملة',
+        ],
+
+        'granted_types' => [
+            'purchase' => 'شراء',
+            'admin_grant' => 'منحة إدارية',
+            'promo' => 'ترويجي',
+        ],
+    ],
+
     'relations' => [
         'sections' => [
             'label' => 'قسم',
@@ -580,6 +643,10 @@ return [
         'subscriptions' => [
             'label' => 'اشتراك',
             'plural' => 'الاشتراكات',
+        ],
+        'addons' => [
+            'label' => 'إضافة',
+            'plural' => 'الإضافات',
         ],
     ],
 ];

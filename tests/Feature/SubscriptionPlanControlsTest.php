@@ -280,6 +280,6 @@ describe('SubscriptionLimitException rendering', function () {
         $response = $exception->render($request);
 
         expect($response)->toBeInstanceOf(\Illuminate\Http\RedirectResponse::class)
-            ->and($response->getTargetUrl())->toContain('subscription');
+            ->and($response->getTargetUrl())->toContain('addons');
     });
 });

@@ -9,19 +9,15 @@ axios.defaults.withXSRFToken = true;
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.headers.common['Accept'] = 'application/json';
 
-// Response interceptor to handle 419 (CSRF token mismatch) errors for non-Inertia requests
+// Response interceptor to handle 419 (CSRF token mismatch) errors
 axios.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
-        // Check if this is an Inertia request (has X-Inertia header)
-        const isInertiaRequest = originalRequest?.headers?.['X-Inertia'] ||
-                                  originalRequest?.headers?.['x-inertia'];
-
-        // Handle 419 CSRF token mismatch - but NOT for Inertia requests
-        // Inertia handles its own CSRF via the XSRF-TOKEN cookie automatically
-        if (error.response?.status === 419 && !originalRequest._retry && !isInertiaRequest) {
+        // Handle 419 CSRF token mismatch for all requests (including Inertia)
+        // Fetches a fresh CSRF cookie and retries the original request once
+        if (error.response?.status === 419 && !originalRequest._retry) {
             originalRequest._retry = true;
 
             try {

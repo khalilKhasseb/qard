@@ -104,6 +104,7 @@ return [
             'verify' => 'Verify Email',
             'unverify' => 'Unverify Email',
             'verify_selected' => 'Verify Selected',
+            'grant_addon' => 'Grant Add-On',
         ],
 
         'notifications' => [
@@ -113,6 +114,8 @@ return [
             'unverified_body' => 'Email verification for :name has been removed.',
             'bulk_verified' => 'Users verified',
             'bulk_verified_body' => ':count users have been verified.',
+            'addon_granted' => 'Add-on granted successfully',
+            'addon_granted_body' => ':addon has been granted to :user.',
         ],
     ],
 
@@ -571,6 +574,66 @@ return [
         ],
     ],
 
+    // Addon Resource
+    'addons' => [
+        'label' => 'Add-On',
+        'plural' => 'Add-Ons',
+        'navigation_label' => 'Add-Ons',
+
+        'sections' => [
+            'addon_details' => 'Add-On Details',
+            'type_config' => 'Type & Configuration',
+            'pricing' => 'Pricing',
+        ],
+
+        'fields' => [
+            'name' => 'Name',
+            'slug' => 'Slug',
+            'description' => 'Description',
+            'type' => 'Type',
+            'feature_key' => 'Feature Key',
+            'value' => 'Value',
+            'value_helper' => 'Number of extra card slots (for extra_cards type)',
+            'price' => 'Price',
+            'currency' => 'Currency',
+            'sort_order' => 'Sort Order',
+            'is_active' => 'Active',
+            'purchases' => 'Purchases',
+        ],
+
+        'types' => [
+            'extra_cards' => 'Extra Card Slots',
+            'feature_unlock' => 'Feature Unlock',
+        ],
+
+        'feature_keys' => [
+            'nfc' => 'NFC',
+            'custom_domain' => 'Custom Domain',
+            'analytics' => 'Analytics',
+            'custom_css' => 'Custom CSS',
+        ],
+    ],
+
+    // User Addon Resource
+    'user_addons' => [
+        'label' => 'User Add-On',
+        'plural' => 'User Add-Ons',
+        'navigation_label' => 'User Add-Ons',
+
+        'fields' => [
+            'user' => 'User',
+            'addon' => 'Add-On',
+            'granted_by' => 'Granted By',
+            'transaction_id' => 'Transaction ID',
+        ],
+
+        'granted_types' => [
+            'purchase' => 'Purchase',
+            'admin_grant' => 'Admin Grant',
+            'promo' => 'Promo',
+        ],
+    ],
+
     // Relation Managers
     'relations' => [
         'sections' => [
@@ -580,6 +643,10 @@ return [
         'subscriptions' => [
             'label' => 'Subscription',
             'plural' => 'Subscriptions',
+        ],
+        'addons' => [
+            'label' => 'Add-On',
+            'plural' => 'Add-Ons',
         ],
     ],
 ];

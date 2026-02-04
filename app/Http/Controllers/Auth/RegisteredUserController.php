@@ -69,6 +69,8 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
+        $request->session()->regenerate();
+
         // Redirect based on verification method setting
         $authSettings = app(AuthSettings::class);
 
